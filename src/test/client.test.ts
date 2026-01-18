@@ -1,4 +1,4 @@
-import { GiteaHttpClient, HttpError } from "../gitea/client";
+import { GiteaHttpClient } from "../gitea/client";
 import { Agent, request } from "undici";
 
 jest.mock("undici", () => {

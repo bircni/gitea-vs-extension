@@ -98,7 +98,8 @@ export class RefreshController {
       const latestRun = runs[0];
       if (latestRun?.sha) {
         try {
-          const status = await this.limiter(() => this.api.getCombinedStatus(repo, latestRun.sha!));
+          const sha = latestRun.sha;
+          const status = await this.limiter(() => this.api.getCombinedStatus(repo, sha));
           this.store.updateEntry(repo, (entry) => {
             entry.repoStatus = status;
           });

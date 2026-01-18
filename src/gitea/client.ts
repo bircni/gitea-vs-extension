@@ -19,21 +19,31 @@ export class HttpError extends Error {
 
 export class GiteaHttpClient {
   private readonly configProvider: () => ClientConfig;
-  private readonly agentProvider: () => Agent | undefined;
+  private cachedAgent?: Agent;
+  private lastInsecureSkipVerify?: boolean;
 
   constructor(configProvider: () => ClientConfig) {
     this.configProvider = configProvider;
-    this.agentProvider = () => {
-      const config = this.configProvider();
-      if (!config.baseUrl || !config.baseUrl.startsWith("https")) {
-        return undefined;
-      }
-      return new Agent({
-        connect: {
-          rejectUnauthorized: !config.insecureSkipVerify,
-        },
-      });
-    };
+  }
+
+  private getAgent(): Agent | undefined {
+    const config = this.configProvider();
+    if (!config.baseUrl || !config.baseUrl.startsWith("https")) {
+      return undefined;
+    }
+
+    // Cache and reuse agent if insecureSkipVerify hasn't changed
+    if (this.cachedAgent && this.lastInsecureSkipVerify === config.insecureSkipVerify) {
+      return this.cachedAgent;
+    }
+
+    this.cachedAgent = new Agent({
+      connect: {
+        rejectUnauthorized: !config.insecureSkipVerify,
+      },
+    });
+    this.lastInsecureSkipVerify = config.insecureSkipVerify;
+    return this.cachedAgent;
   }
 
   async getJson<T>(path: string, options?: { allowMissingBaseUrl?: boolean }): Promise<T> {
@@ -91,7 +101,7 @@ export class GiteaHttpClient {
       body = JSON.stringify(options.body);
     }
 
-    const dispatcher = this.agentProvider();
+    const dispatcher = this.getAgent();
     const response = await request(url, {
       method,
       headers,

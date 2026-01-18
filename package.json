@@ -32,6 +32,7 @@
     "format": "prettier --check \"src/**/*.ts\" \"*.json\" \"*.md\"",
     "format:write": "prettier --write \"src/**/*.ts\" \"*.json\" \"*.md\"",
     "install:debug": "yarn build && code --install-extension dist/extension.vsix --force",
+    "uninstall:debug": "code --uninstall-extension bircni.gitea-vs-extension",
     "lint": "eslint .",
     "package": "vsce package --out dist/extension.vsix --no-yarn",
     "test": "jest --passWithNoTests",

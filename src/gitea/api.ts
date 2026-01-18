@@ -209,7 +209,7 @@ export class GiteaApi {
     const path = `/api/v1/repos/${encodeURIComponent(repo.owner)}/${encodeURIComponent(
       repo.name,
     )}/actions/variables/${encodeURIComponent(variableName)}`;
-    await this.client.requestText("PATCH", path, {
+    await this.client.requestText("PUT", path, {
       body: {
         name: newName ?? variableName,
         value,
