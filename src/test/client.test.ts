@@ -13,6 +13,7 @@ const AgentMock = Agent as unknown as jest.Mock;
 type MockBody = {
   text?: string;
   json?: unknown;
+  arrayBuffer?: Uint8Array;
 };
 
 const mockResponse = (statusCode: number, body: MockBody) => ({
@@ -20,6 +21,7 @@ const mockResponse = (statusCode: number, body: MockBody) => ({
   body: {
     text: jest.fn(async () => body.text ?? ""),
     json: jest.fn(async () => body.json),
+    arrayBuffer: jest.fn(async () => (body.arrayBuffer ?? new Uint8Array()).buffer),
   },
 });
 
@@ -139,4 +141,66 @@ test("uses https agent with insecure configuration", async () => {
   });
   const [, options] = requestMock.mock.calls[0];
   expect(options.dispatcher).toEqual({ options: { connect: { rejectUnauthorized: false } } });
+});
+
+test("returns binary data when requested", async () => {
+  const payload = new Uint8Array([1, 2, 3]);
+  requestMock.mockResolvedValue(mockResponse(200, { arrayBuffer: payload }));
+  const client = new GiteaHttpClient(() => ({
+    baseUrl: "https://gitea.example.com",
+    token: undefined,
+    insecureSkipVerify: false,
+  }));
+
+  const result = await client.getBinary("/avatar.png");
+
+  expect(result).toEqual(payload);
+});
+
+test("reuses cached agent when tls setting stays the same", async () => {
+  requestMock.mockResolvedValue(mockResponse(200, { text: "ok" }));
+  let insecure = true;
+  const client = new GiteaHttpClient(() => ({
+    baseUrl: "https://gitea.example.com",
+    token: undefined,
+    insecureSkipVerify: insecure,
+  }));
+
+  await client.getText("/repos");
+  await client.getText("/repos");
+
+  expect(AgentMock).toHaveBeenCalledTimes(1);
+
+  insecure = false;
+  await client.getText("/repos");
+  expect(AgentMock).toHaveBeenCalledTimes(2);
+});
+
+test("does not create agent for http urls", async () => {
+  requestMock.mockResolvedValue(mockResponse(200, { text: "ok" }));
+  const client = new GiteaHttpClient(() => ({
+    baseUrl: "http://gitea.example.com",
+    token: undefined,
+    insecureSkipVerify: true,
+  }));
+
+  await client.getText("/repos");
+
+  expect(AgentMock).not.toHaveBeenCalled();
+  const [, options] = requestMock.mock.calls[0];
+  expect(options.dispatcher).toBeUndefined();
+});
+
+test("falls back to generic http error message when body is empty", async () => {
+  requestMock.mockResolvedValue(mockResponse(500, { text: "" }));
+  const client = new GiteaHttpClient(() => ({
+    baseUrl: "https://gitea.example.com",
+    token: undefined,
+    insecureSkipVerify: false,
+  }));
+
+  await expect(client.getText("/missing")).rejects.toMatchObject({
+    status: 500,
+    message: "HTTP 500",
+  });
 });
