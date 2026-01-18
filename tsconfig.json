@@ -1,0 +1,16 @@
+{
+  "extends": "@tsconfig/node-lts/tsconfig.json",
+  "compilerOptions": {
+    "isolatedModules": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": [
+    "examples",
+    "examples/**",
+    "**/examples/**",
+    "**/examples/**/*.js",
+    "**/examples/**/*.ts",
+    "node_modules"
+  ]
+}

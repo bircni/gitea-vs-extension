@@ -1,0 +1,17 @@
+node_modules
+dist
+*.vsix
+*.log
+.DS_Store
+out
+.yarn
+.tmp
+
+# Additional common exclusions
+.env
+coverage
+*.tsbuildinfo
+yarn-error.log
+npm-debug.log
+.nyc_output
+.idea
