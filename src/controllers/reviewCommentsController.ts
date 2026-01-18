@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import { createHash } from "crypto";
 import * as vscode from "vscode";
 import { getSettings } from "../config/settings";
 import type { GiteaApi } from "../gitea/api";
@@ -23,6 +24,7 @@ export class ReviewCommentsController implements vscode.Disposable {
     "Gitea Review Comments",
   );
   private readonly threads = new Map<ThreadKey, vscode.CommentThread>();
+  private readonly avatarCache: AvatarCache;
   private refreshInProgress = false;
   private pendingRefresh = false;
   private activeKey?: string;
@@ -30,10 +32,12 @@ export class ReviewCommentsController implements vscode.Disposable {
   constructor(
     private readonly api: GiteaApi,
     private readonly logger: Logger,
+    storageRoot: string,
   ) {
     this.commentController.commentingRangeProvider = {
       provideCommentingRanges: () => [],
     };
+    this.avatarCache = new AvatarCache(api, logger, storageRoot, () => this.scheduleRefresh());
   }
 
   dispose(): void {
@@ -234,7 +238,8 @@ export class ReviewCommentsController implements vscode.Disposable {
         this.threads.get(threadKey) ?? this.commentController.createCommentThread(uri, range, []);
       thread.contextValue = "giteaReviewComment";
       thread.canReply = false;
-      const commentEntry = toVscodeComment(comment);
+      const avatarUri = this.avatarCache.getAvatarUri(comment.avatarUrl);
+      const commentEntry = toVscodeComment(comment, avatarUri);
       thread.comments = [...thread.comments, commentEntry];
       this.threads.set(threadKey, thread);
     }
@@ -299,13 +304,16 @@ function normalizeDiffPath(filePath: string): string {
   return normalized;
 }
 
-function toVscodeComment(comment: PullRequestReviewComment): vscode.Comment {
+function toVscodeComment(
+  comment: PullRequestReviewComment,
+  avatarUri?: vscode.Uri,
+): vscode.Comment {
   const markdown = new vscode.MarkdownString(comment.body ?? "");
   markdown.isTrusted = false;
   const timestamp = comment.updatedAt ?? comment.createdAt;
   return {
     body: markdown,
-    author: { name: comment.author ?? "Unknown" },
+    author: { name: comment.author ?? "Unknown", iconPath: avatarUri },
     mode: vscode.CommentMode.Preview,
     timestamp: timestamp ? new Date(timestamp) : undefined,
   };
@@ -390,4 +398,65 @@ function buildDiffPositionMap(diffText: string): Map<string, Map<number, number>
   }
 
   return map;
+}
+
+class AvatarCache {
+  private readonly avatarDir: string;
+  private readonly inflight = new Set<string>();
+
+  constructor(
+    private readonly api: GiteaApi,
+    private readonly logger: Logger,
+    storageRoot: string,
+    private readonly onReady: () => void,
+  ) {
+    this.avatarDir = path.join(storageRoot, "gitea-avatars");
+  }
+
+  getAvatarUri(url?: string): vscode.Uri | undefined {
+    if (!url) {
+      return undefined;
+    }
+
+    const cachedPath = this.getCachePath(url);
+    if (cachedPath && fs.existsSync(cachedPath)) {
+      return vscode.Uri.file(cachedPath);
+    }
+
+    if (this.inflight.has(url)) {
+      return undefined;
+    }
+
+    this.inflight.add(url);
+    void this.download(url, cachedPath)
+      .then(() => this.onReady())
+      .catch((error) => {
+        this.logger.debug(`Failed to cache avatar: ${formatError(error)}`);
+      })
+      .finally(() => {
+        this.inflight.delete(url);
+      });
+
+    return undefined;
+  }
+
+  private getCachePath(url: string): string | undefined {
+    try {
+      const parsed = new URL(url);
+      const ext = path.extname(parsed.pathname) || ".png";
+      const hash = createHash("sha256").update(url).digest("hex");
+      return path.join(this.avatarDir, `${hash}${ext}`);
+    } catch {
+      return undefined;
+    }
+  }
+
+  private async download(url: string, targetPath?: string): Promise<void> {
+    if (!targetPath) {
+      return;
+    }
+    await fs.promises.mkdir(this.avatarDir, { recursive: true });
+    const data = await this.api.fetchBinaryUrl(url);
+    await fs.promises.writeFile(targetPath, Buffer.from(data));
+  }
 }

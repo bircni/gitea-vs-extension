@@ -94,7 +94,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   statusBar.command = "workbench.view.extension.bircniGiteaVsExtension";
   statusBar.show();
 
-  const reviewCommentsController = new ReviewCommentsController(api, logger);
+  const reviewCommentsController = new ReviewCommentsController(
+    api,
+    logger,
+    context.globalStorageUri.fsPath,
+  );
 
   const refreshController = new RefreshController(
     api,
