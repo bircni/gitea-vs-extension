@@ -6,7 +6,7 @@ export function createLimiter(maxConcurrent: number): Limiter {
   }
 
   let activeCount = 0;
-  const queue: Array<() => void> = [];
+  const queue: (() => void)[] = [];
 
   const next = (): void => {
     if (activeCount >= maxConcurrent) {

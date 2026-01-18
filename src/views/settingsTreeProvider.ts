@@ -1,5 +1,4 @@
 import * as vscode from "vscode";
-import type { TreeNode } from "./nodes";
 import {
   ConfigActionNode,
   ConfigRootNode,
@@ -9,6 +8,7 @@ import {
   TokenNode,
   VariableNode,
   VariablesRootNode,
+  type TreeNode,
 } from "./nodes";
 import type { RepoRef } from "../gitea/models";
 import type { ActionVariable, Secret } from "../gitea/api";

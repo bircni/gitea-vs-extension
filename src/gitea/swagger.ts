@@ -1,5 +1,4 @@
-import type { GiteaHttpClient } from "./client";
-import { HttpError } from "./client";
+import { HttpError, type GiteaHttpClient } from "./client";
 
 export type SwaggerDoc = {
   basePath?: string;
@@ -28,7 +27,7 @@ export async function fetchSwagger(client: GiteaHttpClient): Promise<SwaggerDoc 
   for (const path of SWAGGER_PATHS) {
     try {
       const doc = await client.getJson<SwaggerDoc>(path, { allowMissingBaseUrl: true });
-      if (doc && typeof doc === "object" && doc.paths) {
+      if (doc.paths) {
         return doc;
       }
     } catch (error) {

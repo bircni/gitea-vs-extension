@@ -179,11 +179,14 @@ export function normalizeRun(raw: Record<string, unknown>): WorkflowRun {
 
   return {
     id: asId(raw.id ?? raw.run_id ?? raw.number ?? raw.run_number),
+    // Intentionally use || instead of ?? to treat empty strings as falsy
+    /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
     name:
       asString(raw.name) ||
       asString(raw.display_title) ||
       asString(raw.workflow_name) ||
       "Workflow run",
+    /* eslint-enable @typescript-eslint/prefer-nullish-coalescing */
     workflowName: asString(raw.workflow_name),
     displayTitle: asString(raw.display_title),
     runNumber: asNumber(raw.run_number),
@@ -210,6 +213,7 @@ export function normalizeJob(raw: Record<string, unknown>): Job {
 
   return {
     id: asId(raw.id ?? raw.job_id),
+    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
     name: asString(raw.name) || "Job",
     status,
     conclusion,
@@ -233,6 +237,7 @@ export function normalizeStep(raw: Record<string, unknown>): Step {
 export function normalizeArtifact(raw: Record<string, unknown>): Artifact {
   return {
     id: asId(raw.id ?? raw.artifact_id),
+    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
     name: asString(raw.name) || "Artifact",
     sizeInBytes: asNumber(raw.size_in_bytes ?? raw.size_in_bytes_bytes ?? raw.size),
     createdAt: asString(raw.created_at),
@@ -253,6 +258,7 @@ export function normalizePullRequest(raw: Record<string, unknown>): PullRequest 
   return {
     id: asId(raw.id ?? raw.number),
     number: asNumber(raw.number) ?? 0,
+    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
     title: asString(raw.title) || "Pull request",
     state,
     author: asString((raw.user as Record<string, unknown> | undefined)?.login),
@@ -307,13 +313,13 @@ function normalizeBranch(value?: string): string | undefined {
     return value.slice("tags/".length);
   }
   if (value.startsWith("refs/pull/")) {
-    const prMatch = value.match(/^refs\/pull\/(\d+)\/head$/);
+    const prMatch = /^refs\/pull\/(\d+)\/head$/.exec(value);
     if (prMatch) {
       return `PR #${prMatch[1]}`;
     }
     return value;
   }
-  const prMatch = value.match(/^pull\/(\d+)\/head$/);
+  const prMatch = /^pull\/(\d+)\/head$/.exec(value);
   if (prMatch) {
     return `PR #${prMatch[1]}`;
   }

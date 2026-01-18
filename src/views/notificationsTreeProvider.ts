@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
 import type { NotificationStore } from "../util/notificationStore";
-import type { TreeNode } from "./nodes";
-import { ErrorNode, MessageNode, NotificationNode } from "./nodes";
+import { ErrorNode, MessageNode, NotificationNode, type TreeNode } from "./nodes";
 
 export class NotificationsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   private readonly _onDidChangeTreeData = new vscode.EventEmitter<TreeNode | undefined>();
@@ -17,7 +16,7 @@ export class NotificationsTreeProvider implements vscode.TreeDataProvider<TreeNo
     return element;
   }
 
-  async getChildren(): Promise<TreeNode[]> {
+  getChildren(): TreeNode[] {
     if (this.store.isLoading()) {
       return [new MessageNode("Loading notifications...")];
     }
@@ -26,7 +25,7 @@ export class NotificationsTreeProvider implements vscode.TreeDataProvider<TreeNo
       return [new ErrorNode(error)];
     }
     const notifications = this.store.getNotifications();
-    if (!notifications.length) {
+    if (notifications.length === 0) {
       return [new MessageNode("No notifications.")];
     }
     return notifications.map((thread) => new NotificationNode(thread));

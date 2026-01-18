@@ -51,7 +51,7 @@ export class RepoNode extends vscode.TreeItem {
 export class WorkflowGroupNode extends vscode.TreeItem {
   constructor(
     public readonly name: string,
-    public readonly runs: Array<{ repo: RepoRef; run: WorkflowRun }>,
+    public readonly runs: { repo: RepoRef; run: WorkflowRun }[],
     expanded?: boolean,
   ) {
     super(
@@ -96,7 +96,7 @@ export class JobNode extends vscode.TreeItem {
   ) {
     super(
       job.name,
-      job.steps && job.steps.length
+      job.steps?.length
         ? vscode.TreeItemCollapsibleState.Collapsed
         : vscode.TreeItemCollapsibleState.None,
     );
@@ -357,7 +357,8 @@ function buildRunDescription(run: WorkflowRun): string | undefined {
 
 function buildRunTooltip(run: WorkflowRun): string {
   const status = run.conclusion ?? run.status;
-  const parts = [status ? status.toUpperCase() : "Status"];
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  const parts = [status !== "unknown" && status ? status.toUpperCase() : "Status"];
   if (run.actor) {
     parts.push(`Actor: ${run.actor}`);
   }

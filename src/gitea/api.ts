@@ -1,16 +1,5 @@
-import type { GiteaHttpClient } from "./client";
-import { HttpError } from "./client";
-import type { EndpointMap } from "./swagger";
-import { discoverEndpoints, fetchSwagger, fallbackEndpoints } from "./swagger";
-import type {
-  Artifact,
-  Job,
-  NotificationThread,
-  PullRequest,
-  RepoRef,
-  RepoStatus,
-  WorkflowRun,
-} from "./models";
+import { HttpError, type GiteaHttpClient } from "./client";
+import { discoverEndpoints, fallbackEndpoints, fetchSwagger, type EndpointMap } from "./swagger";
 import {
   normalizeArtifact,
   normalizeJob,
@@ -18,6 +7,13 @@ import {
   normalizePullRequest,
   normalizeRepoStatus,
   normalizeRun,
+  type Artifact,
+  type Job,
+  type NotificationThread,
+  type PullRequest,
+  type RepoRef,
+  type RepoStatus,
+  type WorkflowRun,
 } from "./models";
 
 export class EndpointError extends Error {
@@ -119,7 +115,7 @@ export class GiteaApi {
     const response = await this.client.getJson<Record<string, unknown> | unknown[]>(url);
     const list = Array.isArray(response)
       ? response
-      : extractArray(response as Record<string, unknown>, ["entries", "notifications"]);
+      : extractArray(response, ["entries", "notifications"]);
     return list.map((item) => normalizeNotificationThread(item as Record<string, unknown>));
   }
 

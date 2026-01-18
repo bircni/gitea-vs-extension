@@ -28,7 +28,7 @@ export class GiteaHttpClient {
 
   private getAgent(): Agent | undefined {
     const config = this.configProvider();
-    if (!config.baseUrl || !config.baseUrl.startsWith("https")) {
+    if (!config.baseUrl.startsWith("https")) {
       return undefined;
     }
 

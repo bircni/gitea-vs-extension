@@ -9,7 +9,7 @@ export function formatRelativeTime(iso?: string): string | undefined {
   const deltaMs = Date.now() - date.getTime();
   const seconds = Math.floor(Math.abs(deltaMs) / 1000);
 
-  const units: Array<[number, string]> = [
+  const units: [number, string][] = [
     [60, "s"],
     [60, "m"],
     [24, "h"],
@@ -22,8 +22,7 @@ export function formatRelativeTime(iso?: string): string | undefined {
   let value = seconds;
   let unit = "s";
 
-  for (let i = 0; i < units.length; i += 1) {
-    const [limit, label] = units[i];
+  for (const [limit, label] of units) {
     if (value < limit) {
       unit = label;
       break;
