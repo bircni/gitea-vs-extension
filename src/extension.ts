@@ -222,9 +222,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   );
 }
 
-export function deactivate(): void {
-  return;
-}
+export function deactivate(): void {}
 
 function updateStatusBar(item: vscode.StatusBarItem, summary: RefreshSummary): void {
   const running = summary.runningCount;

@@ -91,11 +91,23 @@ export class SettingsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   }
 
   setRepository(repo: RepoRef | undefined): void {
+    const repoChanged =
+      this.currentRepo &&
+      repo &&
+      (this.currentRepo.host !== repo.host ||
+        this.currentRepo.owner !== repo.owner ||
+        this.currentRepo.name !== repo.name);
+
     this.currentRepo = repo;
-    if (!repo) {
+
+    // Clear secrets and variables when repo changes or is set to undefined
+    if (!repo || repoChanged) {
       this.secrets = [];
       this.variables = [];
+      this.secretsState = "idle";
+      this.variablesState = "idle";
     }
+
     this.refresh();
   }
 
