@@ -61,6 +61,10 @@ export type PullRequest = {
   labels?: PullRequestLabel[];
   htmlUrl?: string;
   updatedAt?: string;
+  headRef?: string;
+  headSha?: string;
+  baseRef?: string;
+  baseSha?: string;
 };
 
 export type PullRequestLabel = {
@@ -77,6 +81,32 @@ export type NotificationThread = {
   updatedAt?: string;
   unread?: boolean;
   pinned?: boolean;
+};
+
+export type PullRequestReview = {
+  id: number | string;
+  state?: string;
+  body?: string;
+  author?: string;
+  submittedAt?: string;
+  htmlUrl?: string;
+};
+
+export type PullRequestReviewComment = {
+  id: number | string;
+  body?: string;
+  path?: string;
+  line?: number;
+  originalLine?: number;
+  position?: number;
+  originalPosition?: number;
+  commitId?: string;
+  diffHunk?: string;
+  author?: string;
+  resolver?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  reviewId?: number | string;
 };
 
 export type RepoStatusState =
@@ -265,6 +295,42 @@ export function normalizePullRequest(raw: Record<string, unknown>): PullRequest 
     labels: normalizeLabels(raw.labels),
     htmlUrl: asString(raw.html_url ?? raw.url),
     updatedAt: asString(raw.updated_at),
+    headRef: asString((raw.head as Record<string, unknown> | undefined)?.ref),
+    headSha: asString((raw.head as Record<string, unknown> | undefined)?.sha),
+    baseRef: asString((raw.base as Record<string, unknown> | undefined)?.ref),
+    baseSha: asString((raw.base as Record<string, unknown> | undefined)?.sha),
+  };
+}
+
+export function normalizePullRequestReview(raw: Record<string, unknown>): PullRequestReview {
+  return {
+    id: asId(raw.id),
+    state: asString(raw.state),
+    body: asString(raw.body),
+    author: asString((raw.user as Record<string, unknown> | undefined)?.login),
+    submittedAt: asString(raw.submitted_at ?? raw.submittedAt),
+    htmlUrl: asString(raw.html_url ?? raw.url),
+  };
+}
+
+export function normalizePullRequestReviewComment(
+  raw: Record<string, unknown>,
+): PullRequestReviewComment {
+  return {
+    id: asId(raw.id),
+    body: asString(raw.body),
+    path: asString(raw.path),
+    line: asNumber(raw.line),
+    originalLine: asNumber(raw.original_line ?? raw.originalLine),
+    position: asNumber(raw.position),
+    originalPosition: asNumber(raw.original_position ?? raw.originalPosition),
+    commitId: asString(raw.commit_id ?? raw.commitId),
+    diffHunk: asString(raw.diff_hunk ?? raw.diffHunk),
+    author: asString((raw.user as Record<string, unknown> | undefined)?.login),
+    resolver: asString((raw.resolver as Record<string, unknown> | undefined)?.login),
+    createdAt: asString(raw.created_at),
+    updatedAt: asString(raw.updated_at),
+    reviewId: asId(raw.review_id ?? raw.reviewId ?? raw.pull_request_review_id),
   };
 }
 

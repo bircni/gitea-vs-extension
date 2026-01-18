@@ -4,6 +4,7 @@ import {
   normalizeConclusion,
   normalizeJob,
   normalizePullRequest,
+  normalizePullRequestReviewComment,
   normalizeRun,
   normalizeNotificationThread,
   normalizeRepoStatus,
@@ -245,6 +246,8 @@ test("normalizes pull request payload", () => {
     user: { login: "octo" },
     labels: [{ name: "bug", color: "ff0000" }, { name: "docs" }],
     html_url: "http://localhost:3000/owner/repo/pulls/2",
+    head: { ref: "feature", sha: "abcd" },
+    base: { ref: "main", sha: "1234" },
   });
 
   expect(pr.state).toBe("merged");
@@ -254,6 +257,10 @@ test("normalizes pull request payload", () => {
     { name: "docs", color: undefined },
   ]);
   expect(pr.htmlUrl).toBe("http://localhost:3000/owner/repo/pulls/2");
+  expect(pr.headRef).toBe("feature");
+  expect(pr.headSha).toBe("abcd");
+  expect(pr.baseRef).toBe("main");
+  expect(pr.baseSha).toBe("1234");
 });
 
 test("normalizes pull request fallback fields", () => {
@@ -317,4 +324,32 @@ test("normalizes repository status with url fallback and unknown state", () => {
 
   expect(status.state).toBe("unknown");
   expect(status.targetUrl).toBe("http://example.com/status");
+});
+
+test("normalizes pull request review comment payload", () => {
+  const comment = normalizePullRequestReviewComment({
+    id: 5,
+    body: "Needs changes",
+    path: "README.md",
+    line: 12,
+    original_line: 10,
+    position: 4,
+    commit_id: "deadbeef",
+    diff_hunk: "@@ -1,2 +1,3 @@",
+    user: { login: "octo" },
+    created_at: "2024-01-02T00:00:00Z",
+    updated_at: "2024-01-03T00:00:00Z",
+    review_id: 9,
+  });
+
+  expect(comment.id).toBe(5);
+  expect(comment.body).toBe("Needs changes");
+  expect(comment.path).toBe("README.md");
+  expect(comment.line).toBe(12);
+  expect(comment.originalLine).toBe(10);
+  expect(comment.position).toBe(4);
+  expect(comment.commitId).toBe("deadbeef");
+  expect(comment.diffHunk).toBe("@@ -1,2 +1,3 @@");
+  expect(comment.author).toBe("octo");
+  expect(comment.reviewId).toBe(9);
 });

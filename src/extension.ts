@@ -13,6 +13,7 @@ import { RefreshController, type RefreshSummary } from "./controllers/refreshCon
 import { CommandsController } from "./controllers/commands";
 import { SettingsTreeProvider } from "./views/settingsTreeProvider";
 import { NotificationsTreeProvider } from "./views/notificationsTreeProvider";
+import { ReviewCommentsController } from "./controllers/reviewCommentsController";
 import {
   RepoNode,
   RunNode,
@@ -93,6 +94,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   statusBar.command = "workbench.view.extension.bircniGiteaVsExtension";
   statusBar.show();
 
+  const reviewCommentsController = new ReviewCommentsController(api, logger);
+
   const refreshController = new RefreshController(
     api,
     store,
@@ -111,7 +114,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         settingsProvider.setRepository(firstRepo);
       }
     },
-    (summary) => updateStatusBar(statusBar, summary),
+    (summary) => {
+      updateStatusBar(statusBar, summary);
+      reviewCommentsController.scheduleRefresh();
+    },
   );
 
   const commands = new CommandsController(
@@ -130,6 +136,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     notificationsTree,
     settingsTree,
     statusBar,
+    reviewCommentsController,
     logger,
     { dispose: () => refreshController.dispose() },
     ...commands.register(),
@@ -137,9 +144,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       logger.debug("Settings changed, refreshing.");
       refreshController.scheduleNext();
       void refreshController.refreshAll();
+      reviewCommentsController.scheduleRefresh();
     }),
     vscode.workspace.onDidChangeWorkspaceFolders(() => {
       void refreshController.refreshAll();
+      reviewCommentsController.scheduleRefresh();
     }),
     runsTree.onDidChangeVisibility((event) => {
       if (event.visible) {
@@ -219,6 +228,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       }
     }),
   );
+
+  reviewCommentsController.scheduleRefresh();
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
