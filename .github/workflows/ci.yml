@@ -1,0 +1,78 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        node-version: [lts/*, current]
+
+    env:
+      CI: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+            lfs: true
+
+      - name: Enable Corepack
+        run: corepack enable
+        
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Check unused dependencies
+        run: yarn check-unused
+
+      - name: Check formatting
+        run: yarn format
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Build
+        run: yarn build
+
+      - name: Test
+        run: yarn test
+
+  security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CI: true
+    steps:
+      - name: Checkout ${{ github.sha }}
+        uses: actions/checkout@v6
+        with:
+            lfs: true
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Use Node.js LTS
+        uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Run security audit
+        run: yarn npm audit --all --severity moderate 

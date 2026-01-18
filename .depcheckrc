@@ -1,0 +1,2 @@
+ignores: ["rimraf", "depcheck", "vscode"]
+skip-missing: true

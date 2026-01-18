@@ -1,0 +1,53 @@
+# Development files
+.vscode/**
+.vscode-test/**
+src/**
+.gitignore
+.eslintrc.json
+.npmignore
+tsconfig.json
+tsconfig.build.json
+jest.config.js
+jest.setup.js
+*.map
+*.tsbuildinfo
+
+# Documentation (not needed in extension)
+FEATURES.md
+FEATURES-EXAMPLE.md
+EXTENSION_STRUCTURE_REVIEW.md
+README.md
+# LICENSE
+AGENTS.md
+TEST_VALIDATION_REPORT.md
+docs/**
+
+# Demo assets (only needed for GitHub README, not in extension)
+assets/demo.gif
+assets/example-video.gif
+assets/example-ui.png
+assets/example-ui-selected-line.png
+
+# Build artifacts
+branding/**
+node_modules/**
+coverage/**
+test-report/**
+*.log
+
+# Test files
+test-*.md
+*.test.ts
+**/__tests__/**
+
+# CI/CD
+.github/**
+
+# Cursor files
+.cursor/**
+
+.yarn/**
+*.config.ts
+.yarnrc.yml
+.depcheckrc
+.tmp/**
