@@ -1,4 +1,5 @@
 {
     "editor.formatOnSave": true,
-    "npm.packageManager": "yarn"
+    "npm.packageManager": "yarn",
+    "typescript.tsdk": "node_modules/typescript/lib"
 }

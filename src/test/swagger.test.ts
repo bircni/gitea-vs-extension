@@ -17,6 +17,12 @@ test("finds actions endpoints", () => {
     "/api/v1/repos/{owner}/{repo}/actions/runs/{run}/artifacts",
   );
   expect(endpoints.listPullRequests).toBe("/api/v1/repos/{owner}/{repo}/pulls");
+  expect(endpoints.listPullRequestReviews).toBe(
+    "/api/v1/repos/{owner}/{repo}/pulls/{index}/reviews",
+  );
+  expect(endpoints.listPullRequestReviewComments).toBe(
+    "/api/v1/repos/{owner}/{repo}/pulls/{index}/reviews/{id}/comments",
+  );
 });
 
 test("uses fallback endpoints when swagger is missing", () => {
@@ -24,6 +30,12 @@ test("uses fallback endpoints when swagger is missing", () => {
   expect(endpoints.listRuns).toBe("/api/v1/repos/{owner}/{repo}/actions/runs");
   expect(endpoints.listJobs).toBe("/api/v1/repos/{owner}/{repo}/actions/runs/{run}/jobs");
   expect(endpoints.version).toBe("/api/v1/version");
+  expect(endpoints.listPullRequestReviews).toBe(
+    "/api/v1/repos/{owner}/{repo}/pulls/{index}/reviews",
+  );
+  expect(endpoints.listPullRequestReviewComments).toBe(
+    "/api/v1/repos/{owner}/{repo}/pulls/{index}/reviews/{id}/comments",
+  );
 });
 
 test("prefixes discovered endpoints with basePath", () => {

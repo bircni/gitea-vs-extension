@@ -11,6 +11,7 @@ export type ExtensionSettings = {
   maxRunsPerRepo: number;
   maxJobsPerRun: number;
   debugLogging: boolean;
+  reviewCommentsEnabled: boolean;
 };
 
 export function getSettings(): ExtensionSettings {
@@ -24,6 +25,7 @@ export function getSettings(): ExtensionSettings {
     maxRunsPerRepo: config.get<number>("maxRunsPerRepo") ?? 20,
     maxJobsPerRun: config.get<number>("maxJobsPerRun") ?? 50,
     debugLogging: config.get<boolean>("logging.debug") ?? false,
+    reviewCommentsEnabled: config.get<boolean>("reviewComments.enabled") ?? true,
   };
 }
 

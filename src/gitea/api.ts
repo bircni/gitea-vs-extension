@@ -5,12 +5,16 @@ import {
   normalizeJob,
   normalizeNotificationThread,
   normalizePullRequest,
+  normalizePullRequestReview,
+  normalizePullRequestReviewComment,
   normalizeRepoStatus,
   normalizeRun,
   type Artifact,
   type Job,
   type NotificationThread,
   type PullRequest,
+  type PullRequestReview,
+  type PullRequestReviewComment,
   type RepoRef,
   type RepoStatus,
   type WorkflowRun,
@@ -108,6 +112,83 @@ export class GiteaApi {
     const response = await this.client.getJson<Record<string, unknown> | unknown[]>(url);
     const list = Array.isArray(response) ? response : extractArray(response, ["entries", "pulls"]);
     return list.map((item) => normalizePullRequest(item as Record<string, unknown>));
+  }
+
+  async listPullRequestReviews(
+    repo: RepoRef,
+    pullRequestNumber: number,
+  ): Promise<PullRequestReview[]> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.listPullRequestReviews;
+    if (!path) {
+      return [];
+    }
+    const url = withQuery(
+      fillRepoPath(path, repo).replace("{index}", encodeURIComponent(String(pullRequestNumber))),
+      { state: "all" },
+    );
+    const response = await this.client.getJson<Record<string, unknown> | unknown[]>(url);
+    const list = Array.isArray(response)
+      ? response
+      : extractArray(response, ["entries", "reviews"]);
+    return list.map((item) => normalizePullRequestReview(item as Record<string, unknown>));
+  }
+
+  async listPullRequestReviewComments(
+    repo: RepoRef,
+    pullRequestNumber: number,
+    reviewId: number | string,
+  ): Promise<PullRequestReviewComment[]> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.listPullRequestReviewComments;
+    if (!path) {
+      return [];
+    }
+    const url = fillRepoPath(path, repo)
+      .replace("{index}", encodeURIComponent(String(pullRequestNumber)))
+      .replace("{id}", encodeURIComponent(String(reviewId)));
+    const response = await this.client.getJson<Record<string, unknown> | unknown[]>(url);
+    const list = Array.isArray(response)
+      ? response
+      : extractArray(response, ["entries", "comments"]);
+    return list.map((item) => normalizePullRequestReviewComment(item as Record<string, unknown>));
+  }
+
+  async createPullRequestReviewComment(
+    repo: RepoRef,
+    pullRequestNumber: number,
+    options: { body: string; path: string; line: number; commitId?: string },
+  ): Promise<void> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.listPullRequestReviews;
+    if (!path) {
+      throw new EndpointError("Pull request reviews endpoint not available");
+    }
+    const url = fillRepoPath(path, repo).replace(
+      "{index}",
+      encodeURIComponent(String(pullRequestNumber)),
+    );
+    await this.client.requestText("POST", url, {
+      body: {
+        event: "COMMENT",
+        commit_id: options.commitId,
+        comments: [
+          {
+            body: options.body,
+            path: options.path,
+            new_position: options.line,
+            old_position: 0,
+          },
+        ],
+      },
+    });
+  }
+
+  async getPullRequestDiff(repo: RepoRef, pullRequestNumber: number): Promise<string> {
+    const path = `/api/v1/repos/${encodeURIComponent(repo.owner)}/${encodeURIComponent(
+      repo.name,
+    )}/pulls/${encodeURIComponent(String(pullRequestNumber))}.diff`;
+    return this.client.getText(path);
   }
 
   async listNotifications(): Promise<NotificationThread[]> {

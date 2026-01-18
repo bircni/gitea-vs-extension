@@ -88,6 +88,11 @@
           "type": "boolean",
           "default": false,
           "description": "Enable debug logging to the extension output channel."
+        },
+        "bircni.gitea-vs-extension.reviewComments.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show Gitea pull request review comments inline in the editor for the current branch."
         }
       }
     },

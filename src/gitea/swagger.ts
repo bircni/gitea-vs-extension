@@ -12,6 +12,8 @@ export type EndpointMap = {
   listRunArtifacts?: string;
   listRepoArtifacts?: string;
   listPullRequests?: string;
+  listPullRequestReviews?: string;
+  listPullRequestReviewComments?: string;
   listRepos?: string;
   version?: string;
 };
@@ -61,6 +63,14 @@ export function discoverEndpoints(doc?: SwaggerDoc): EndpointMap {
   );
   const listRepoArtifacts = pickPath(paths, /^\/repos\/\{owner\}\/\{repo\}\/actions\/artifacts$/);
   const listPullRequests = pickPath(paths, /^\/repos\/\{owner\}\/\{repo\}\/pulls$/);
+  const listPullRequestReviews = pickPath(
+    paths,
+    /^\/repos\/\{owner\}\/\{repo\}\/pulls\/\{[^}]+\}\/reviews$/,
+  );
+  const listPullRequestReviewComments = pickPath(
+    paths,
+    /^\/repos\/\{owner\}\/\{repo\}\/pulls\/\{[^}]+\}\/reviews\/\{[^}]+\}\/comments$/,
+  );
   const listRepos = pickPath(paths, /^\/user\/repos$/);
   const version = pickPath(paths, /^\/version$/);
 
@@ -71,6 +81,8 @@ export function discoverEndpoints(doc?: SwaggerDoc): EndpointMap {
     listRunArtifacts: joinPath(basePath, listRunArtifacts),
     listRepoArtifacts: joinPath(basePath, listRepoArtifacts),
     listPullRequests: joinPath(basePath, listPullRequests),
+    listPullRequestReviews: joinPath(basePath, listPullRequestReviews),
+    listPullRequestReviewComments: joinPath(basePath, listPullRequestReviewComments),
     listRepos: joinPath(basePath, listRepos),
     version: joinPath(basePath, version),
   };
@@ -85,6 +97,8 @@ export function fallbackEndpoints(): EndpointMap {
     listRunArtifacts: `${basePath}/repos/{owner}/{repo}/actions/runs/{run}/artifacts`,
     listRepoArtifacts: `${basePath}/repos/{owner}/{repo}/actions/artifacts`,
     listPullRequests: `${basePath}/repos/{owner}/{repo}/pulls`,
+    listPullRequestReviews: `${basePath}/repos/{owner}/{repo}/pulls/{index}/reviews`,
+    listPullRequestReviewComments: `${basePath}/repos/{owner}/{repo}/pulls/{index}/reviews/{id}/comments`,
     listRepos: `${basePath}/user/repos`,
     version: `${basePath}/version`,
   };
