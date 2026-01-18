@@ -4,7 +4,7 @@ export const TOKEN_KEY = "bircni.gitea-vs-extension.pat";
 
 export async function getToken(secrets: vscode.SecretStorage): Promise<string | undefined> {
   const token = await secrets.get(TOKEN_KEY);
-  return token?.trim() || undefined;
+  return token?.trim() ?? undefined;
 }
 
 export async function setToken(secrets: vscode.SecretStorage, token: string): Promise<void> {

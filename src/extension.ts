@@ -9,8 +9,7 @@ import { RepoStateStore } from "./util/cache";
 import { Logger } from "./util/logging";
 import { expandedRepoKey, expandedRunKey, expandedWorkflowKey } from "./util/expandedState";
 import { NotificationStore } from "./util/notificationStore";
-import type { RefreshSummary } from "./controllers/refreshController";
-import { RefreshController } from "./controllers/refreshController";
+import { RefreshController, type RefreshSummary } from "./controllers/refreshController";
 import { CommandsController } from "./controllers/commands";
 import { SettingsTreeProvider } from "./views/settingsTreeProvider";
 import { NotificationsTreeProvider } from "./views/notificationsTreeProvider";
@@ -29,13 +28,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   let cachedToken = await getToken(context.secrets);
 
   const settingsProvider = new SettingsTreeProvider();
-  settingsProvider.setTokenStatus(!!cachedToken);
+  settingsProvider.setTokenStatus(Boolean(cachedToken));
 
   context.secrets.onDidChange((event) => {
     if (event.key === TOKEN_KEY) {
       void getToken(context.secrets).then((token) => {
         cachedToken = token;
-        settingsProvider.setTokenStatus(!!token);
+        settingsProvider.setTokenStatus(Boolean(token));
       });
     }
   });
@@ -105,11 +104,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       workflowsProvider.refresh();
       pullRequestsProvider.refresh();
       notificationsProvider.refresh();
-      if (!settingsProvider.getCurrentRepo()) {
-        const firstRepo = store.getRepos()[0];
-        if (firstRepo) {
-          settingsProvider.setRepository(firstRepo);
-        }
+      const currentRepo = settingsProvider.getCurrentRepo();
+      const [firstRepo] = store.getRepos();
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (!currentRepo && firstRepo) {
+        settingsProvider.setRepository(firstRepo);
       }
     },
     (summary) => updateStatusBar(statusBar, summary),
@@ -222,6 +221,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-function
 export function deactivate(): void {}
 
 function updateStatusBar(item: vscode.StatusBarItem, summary: RefreshSummary): void {

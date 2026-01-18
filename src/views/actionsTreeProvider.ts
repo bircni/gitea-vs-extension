@@ -3,7 +3,6 @@ import { getSettings } from "../config/settings";
 import { getToken } from "../config/secrets";
 import type { RepoStateStore } from "../util/cache";
 import { expandedRepoKey, expandedRunKey, expandedWorkflowKey } from "../util/expandedState";
-import type { TreeNode } from "./nodes";
 import {
   ArtifactNode,
   ErrorNode,
@@ -15,6 +14,7 @@ import {
   SectionNode,
   StepNode,
   WorkflowGroupNode,
+  type TreeNode,
 } from "./nodes";
 import type { Job, RepoRef, WorkflowRun } from "../gitea/models";
 
@@ -74,7 +74,7 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       if (element.sectionType === "errors") {
         return this.getErrorChildren(element.repo);
       }
-      if (element.sectionType === "artifacts" && element.runId !== undefined) {
+      if (element.runId !== undefined) {
         return this.getArtifactChildren(element.repo, element.runId);
       }
     }

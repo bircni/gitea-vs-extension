@@ -2,8 +2,7 @@ import { getSettings } from "../config/settings";
 import type { RepoStateStore } from "../util/cache";
 import { createLimiter } from "../util/limiter";
 import type { Logger } from "../util/logging";
-import type { GiteaApi } from "../gitea/api";
-import { EndpointError } from "../gitea/api";
+import { EndpointError, type GiteaApi } from "../gitea/api";
 import { HttpError } from "../gitea/client";
 import type { RepoDiscovery } from "../gitea/discovery";
 import type { Artifact, Job, PullRequest, RepoRef } from "../gitea/models";
@@ -17,7 +16,7 @@ export type RefreshSummary = {
 export class RefreshController {
   private timer?: NodeJS.Timeout;
   private refreshInProgress = false;
-  private limiter = createLimiter(4);
+  private readonly limiter = createLimiter(4);
 
   constructor(
     private readonly api: GiteaApi,
@@ -77,7 +76,8 @@ export class RefreshController {
 
   async refreshRepo(repo: RepoRef, limit: number): Promise<void> {
     const existing = this.store.getEntry(repo);
-    const hasData = !!existing && (existing.runs.length > 0 || existing.pullRequests.length > 0);
+    const hasData =
+      existing !== undefined && (existing.runs.length > 0 || existing.pullRequests.length > 0);
     this.store.updateEntry(repo, (entry) => {
       entry.loading = true;
       entry.error = undefined;
@@ -95,18 +95,20 @@ export class RefreshController {
         entry.runs = runs;
       });
 
-      const latestRun = runs[0];
-      if (latestRun?.sha) {
-        try {
-          const sha = latestRun.sha;
-          const status = await this.limiter(() => this.api.getCombinedStatus(repo, sha));
-          this.store.updateEntry(repo, (entry) => {
-            entry.repoStatus = status;
-          });
-        } catch (error) {
-          this.logger.debug(
-            `Failed to load repo status for ${repo.owner}/${repo.name}: ${formatError(error)}`,
-          );
+      if (runs.length > 0) {
+        const latestRun = runs[0];
+        const sha = latestRun.sha;
+        if (sha) {
+          try {
+            const status = await this.limiter(() => this.api.getCombinedStatus(repo, sha));
+            this.store.updateEntry(repo, (entry) => {
+              entry.repoStatus = status;
+            });
+          } catch (error) {
+            this.logger.debug(
+              `Failed to load repo status for ${repo.owner}/${repo.name}: ${formatError(error)}`,
+            );
+          }
         }
       }
 
