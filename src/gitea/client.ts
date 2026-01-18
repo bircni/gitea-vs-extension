@@ -54,6 +54,10 @@ export class GiteaHttpClient {
     return this.requestText("GET", path);
   }
 
+  async getBinary(path: string): Promise<Uint8Array> {
+    return this.requestBinary("GET", path);
+  }
+
   async requestJson<T>(
     method: Dispatcher.HttpMethod,
     path: string,
@@ -70,6 +74,16 @@ export class GiteaHttpClient {
   ): Promise<string> {
     const response = await this.request(method, path, options);
     return response.body.text();
+  }
+
+  async requestBinary(
+    method: Dispatcher.HttpMethod,
+    path: string,
+    options?: { allowMissingBaseUrl?: boolean; body?: unknown; headers?: Record<string, string> },
+  ): Promise<Uint8Array> {
+    const response = await this.request(method, path, options);
+    const buffer = await response.body.arrayBuffer();
+    return new Uint8Array(buffer);
   }
 
   private async request(

@@ -103,6 +103,7 @@ export type PullRequestReviewComment = {
   commitId?: string;
   diffHunk?: string;
   author?: string;
+  avatarUrl?: string;
   resolver?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -327,6 +328,7 @@ export function normalizePullRequestReviewComment(
     commitId: asString(raw.commit_id ?? raw.commitId),
     diffHunk: asString(raw.diff_hunk ?? raw.diffHunk),
     author: asString((raw.user as Record<string, unknown> | undefined)?.login),
+    avatarUrl: asString((raw.user as Record<string, unknown> | undefined)?.avatar_url),
     resolver: asString((raw.resolver as Record<string, unknown> | undefined)?.login),
     createdAt: asString(raw.created_at),
     updatedAt: asString(raw.updated_at),

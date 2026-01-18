@@ -191,6 +191,10 @@ export class GiteaApi {
     return this.client.getText(path);
   }
 
+  async fetchBinaryUrl(url: string): Promise<Uint8Array> {
+    return this.client.getBinary(url);
+  }
+
   async listNotifications(): Promise<NotificationThread[]> {
     const url = withQuery("/api/v1/notifications", { "status-types": "unread,pinned" });
     const response = await this.client.getJson<Record<string, unknown> | unknown[]>(url);
