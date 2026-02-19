@@ -3,7 +3,7 @@
   "displayName": "Gitea VS Extension",
   "description": "Gitea Actions status and logs in VS Code/Cursor.",
   "icon": "media/icon.png",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "bircni",
   "license": "MIT",
   "packageManager": "yarn@4.12.0",
