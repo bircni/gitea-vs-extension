@@ -4,7 +4,7 @@ const { execSync } = require("child_process");
 /**
  * Release helper script for markdown-inline-editor-vscode.
  * - Runs validation checks (lint:docs, test, build)
- * - Gets next version with git-cliff
+ * - Gets next version with git-cliff (or a custom version via --version)
  * - Generates CHANGELOG.md
  * - Bumps package.json version
  * - Commits changes and creates git tag
@@ -27,7 +27,34 @@ function error(msg) {
   console.error(`\x1b[31m${msg}\x1b[0m`);
 }
 
+function parseArgs(argv) {
+  const args = argv.slice(2);
+  let customVersion = null;
+
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i];
+    if (arg === "--version" || arg === "-v") {
+      customVersion = args[i + 1];
+      i += 1;
+      continue;
+    }
+    if (arg.startsWith("--version=")) {
+      customVersion = arg.split("=")[1];
+      continue;
+    }
+  }
+
+  return { customVersion };
+}
+
 try {
+  const { customVersion } = parseArgs(process.argv);
+  if (customVersion === "") {
+    throw new Error("Custom version cannot be empty. Use --version <x.y.z>.");
+  }
+  if (customVersion === undefined) {
+    throw new Error("Missing value for --version. Use --version <x.y.z>.");
+  }
   // check that we are on main and working tree is clean
   const branch = run("git rev-parse --abbrev-ref HEAD");
   if (branch !== "main") {
@@ -43,11 +70,11 @@ try {
   // Run validation checks
   log("🔍 Running validation checks...");
   log("  📝 Validating feature file structure...");
-  run("npm run lint:docs");
+  run("yarn lint");
   log("  🧪 Running tests...");
-  run("npm test");
+  run("yarn test");
   log("  🔨 Building extension...");
-  run("npm run build");
+  run("yarn build");
   log("✅ All validation checks passed");
 
   // Check if git-cliff is available
@@ -57,17 +84,22 @@ try {
     run("npx --yes git-cliff --version", { stdio: "pipe" });
   } catch {
     throw new Error(
-      "git-cliff is not available. Run 'npm install' to install dev dependencies, or install globally with: npm install -g git-cliff",
+      "git-cliff is not available. Run 'yarn install' to install dev dependencies, or install globally with: npm install -g git-cliff",
     );
   }
 
   // Determine next version
-  log("🔍 Determining next version with git-cliff...");
-  let nextVersion = run("npx git-cliff --bumped-version");
-  if (!nextVersion) {
-    throw new Error(
-      "Failed to determine next version. Ensure you have conventional commits since the last tag.",
-    );
+  let nextVersion = customVersion;
+  if (nextVersion) {
+    log(`🔍 Using custom version: ${nextVersion}`);
+  } else {
+    log("🔍 Determining next version with git-cliff...");
+    nextVersion = run("npx git-cliff --bumped-version");
+    if (!nextVersion) {
+      throw new Error(
+        "Failed to determine next version. Ensure you have conventional commits since the last tag.",
+      );
+    }
   }
   // Remove 'v' prefix if present for consistency
   nextVersion = nextVersion.replace(/^v/, "");
@@ -84,7 +116,7 @@ try {
 
   // Commit changes
   log("✅ Committing changes...");
-  run("git add CHANGELOG.md package.json package-lock.json");
+  run("git add CHANGELOG.md package.json yarn.lock");
   run(`git commit -m "chore(release): ${tagVersion}"`);
 
   // Create git tag
