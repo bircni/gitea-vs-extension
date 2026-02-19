@@ -51,3 +51,5 @@ test-*.md
 .yarnrc.yml
 .depcheckrc
 .tmp/**
+cliff.toml
+scripts/**

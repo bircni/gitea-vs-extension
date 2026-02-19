@@ -61,19 +61,19 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     expanded,
   );
 
-  const workflowsTree = vscode.window.createTreeView("bircni.gitea-vs-extension.runsPinned", {
+  const workflowsTree = vscode.window.createTreeView("gitea-vs-extension.runsPinned", {
     treeDataProvider: workflowsProvider,
     showCollapseAll: true,
   });
-  const pullRequestsTree = vscode.window.createTreeView("bircni.gitea-vs-extension.pullRequests", {
+  const pullRequestsTree = vscode.window.createTreeView("gitea-vs-extension.pullRequests", {
     treeDataProvider: pullRequestsProvider,
     showCollapseAll: true,
   });
-  const runsTree = vscode.window.createTreeView("bircni.gitea-vs-extension.runs", {
+  const runsTree = vscode.window.createTreeView("gitea-vs-extension.runs", {
     treeDataProvider: runsProvider,
     showCollapseAll: true,
   });
-  const settingsTree = vscode.window.createTreeView("bircni.gitea-vs-extension.settings", {
+  const settingsTree = vscode.window.createTreeView("gitea-vs-extension.settings", {
     treeDataProvider: settingsProvider,
     showCollapseAll: true,
   });
@@ -159,8 +159,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       if (event.visible) {
         const repo = settingsProvider.getCurrentRepo();
         if (repo) {
-          void vscode.commands.executeCommand("bircni.gitea-vs-extension.refreshSecrets", repo);
-          void vscode.commands.executeCommand("bircni.gitea-vs-extension.refreshVariables", repo);
+          void vscode.commands.executeCommand("gitea-vs-extension.refreshSecrets", repo);
+          void vscode.commands.executeCommand("gitea-vs-extension.refreshVariables", repo);
         }
       }
     }),
@@ -244,7 +244,7 @@ function extractRepoFromSelection(selection: readonly unknown[]): RepoRef | unde
   return undefined;
 }
 
-const EXPANDED_STATE_KEY = "bircni.gitea-vs-extension.expandedNodes";
+const EXPANDED_STATE_KEY = "gitea-vs-extension.expandedNodes";
 
 function loadExpandedState(storage: vscode.Memento): Set<string> {
   const stored = storage.get<string[]>(EXPANDED_STATE_KEY) ?? [];

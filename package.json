@@ -38,24 +38,25 @@
     "test": "jest --passWithNoTests",
     "test:report": "jest && echo 'HTML report generated at: dist/test-report/report.html'",
     "test:watch": "jest --watch",
-    "watch": "tsc  --project tsconfig.build.json --watch"
+    "watch": "tsc  --project tsconfig.build.json --watch",
+    "release": "node scripts/release.js"
   },
   "contributes": {
     "configuration": {
       "type": "object",
       "title": "Gitea VS Extension",
       "properties": {
-        "bircni.gitea-vs-extension.baseUrl": {
+        "gitea-vs-extension.baseUrl": {
           "type": "string",
           "default": "",
           "description": "Base URL for the Gitea instance, e.g. http://localhost:3000."
         },
-        "bircni.gitea-vs-extension.tls.insecureSkipVerify": {
+        "gitea-vs-extension.tls.insecureSkipVerify": {
           "type": "boolean",
           "default": false,
           "description": "Disable TLS certificate verification for HTTPS connections."
         },
-        "bircni.gitea-vs-extension.discovery.mode": {
+        "gitea-vs-extension.discovery.mode": {
           "type": "string",
           "enum": [
             "workspace",
@@ -64,32 +65,32 @@
           "default": "workspace",
           "description": "Repository discovery mode."
         },
-        "bircni.gitea-vs-extension.refresh.runningIntervalSeconds": {
+        "gitea-vs-extension.refresh.runningIntervalSeconds": {
           "type": "number",
           "default": 15,
           "description": "Refresh interval when runs are queued or running."
         },
-        "bircni.gitea-vs-extension.refresh.idleIntervalSeconds": {
+        "gitea-vs-extension.refresh.idleIntervalSeconds": {
           "type": "number",
           "default": 60,
           "description": "Refresh interval when idle."
         },
-        "bircni.gitea-vs-extension.maxRunsPerRepo": {
+        "gitea-vs-extension.maxRunsPerRepo": {
           "type": "number",
           "default": 20,
           "description": "Maximum workflow runs to load per repository."
         },
-        "bircni.gitea-vs-extension.maxJobsPerRun": {
+        "gitea-vs-extension.maxJobsPerRun": {
           "type": "number",
           "default": 50,
           "description": "Maximum workflow jobs to load per run."
         },
-        "bircni.gitea-vs-extension.logging.debug": {
+        "gitea-vs-extension.logging.debug": {
           "type": "boolean",
           "default": false,
           "description": "Enable debug logging to the extension output channel."
         },
-        "bircni.gitea-vs-extension.reviewComments.enabled": {
+        "gitea-vs-extension.reviewComments.enabled": {
           "type": "boolean",
           "default": true,
           "description": "Show Gitea pull request review comments inline in the editor for the current branch."
@@ -109,114 +110,114 @@
       "bircniGiteaVsExtension": [
         {
           "type": "tree",
-          "id": "bircni.gitea-vs-extension.runsPinned",
+          "id": "gitea-vs-extension.runsPinned",
           "name": "Workflows"
         },
         {
           "type": "tree",
-          "id": "bircni.gitea-vs-extension.pullRequests",
+          "id": "gitea-vs-extension.pullRequests",
           "name": "Pull Requests"
         },
         {
           "type": "tree",
-          "id": "bircni.gitea-vs-extension.runs",
+          "id": "gitea-vs-extension.runs",
           "name": "Workflow Runs"
         },
         {
           "type": "tree",
-          "id": "bircni.gitea-vs-extension.settings",
+          "id": "gitea-vs-extension.settings",
           "name": "Settings"
         }
       ]
     },
     "commands": [
       {
-        "command": "bircni.gitea-vs-extension.setToken",
+        "command": "gitea-vs-extension.setToken",
         "title": "gitea-vs-extension: Set Token",
         "icon": "$(pencil)"
       },
       {
-        "command": "bircni.gitea-vs-extension.clearToken",
+        "command": "gitea-vs-extension.clearToken",
         "title": "gitea-vs-extension: Clear Token",
         "icon": "$(trash)"
       },
       {
-        "command": "bircni.gitea-vs-extension.testConnection",
+        "command": "gitea-vs-extension.testConnection",
         "title": "gitea-vs-extension: Test Connection",
         "icon": "$(plug)"
       },
       {
-        "command": "bircni.gitea-vs-extension.refresh",
+        "command": "gitea-vs-extension.refresh",
         "title": "gitea-vs-extension: Refresh",
         "icon": "$(refresh)"
       },
       {
-        "command": "bircni.gitea-vs-extension.refreshRepo",
+        "command": "gitea-vs-extension.refreshRepo",
         "title": "gitea-vs-extension: Refresh Repository",
         "icon": "$(refresh)"
       },
       {
-        "command": "bircni.gitea-vs-extension.viewJobLogs",
+        "command": "gitea-vs-extension.viewJobLogs",
         "title": "gitea-vs-extension: View Job Logs",
         "icon": "$(list-unordered)"
       },
       {
-        "command": "bircni.gitea-vs-extension.openLatestFailedJobLogs",
+        "command": "gitea-vs-extension.openLatestFailedJobLogs",
         "title": "gitea-vs-extension: Open Latest Failed Job Logs",
         "icon": "$(error)"
       },
       {
-        "command": "bircni.gitea-vs-extension.openInBrowser",
+        "command": "gitea-vs-extension.openInBrowser",
         "title": "gitea-vs-extension: Open in Browser",
         "icon": "$(globe)"
       },
       {
-        "command": "bircni.gitea-vs-extension.copyUrl",
+        "command": "gitea-vs-extension.copyUrl",
         "title": "gitea-vs-extension: Copy URL",
         "icon": "$(copy)"
       },
       {
-        "command": "bircni.gitea-vs-extension.refreshSecrets",
+        "command": "gitea-vs-extension.refreshSecrets",
         "title": "gitea-vs-extension: Refresh Secrets",
         "icon": "$(refresh)"
       },
       {
-        "command": "bircni.gitea-vs-extension.refreshVariables",
+        "command": "gitea-vs-extension.refreshVariables",
         "title": "gitea-vs-extension: Refresh Variables",
         "icon": "$(refresh)"
       },
       {
-        "command": "bircni.gitea-vs-extension.createSecret",
+        "command": "gitea-vs-extension.createSecret",
         "title": "gitea-vs-extension: Add Secret",
         "icon": "$(add)"
       },
       {
-        "command": "bircni.gitea-vs-extension.updateSecret",
+        "command": "gitea-vs-extension.updateSecret",
         "title": "gitea-vs-extension: Update Secret",
         "icon": "$(pencil)"
       },
       {
-        "command": "bircni.gitea-vs-extension.deleteSecret",
+        "command": "gitea-vs-extension.deleteSecret",
         "title": "gitea-vs-extension: Delete Secret",
         "icon": "$(trash)"
       },
       {
-        "command": "bircni.gitea-vs-extension.createVariable",
+        "command": "gitea-vs-extension.createVariable",
         "title": "gitea-vs-extension: Add Variable",
         "icon": "$(add)"
       },
       {
-        "command": "bircni.gitea-vs-extension.updateVariable",
+        "command": "gitea-vs-extension.updateVariable",
         "title": "gitea-vs-extension: Update Variable",
         "icon": "$(pencil)"
       },
       {
-        "command": "bircni.gitea-vs-extension.deleteVariable",
+        "command": "gitea-vs-extension.deleteVariable",
         "title": "gitea-vs-extension: Delete Variable",
         "icon": "$(trash)"
       },
       {
-        "command": "bircni.gitea-vs-extension.openBaseUrlSettings",
+        "command": "gitea-vs-extension.openBaseUrlSettings",
         "title": "gitea-vs-extension: Open Base URL Settings",
         "icon": "$(settings-gear)"
       }
@@ -224,105 +225,105 @@
     "menus": {
       "view/title": [
         {
-          "command": "bircni.gitea-vs-extension.refresh",
-          "when": "view == bircni.gitea-vs-extension.runs || view == bircni.gitea-vs-extension.runsPinned || view == bircni.gitea-vs-extension.pullRequests",
+          "command": "gitea-vs-extension.refresh",
+          "when": "view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned || view == gitea-vs-extension.pullRequests",
           "group": "navigation"
         }
       ],
       "view/item/context": [
         {
-          "command": "bircni.gitea-vs-extension.refresh",
-          "when": "(view == bircni.gitea-vs-extension.runs || view == bircni.gitea-vs-extension.runsPinned || view == bircni.gitea-vs-extension.pullRequests) && viewItem == giteaRepo",
+          "command": "gitea-vs-extension.refresh",
+          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned || view == gitea-vs-extension.pullRequests) && viewItem == giteaRepo",
           "group": "inline"
         },
         {
-          "command": "bircni.gitea-vs-extension.refreshRepo",
+          "command": "gitea-vs-extension.refreshRepo",
           "when": "viewItem == giteaRepo",
           "group": "inline@1"
         },
         {
-          "command": "bircni.gitea-vs-extension.openInBrowser",
-          "when": "(view == bircni.gitea-vs-extension.runs || view == bircni.gitea-vs-extension.runsPinned) && viewItem == giteaRun",
+          "command": "gitea-vs-extension.openInBrowser",
+          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem == giteaRun",
           "group": "inline"
         },
         {
-          "command": "bircni.gitea-vs-extension.openLatestFailedJobLogs",
+          "command": "gitea-vs-extension.openLatestFailedJobLogs",
           "when": "viewItem == giteaRun",
           "group": "inline@1"
         },
         {
-          "command": "bircni.gitea-vs-extension.openInBrowser",
-          "when": "(view == bircni.gitea-vs-extension.runs || view == bircni.gitea-vs-extension.runsPinned) && viewItem == giteaJob",
+          "command": "gitea-vs-extension.openInBrowser",
+          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem == giteaJob",
           "group": "inline"
         },
         {
-          "command": "bircni.gitea-vs-extension.viewJobLogs",
-          "when": "(view == bircni.gitea-vs-extension.runs || view == bircni.gitea-vs-extension.runsPinned) && (viewItem == giteaJob || viewItem == giteaStep)",
+          "command": "gitea-vs-extension.viewJobLogs",
+          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && (viewItem == giteaJob || viewItem == giteaStep)",
           "group": "inline"
         },
         {
-          "command": "bircni.gitea-vs-extension.openInBrowser",
-          "when": "(view == bircni.gitea-vs-extension.runs || view == bircni.gitea-vs-extension.runsPinned || view == bircni.gitea-vs-extension.pullRequests) && viewItem == giteaPullRequest",
+          "command": "gitea-vs-extension.openInBrowser",
+          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned || view == gitea-vs-extension.pullRequests) && viewItem == giteaPullRequest",
           "group": "inline"
         },
         {
-          "command": "bircni.gitea-vs-extension.copyUrl",
+          "command": "gitea-vs-extension.copyUrl",
           "when": "viewItem == giteaRepo || viewItem == giteaRun || viewItem == giteaJob || viewItem == giteaStep || viewItem == giteaPullRequest || viewItem == giteaArtifact",
           "group": "inline@2"
         },
         {
-          "command": "bircni.gitea-vs-extension.openInBrowser",
-          "when": "(view == bircni.gitea-vs-extension.runs || view == bircni.gitea-vs-extension.runsPinned) && viewItem == giteaArtifact",
+          "command": "gitea-vs-extension.openInBrowser",
+          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem == giteaArtifact",
           "group": "inline"
         },
         {
-          "command": "bircni.gitea-vs-extension.refreshSecrets",
-          "when": "view == bircni.gitea-vs-extension.settings && viewItem == giteaSecretsRoot",
+          "command": "gitea-vs-extension.refreshSecrets",
+          "when": "view == gitea-vs-extension.settings && viewItem == giteaSecretsRoot",
           "group": "inline"
         },
         {
-          "command": "bircni.gitea-vs-extension.createSecret",
-          "when": "view == bircni.gitea-vs-extension.settings && viewItem == giteaSecretsRoot",
+          "command": "gitea-vs-extension.createSecret",
+          "when": "view == gitea-vs-extension.settings && viewItem == giteaSecretsRoot",
           "group": "inline@1"
         },
         {
-          "command": "bircni.gitea-vs-extension.updateSecret",
-          "when": "view == bircni.gitea-vs-extension.settings && viewItem == giteaSecret",
+          "command": "gitea-vs-extension.updateSecret",
+          "when": "view == gitea-vs-extension.settings && viewItem == giteaSecret",
           "group": "inline"
         },
         {
-          "command": "bircni.gitea-vs-extension.deleteSecret",
-          "when": "view == bircni.gitea-vs-extension.settings && viewItem == giteaSecret",
+          "command": "gitea-vs-extension.deleteSecret",
+          "when": "view == gitea-vs-extension.settings && viewItem == giteaSecret",
           "group": "inline@1"
         },
         {
-          "command": "bircni.gitea-vs-extension.refreshVariables",
-          "when": "view == bircni.gitea-vs-extension.settings && viewItem == giteaVariablesRoot",
+          "command": "gitea-vs-extension.refreshVariables",
+          "when": "view == gitea-vs-extension.settings && viewItem == giteaVariablesRoot",
           "group": "inline"
         },
         {
-          "command": "bircni.gitea-vs-extension.createVariable",
-          "when": "view == bircni.gitea-vs-extension.settings && viewItem == giteaVariablesRoot",
+          "command": "gitea-vs-extension.createVariable",
+          "when": "view == gitea-vs-extension.settings && viewItem == giteaVariablesRoot",
           "group": "inline@1"
         },
         {
-          "command": "bircni.gitea-vs-extension.updateVariable",
-          "when": "view == bircni.gitea-vs-extension.settings && viewItem == giteaVariable",
+          "command": "gitea-vs-extension.updateVariable",
+          "when": "view == gitea-vs-extension.settings && viewItem == giteaVariable",
           "group": "inline"
         },
         {
-          "command": "bircni.gitea-vs-extension.deleteVariable",
-          "when": "view == bircni.gitea-vs-extension.settings && viewItem == giteaVariable",
+          "command": "gitea-vs-extension.deleteVariable",
+          "when": "view == gitea-vs-extension.settings && viewItem == giteaVariable",
           "group": "inline@1"
         },
         {
-          "command": "bircni.gitea-vs-extension.setToken",
-          "when": "view == bircni.gitea-vs-extension.settings && viewItem == giteaToken",
+          "command": "gitea-vs-extension.setToken",
+          "when": "view == gitea-vs-extension.settings && viewItem == giteaToken",
           "group": "inline"
         },
         {
-          "command": "bircni.gitea-vs-extension.clearToken",
-          "when": "view == bircni.gitea-vs-extension.settings && viewItem == giteaToken",
+          "command": "gitea-vs-extension.clearToken",
+          "when": "view == gitea-vs-extension.settings && viewItem == giteaToken",
           "group": "inline@1"
         }
       ]

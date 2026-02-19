@@ -17,7 +17,7 @@ Works with VS Code, Cursor, VSCodium, Windsurf, and other VS Code compatible edi
 ## Quick Start
 
 1. Install the extension (VSIX or marketplace, depending on your setup).
-2. Set `bircni.gitea-vs-extension.baseUrl` to your Gitea instance (for example, `http://localhost:3000`).
+2. Set `gitea-vs-extension.baseUrl` to your Gitea instance (for example, `http://localhost:3000`).
 3. Open the Gitea VS Extension activity bar view.
 4. In Settings, set your personal access token and click Test Connection.
 
@@ -59,16 +59,16 @@ Manage token, test connection, and edit secrets and variables.
 
 ## Configuration
 
-| Setting                                                    | Default     | Description                             |
-| ---------------------------------------------------------- | ----------- | --------------------------------------- |
-| `bircni.gitea-vs-extension.baseUrl`                        | -           | Base URL of your Gitea instance         |
-| `bircni.gitea-vs-extension.discovery.mode`                 | `workspace` | How to discover repositories            |
-| `bircni.gitea-vs-extension.refresh.runningIntervalSeconds` | `15`        | Polling interval while runs are active  |
-| `bircni.gitea-vs-extension.refresh.idleIntervalSeconds`    | `60`        | Polling interval while idle             |
-| `bircni.gitea-vs-extension.maxRunsPerRepo`                 | `20`        | Maximum runs to fetch per repository    |
-| `bircni.gitea-vs-extension.maxJobsPerRun`                  | `50`        | Maximum jobs to fetch per run           |
-| `bircni.gitea-vs-extension.tls.insecureSkipVerify`         | `false`     | Skip TLS verification (not recommended) |
-| `bircni.gitea-vs-extension.logging.debug`                  | `false`     | Enable debug logging                    |
+| Setting                                             | Default     | Description                             |
+| --------------------------------------------------- | ----------- | --------------------------------------- |
+| `gitea-vs-extension.baseUrl`                        | -           | Base URL of your Gitea instance         |
+| `gitea-vs-extension.discovery.mode`                 | `workspace` | How to discover repositories            |
+| `gitea-vs-extension.refresh.runningIntervalSeconds` | `15`        | Polling interval while runs are active  |
+| `gitea-vs-extension.refresh.idleIntervalSeconds`    | `60`        | Polling interval while idle             |
+| `gitea-vs-extension.maxRunsPerRepo`                 | `20`        | Maximum runs to fetch per repository    |
+| `gitea-vs-extension.maxJobsPerRun`                  | `50`        | Maximum jobs to fetch per run           |
+| `gitea-vs-extension.tls.insecureSkipVerify`         | `false`     | Skip TLS verification (not recommended) |
+| `gitea-vs-extension.logging.debug`                  | `false`     | Enable debug logging                    |
 
 ### Discovery Modes
 

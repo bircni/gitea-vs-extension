@@ -33,58 +33,54 @@ export class CommandsController {
 
   register(): vscode.Disposable[] {
     return [
-      vscode.commands.registerCommand("bircni.gitea-vs-extension.setToken", () =>
-        this.handleSetToken(),
-      ),
-      vscode.commands.registerCommand("bircni.gitea-vs-extension.clearToken", () =>
+      vscode.commands.registerCommand("gitea-vs-extension.setToken", () => this.handleSetToken()),
+      vscode.commands.registerCommand("gitea-vs-extension.clearToken", () =>
         this.handleClearToken(),
       ),
-      vscode.commands.registerCommand("bircni.gitea-vs-extension.testConnection", () =>
+      vscode.commands.registerCommand("gitea-vs-extension.testConnection", () =>
         this.handleTestConnection(),
       ),
-      vscode.commands.registerCommand("bircni.gitea-vs-extension.refresh", () =>
-        this.handleRefresh(),
-      ),
-      vscode.commands.registerCommand("bircni.gitea-vs-extension.refreshRepo", (arg) =>
+      vscode.commands.registerCommand("gitea-vs-extension.refresh", () => this.handleRefresh()),
+      vscode.commands.registerCommand("gitea-vs-extension.refreshRepo", (arg) =>
         this.handleRefreshRepo(arg),
       ),
-      vscode.commands.registerCommand("bircni.gitea-vs-extension.viewJobLogs", (arg) =>
+      vscode.commands.registerCommand("gitea-vs-extension.viewJobLogs", (arg) =>
         this.handleViewJobLogs(arg),
       ),
-      vscode.commands.registerCommand("bircni.gitea-vs-extension.openLatestFailedJobLogs", (arg) =>
+      vscode.commands.registerCommand("gitea-vs-extension.openLatestFailedJobLogs", (arg) =>
         this.handleOpenLatestFailedJobLogs(arg),
       ),
-      vscode.commands.registerCommand("bircni.gitea-vs-extension.openInBrowser", (arg) =>
+      vscode.commands.registerCommand("gitea-vs-extension.openInBrowser", (arg) =>
         this.handleOpenInBrowser(arg),
       ),
-      vscode.commands.registerCommand("bircni.gitea-vs-extension.copyUrl", (arg) =>
+      vscode.commands.registerCommand("gitea-vs-extension.copyUrl", (arg) =>
         this.handleCopyUrl(arg),
       ),
-      vscode.commands.registerCommand("bircni.gitea-vs-extension.refreshSecrets", (arg) =>
+      vscode.commands.registerCommand("gitea-vs-extension.refreshSecrets", (arg) =>
         this.handleRefreshSecrets(arg),
       ),
-      vscode.commands.registerCommand("bircni.gitea-vs-extension.refreshVariables", (arg) =>
+      vscode.commands.registerCommand("gitea-vs-extension.refreshVariables", (arg) =>
         this.handleRefreshVariables(arg),
       ),
-      vscode.commands.registerCommand("bircni.gitea-vs-extension.createSecret", (arg) =>
+      vscode.commands.registerCommand("gitea-vs-extension.createSecret", (arg) =>
         this.handleCreateSecret(arg),
       ),
-      vscode.commands.registerCommand("bircni.gitea-vs-extension.updateSecret", (arg) =>
+      vscode.commands.registerCommand("gitea-vs-extension.updateSecret", (arg) =>
         this.handleUpdateSecret(arg),
       ),
-      vscode.commands.registerCommand("bircni.gitea-vs-extension.deleteSecret", (arg) =>
+      vscode.commands.registerCommand("gitea-vs-extension.deleteSecret", (arg) =>
         this.handleDeleteSecret(arg),
       ),
-      vscode.commands.registerCommand("bircni.gitea-vs-extension.createVariable", (arg) =>
+      vscode.commands.registerCommand("gitea-vs-extension.createVariable", (arg) =>
         this.handleCreateVariable(arg),
       ),
-      vscode.commands.registerCommand("bircni.gitea-vs-extension.updateVariable", (arg) =>
+      vscode.commands.registerCommand("gitea-vs-extension.updateVariable", (arg) =>
         this.handleUpdateVariable(arg),
       ),
-      vscode.commands.registerCommand("bircni.gitea-vs-extension.deleteVariable", (arg) =>
+      vscode.commands.registerCommand("gitea-vs-extension.deleteVariable", (arg) =>
         this.handleDeleteVariable(arg),
       ),
-      vscode.commands.registerCommand("bircni.gitea-vs-extension.openBaseUrlSettings", () =>
+      vscode.commands.registerCommand("gitea-vs-extension.openBaseUrlSettings", () =>
         this.handleOpenBaseUrlSettings(),
       ),
     ];
@@ -118,9 +114,7 @@ export class CommandsController {
   private async handleTestConnection(): Promise<void> {
     const settings = getSettings();
     if (!settings.baseUrl) {
-      vscode.window.showWarningMessage(
-        "Set bircni.gitea-vs-extension.baseUrl before testing connection.",
-      );
+      vscode.window.showWarningMessage("Set gitea-vs-extension.baseUrl before testing connection.");
       return;
     }
 
@@ -381,10 +375,7 @@ export class CommandsController {
   }
 
   private async handleOpenBaseUrlSettings(): Promise<void> {
-    await vscode.commands.executeCommand(
-      "workbench.action.openSettings",
-      "@bircni.gitea-vs-extension",
-    );
+    await vscode.commands.executeCommand("workbench.action.openSettings", "@gitea-vs-extension");
   }
 
   private async ensureRunDetails(repo: RepoRef, run: WorkflowRun): Promise<void> {

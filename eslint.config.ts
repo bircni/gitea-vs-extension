@@ -141,6 +141,11 @@ export default tseslint.config(
   {
     files: ["scripts/**/*.js"],
     languageOptions: {
+      parserOptions: {
+        projectService: {
+          allowDefaultProject: ["scripts/*.js"],
+        },
+      },
       globals: {
         require: "readonly",
         module: "readonly",
@@ -158,6 +163,9 @@ export default tseslint.config(
     rules: {
       "@typescript-eslint/no-var-requires": "off",
       "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "preserve-caught-error": "off",
+      "no-console": "off",
     },
   },
 );
