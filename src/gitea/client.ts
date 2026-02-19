@@ -97,11 +97,12 @@ export class GiteaHttpClient {
     }
 
     const url = buildUrl(baseUrl, path);
+    const sameOrigin = isSameOrigin(baseUrl, url);
     const headers: Record<string, string> = {
       Accept: "application/json",
     };
 
-    if (token) {
+    if (token && sameOrigin) {
       headers.Authorization = `token ${token}`;
     }
 
@@ -115,7 +116,7 @@ export class GiteaHttpClient {
       body = JSON.stringify(options.body);
     }
 
-    const dispatcher = this.getAgent();
+    const dispatcher = sameOrigin ? this.getAgent() : undefined;
     const response = await request(url, {
       method,
       headers,
@@ -129,6 +130,19 @@ export class GiteaHttpClient {
     }
 
     return response;
+  }
+}
+
+function isSameOrigin(baseUrl: string, url: string): boolean {
+  try {
+    const targetOrigin = new URL(url).origin;
+    if (!baseUrl) {
+      return false;
+    }
+    const baseOrigin = new URL(baseUrl).origin;
+    return targetOrigin === baseOrigin;
+  } catch {
+    return false;
   }
 }
 
