@@ -1,0 +1,78 @@
+name: Publish Extension
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CI: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          lfs: true
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Use Node.js LTS
+        uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: "yarn"
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Build
+        run: yarn build
+
+      - name: Package extension
+        run: yarn package
+
+      - name: Publish to VS Code Marketplace
+      # Cannot use yarn as vsce does not support the newer version of yarn
+        run: npx @vscode/vsce publish --packagePath dist/extension.vsix --pat ${{ secrets.AZURE_DEVOPS_TOKEN }} --no-yarn
+
+    #   - name: Publish to Open VSX Registry
+    #     run: npx ovsx publish dist/extension.vsix --pat "$OVSX_PAT"
+    #     env:
+    #       OVSX_PAT: ${{ secrets.OVSX_PAT }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Use Node.js LTS
+        uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: "yarn"
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Build
+        run: yarn build
+
+      - name: Package extension
+        run: yarn package
+
+      - name: Create a release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release ${{ steps.tagName.outputs.tag }}
+          files: dist/extension.vsix
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
