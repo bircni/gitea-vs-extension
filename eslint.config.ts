@@ -110,6 +110,7 @@ export default tseslint.config(
       "*.js",
       "examples/**",
       "*.config.ts",
+      "scripts/**",
     ],
   },
   // Allow require() and any types in parser-remark.ts for CommonJS compatibility
@@ -135,37 +136,6 @@ export default tseslint.config(
       "@typescript-eslint/no-unsafe-return": "off",
       "@typescript-eslint/require-await": "off",
       "@typescript-eslint/no-floating-promises": "off",
-    },
-  },
-  // Node.js scripts directory - allow CommonJS and Node.js globals
-  {
-    files: ["scripts/**/*.js"],
-    languageOptions: {
-      parserOptions: {
-        projectService: {
-          allowDefaultProject: ["scripts/*.js"],
-        },
-      },
-      globals: {
-        require: "readonly",
-        module: "readonly",
-        exports: "readonly",
-        __dirname: "readonly",
-        __filename: "readonly",
-        process: "readonly",
-        console: "readonly",
-        Buffer: "readonly",
-        global: "readonly",
-      },
-      ecmaVersion: "latest",
-      sourceType: "script",
-    },
-    rules: {
-      "@typescript-eslint/no-var-requires": "off",
-      "@typescript-eslint/no-require-imports": "off",
-      "@typescript-eslint/no-unsafe-argument": "off",
-      "preserve-caught-error": "off",
-      "no-console": "off",
     },
   },
 );
