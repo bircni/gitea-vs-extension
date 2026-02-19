@@ -62,6 +62,41 @@ test("passes through absolute urls", async () => {
   );
 });
 
+test("does not send auth header for cross-origin absolute urls", async () => {
+  requestMock.mockResolvedValue(mockResponse(200, { text: "ok" }));
+  const client = new GiteaHttpClient(() => ({
+    baseUrl: "https://gitea.example.com",
+    token: "token-value",
+    insecureSkipVerify: true,
+  }));
+
+  await client.getText("https://avatars.example.net/u/123.png");
+
+  const [, options] = requestMock.mock.calls[0];
+  expect(options.headers).toMatchObject({
+    Accept: "application/json",
+  });
+  expect(options.headers).not.toHaveProperty("Authorization");
+  expect(options.dispatcher).toBeUndefined();
+});
+
+test("sends auth header for same-origin absolute urls", async () => {
+  requestMock.mockResolvedValue(mockResponse(200, { text: "ok" }));
+  const client = new GiteaHttpClient(() => ({
+    baseUrl: "https://gitea.example.com",
+    token: "token-value",
+    insecureSkipVerify: false,
+  }));
+
+  await client.getText("https://gitea.example.com/avatars/1.png");
+
+  const [, options] = requestMock.mock.calls[0];
+  expect(options.headers).toMatchObject({
+    Accept: "application/json",
+    Authorization: "token token-value",
+  });
+});
+
 test("throws when base url is missing", async () => {
   const client = new GiteaHttpClient(() => ({
     baseUrl: "",

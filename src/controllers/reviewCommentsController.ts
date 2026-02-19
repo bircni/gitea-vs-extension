@@ -324,7 +324,7 @@ function formatError(error: unknown): string {
   return "Unknown error";
 }
 
-function buildDiffPositionMap(diffText: string): Map<string, Map<number, number>> {
+export function buildDiffPositionMap(diffText: string): Map<string, Map<number, number>> {
   const map = new Map<string, Map<number, number>>();
   const lines = diffText.split(/\r?\n/);
 
@@ -360,7 +360,6 @@ function buildDiffPositionMap(diffText: string): Map<string, Map<number, number>
         newLine = Number(match[2]);
       }
       inHunk = true;
-      diffPosition += 1;
       continue;
     }
 
