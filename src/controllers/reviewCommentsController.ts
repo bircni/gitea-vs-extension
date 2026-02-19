@@ -179,29 +179,27 @@ export class ReviewCommentsController implements vscode.Disposable {
       return comments;
     }
 
-    let diffText = "";
     try {
-      diffText = await this.api.getPullRequestDiff(repo, pullRequestNumber);
+      const diffText = await this.api.getPullRequestDiff(repo, pullRequestNumber);
+      const positionMap = buildDiffPositionMap(diffText);
+      return comments.map((comment) => {
+        if (comment.line || !comment.position || !comment.path) {
+          return comment;
+        }
+        const fileMap = positionMap.get(normalizeDiffPath(comment.path));
+        const mappedLine = fileMap?.get(comment.position);
+        if (!mappedLine) {
+          return comment;
+        }
+        return {
+          ...comment,
+          line: mappedLine,
+        };
+      });
     } catch (error) {
       this.logger.debug(`Failed to load diff for PR #${pullRequestNumber}: ${formatError(error)}`);
       return comments;
     }
-
-    const positionMap = buildDiffPositionMap(diffText);
-    return comments.map((comment) => {
-      if (comment.line || !comment.position || !comment.path) {
-        return comment;
-      }
-      const fileMap = positionMap.get(normalizeDiffPath(comment.path));
-      const mappedLine = fileMap?.get(comment.position);
-      if (!mappedLine) {
-        return comment;
-      }
-      return {
-        ...comment,
-        line: mappedLine,
-      };
-    });
   }
 
   private renderComments(

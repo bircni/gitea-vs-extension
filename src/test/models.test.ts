@@ -6,7 +6,6 @@ import {
   normalizePullRequest,
   normalizePullRequestReviewComment,
   normalizeRun,
-  normalizeNotificationThread,
   normalizeRepoStatus,
   normalizeStatus,
   normalizeStep,
@@ -279,28 +278,6 @@ test("normalizes pull request fallback fields", () => {
   expect(pr.state).toBe("closed");
   expect(pr.labels).toBeUndefined();
   expect(pr.htmlUrl).toBe("http://localhost:3000/owner/repo/pulls/3");
-});
-
-test("normalizes notification thread payload", () => {
-  const thread = normalizeNotificationThread({
-    id: 10,
-    title: "Fallback title",
-    unread: true,
-    pinned: false,
-    updated_at: "2024-01-02T00:00:00Z",
-    subject: { title: "PR updated", type: "Pull", htmlUrl: "http://example.com/pr/1" },
-    repository: {
-      name: "repo",
-      owner: { login: "octo" },
-    },
-  });
-
-  expect(thread.id).toBe(10);
-  expect(thread.title).toBe("PR updated");
-  expect(thread.type).toBe("Pull");
-  expect(thread.repository).toBe("octo/repo");
-  expect(thread.subjectHtmlUrl).toBe("http://example.com/pr/1");
-  expect(thread.unread).toBe(true);
 });
 
 test("normalizes repository status payload", () => {

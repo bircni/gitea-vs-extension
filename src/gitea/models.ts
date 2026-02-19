@@ -72,17 +72,6 @@ export type PullRequestLabel = {
   color?: string;
 };
 
-export type NotificationThread = {
-  id: number | string;
-  title?: string;
-  type?: string;
-  repository?: string;
-  subjectHtmlUrl?: string;
-  updatedAt?: string;
-  unread?: boolean;
-  pinned?: boolean;
-};
-
 export type PullRequestReview = {
   id: number | string;
   state?: string;
@@ -336,26 +325,6 @@ export function normalizePullRequestReviewComment(
   };
 }
 
-export function normalizeNotificationThread(raw: Record<string, unknown>): NotificationThread {
-  const subject = raw.subject as Record<string, unknown> | undefined;
-  const repo = raw.repository as Record<string, unknown> | undefined;
-  const repoOwner = asString((repo?.owner as Record<string, unknown> | undefined)?.login);
-  const repoName = asString(repo?.name);
-  const repository =
-    asString(repo?.full_name) ?? (repoOwner && repoName ? `${repoOwner}/${repoName}` : undefined);
-
-  return {
-    id: asId(raw.id),
-    title: asString(subject?.title) ?? asString(raw.title),
-    type: asString(subject?.type),
-    repository,
-    subjectHtmlUrl: asString(subject?.html_url ?? subject?.htmlUrl),
-    updatedAt: asString(raw.updated_at),
-    unread: asBoolean(raw.unread),
-    pinned: asBoolean(raw.pinned),
-  };
-}
-
 export function normalizeRepoStatus(raw: Record<string, unknown>): RepoStatus {
   const stateRaw = asString(raw.state) ?? "";
   const state = normalizeRepoStatusState(stateRaw);
@@ -429,13 +398,6 @@ function asNumber(value: unknown): number | undefined {
   if (typeof value === "string") {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : undefined;
-  }
-  return undefined;
-}
-
-function asBoolean(value: unknown): boolean | undefined {
-  if (typeof value === "boolean") {
-    return value;
   }
   return undefined;
 }

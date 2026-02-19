@@ -175,37 +175,6 @@ describe("GiteaApi core endpoints", () => {
     expect(prs[0]?.number).toBe(2);
   });
 
-  test("lists notifications from response wrapper", async () => {
-    client.getJson.mockResolvedValueOnce({ notifications: [{ id: 1, title: "Note" }] });
-
-    const notes = await api.listNotifications();
-
-    expect(client.getJson).toHaveBeenCalledWith(
-      "/api/v1/notifications?status-types=unread%2Cpinned",
-    );
-    expect(notes).toHaveLength(1);
-  });
-
-  test("lists notifications from array response", async () => {
-    client.getJson.mockResolvedValueOnce([{ id: 2, title: "Note2" }]);
-
-    const notes = await api.listNotifications();
-
-    expect(notes).toHaveLength(1);
-    expect(notes[0]?.id).toBe(2);
-  });
-
-  test("marks notification as read", async () => {
-    client.requestText.mockResolvedValueOnce("ok");
-
-    await api.markNotificationRead(7);
-
-    expect(client.requestText).toHaveBeenCalledWith(
-      "PATCH",
-      "/api/v1/notifications/threads/7?to-status=read",
-    );
-  });
-
   test("returns empty when pull request reviews endpoint missing", async () => {
     (api as any).ensureEndpoints = jest.fn(async () => ({}));
 
