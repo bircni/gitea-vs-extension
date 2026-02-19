@@ -6,7 +6,6 @@ import { EndpointError, type GiteaApi } from "../gitea/api";
 import { HttpError } from "../gitea/client";
 import type { RepoDiscovery } from "../gitea/discovery";
 import type { Artifact, Job, PullRequest, RepoRef } from "../gitea/models";
-import type { NotificationStore } from "../util/notificationStore";
 
 export type RefreshSummary = {
   runningCount: number;
@@ -21,7 +20,6 @@ export class RefreshController {
   constructor(
     private readonly api: GiteaApi,
     private readonly store: RepoStateStore,
-    private readonly notifications: NotificationStore,
     private readonly discovery: RepoDiscovery,
     private readonly logger: Logger,
     private readonly onDidUpdate: () => void,
@@ -62,10 +60,7 @@ export class RefreshController {
         this.onDidUpdate();
       }
 
-      await Promise.all([
-        ...repos.map((repo) => this.refreshRepo(repo, settings.maxRunsPerRepo)),
-        this.refreshNotifications(),
-      ]);
+      await Promise.all([...repos.map((repo) => this.refreshRepo(repo, settings.maxRunsPerRepo))]);
 
       this.updateSummary();
     } finally {
@@ -201,23 +196,6 @@ export class RefreshController {
         entry.artifactsStateByRun.set(runKey, "error");
         entry.artifactsErrorByRun.set(runKey, message);
       });
-    }
-
-    this.onDidUpdate();
-  }
-
-  async refreshNotifications(): Promise<void> {
-    this.notifications.setLoading(true);
-    this.notifications.setError(undefined);
-    this.onDidUpdate();
-
-    try {
-      const list = await this.api.listNotifications();
-      this.notifications.setNotifications(list);
-      this.notifications.setLoading(false);
-    } catch (error) {
-      this.notifications.setError(formatError(error));
-      this.notifications.setLoading(false);
     }
 
     this.onDidUpdate();

@@ -8,7 +8,6 @@ import type { ActionsTreeProvider } from "../views/actionsTreeProvider";
 import {
   ArtifactNode,
   JobNode,
-  NotificationNode,
   PullRequestNode,
   RepoNode,
   RunNode,
@@ -49,9 +48,6 @@ export class CommandsController {
       vscode.commands.registerCommand("bircni.gitea-vs-extension.refreshRepo", (arg) =>
         this.handleRefreshRepo(arg),
       ),
-      vscode.commands.registerCommand("bircni.gitea-vs-extension.refreshNotifications", () =>
-        this.handleRefreshNotifications(),
-      ),
       vscode.commands.registerCommand("bircni.gitea-vs-extension.viewJobLogs", (arg) =>
         this.handleViewJobLogs(arg),
       ),
@@ -63,9 +59,6 @@ export class CommandsController {
       ),
       vscode.commands.registerCommand("bircni.gitea-vs-extension.copyUrl", (arg) =>
         this.handleCopyUrl(arg),
-      ),
-      vscode.commands.registerCommand("bircni.gitea-vs-extension.markNotificationRead", (arg) =>
-        this.handleMarkNotificationRead(arg),
       ),
       vscode.commands.registerCommand("bircni.gitea-vs-extension.refreshSecrets", (arg) =>
         this.handleRefreshSecrets(arg),
@@ -159,10 +152,6 @@ export class CommandsController {
     void this.refreshController.refreshRepo(repo, settings.maxRunsPerRepo);
   }
 
-  private handleRefreshNotifications(): void {
-    void this.refreshController.refreshNotifications();
-  }
-
   private async handleViewJobLogs(arg: unknown): Promise<void> {
     const payload = normalizeLogArg(arg);
     if (!payload) {
@@ -220,20 +209,6 @@ export class CommandsController {
     }
     await vscode.env.clipboard.writeText(url);
     vscode.window.showInformationMessage("URL copied to clipboard.");
-  }
-
-  private async handleMarkNotificationRead(arg: unknown): Promise<void> {
-    const notification = arg instanceof NotificationNode ? arg.notification : undefined;
-    if (!notification) {
-      return;
-    }
-    try {
-      await this.api.markNotificationRead(notification.id);
-      void this.refreshController.refreshNotifications();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to mark notification read.";
-      vscode.window.showWarningMessage(message);
-    }
   }
 
   private async handleRefreshSecrets(arg: unknown): Promise<void> {
@@ -452,9 +427,6 @@ function resolveOpenUrl(arg: unknown, baseUrl: string): string | undefined {
   }
   if (arg instanceof ArtifactNode) {
     return arg.artifact.downloadUrl;
-  }
-  if (arg instanceof NotificationNode) {
-    return arg.notification.subjectHtmlUrl;
   }
   if (arg instanceof SectionNode) {
     return undefined;

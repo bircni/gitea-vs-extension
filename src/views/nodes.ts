@@ -1,13 +1,5 @@
 import * as vscode from "vscode";
-import type {
-  Artifact,
-  Job,
-  NotificationThread,
-  PullRequest,
-  RepoRef,
-  Step,
-  WorkflowRun,
-} from "../gitea/models";
+import type { Artifact, Job, PullRequest, RepoRef, Step, WorkflowRun } from "../gitea/models";
 import { iconForStatus } from "./icons";
 import { formatDuration, formatRelativeTime } from "../util/time";
 
@@ -19,7 +11,6 @@ export type TreeNode =
   | StepNode
   | ArtifactNode
   | PullRequestNode
-  | NotificationNode
   | SectionNode
   | MessageNode
   | ErrorNode
@@ -188,36 +179,6 @@ export class PullRequestNode extends vscode.TreeItem {
         tooltipParts.push(`Labels: ${labels}`);
       }
       this.tooltip = tooltipParts.join("\n");
-    }
-  }
-}
-
-export class NotificationNode extends vscode.TreeItem {
-  constructor(public readonly notification: NotificationThread) {
-    super(notification.title ?? "Notification", vscode.TreeItemCollapsibleState.None);
-    this.contextValue = "giteaNotification";
-    const parts = [];
-    if (notification.repository) {
-      parts.push(notification.repository);
-    }
-    if (notification.type) {
-      parts.push(notification.type);
-    }
-    if (notification.unread) {
-      parts.push("unread");
-    }
-    if (notification.pinned) {
-      parts.push("pinned");
-    }
-    this.description = parts.length ? parts.join(" · ") : undefined;
-    this.iconPath = notification.pinned
-      ? new vscode.ThemeIcon("pin")
-      : new vscode.ThemeIcon(
-          "bell",
-          notification.unread ? new vscode.ThemeColor("charts.yellow") : undefined,
-        );
-    if (notification.subjectHtmlUrl) {
-      this.tooltip = notification.subjectHtmlUrl;
     }
   }
 }

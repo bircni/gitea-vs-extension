@@ -8,11 +8,9 @@ import { ActionsTreeProvider } from "./views/actionsTreeProvider";
 import { RepoStateStore } from "./util/cache";
 import { Logger } from "./util/logging";
 import { expandedRepoKey, expandedRunKey, expandedWorkflowKey } from "./util/expandedState";
-import { NotificationStore } from "./util/notificationStore";
 import { RefreshController, type RefreshSummary } from "./controllers/refreshController";
 import { CommandsController } from "./controllers/commands";
 import { SettingsTreeProvider } from "./views/settingsTreeProvider";
-import { NotificationsTreeProvider } from "./views/notificationsTreeProvider";
 import { ReviewCommentsController } from "./controllers/reviewCommentsController";
 import {
   RepoNode,
@@ -51,7 +49,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   const api = new GiteaApi(client, () => getSettings().baseUrl);
   const store = new RepoStateStore();
-  const notificationStore = new NotificationStore();
   const discovery = new RepoDiscovery(api);
   const expanded = loadExpandedState(context.globalState);
 
@@ -63,7 +60,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     context.secrets,
     expanded,
   );
-  const notificationsProvider = new NotificationsTreeProvider(notificationStore);
 
   const workflowsTree = vscode.window.createTreeView("bircni.gitea-vs-extension.runsPinned", {
     treeDataProvider: workflowsProvider,
@@ -73,13 +69,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     treeDataProvider: pullRequestsProvider,
     showCollapseAll: true,
   });
-  const notificationsTree = vscode.window.createTreeView(
-    "bircni.gitea-vs-extension.notifications",
-    {
-      treeDataProvider: notificationsProvider,
-      showCollapseAll: true,
-    },
-  );
   const runsTree = vscode.window.createTreeView("bircni.gitea-vs-extension.runs", {
     treeDataProvider: runsProvider,
     showCollapseAll: true,
@@ -103,14 +92,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const refreshController = new RefreshController(
     api,
     store,
-    notificationStore,
     discovery,
     logger,
     () => {
       runsProvider.refresh();
       workflowsProvider.refresh();
       pullRequestsProvider.refresh();
-      notificationsProvider.refresh();
       const currentRepo = settingsProvider.getCurrentRepo();
       const [firstRepo] = store.getRepos();
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -137,7 +124,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     runsTree,
     workflowsTree,
     pullRequestsTree,
-    notificationsTree,
     settingsTree,
     statusBar,
     reviewCommentsController,
@@ -169,11 +155,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         void refreshController.refreshAll();
       }
     }),
-    notificationsTree.onDidChangeVisibility((event) => {
-      if (event.visible) {
-        void refreshController.refreshNotifications();
-      }
-    }),
     settingsTree.onDidChangeVisibility((event) => {
       if (event.visible) {
         const repo = settingsProvider.getCurrentRepo();
@@ -198,9 +179,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     pullRequestsTree.onDidExpandElement((event) => {
       updateExpandedState(expanded, context.globalState, event.element, true);
     }),
-    notificationsTree.onDidExpandElement((event) => {
-      updateExpandedState(expanded, context.globalState, event.element, true);
-    }),
     runsTree.onDidCollapseElement((event) => {
       updateExpandedState(expanded, context.globalState, event.element, false);
     }),
@@ -208,9 +186,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       updateExpandedState(expanded, context.globalState, event.element, false);
     }),
     pullRequestsTree.onDidCollapseElement((event) => {
-      updateExpandedState(expanded, context.globalState, event.element, false);
-    }),
-    notificationsTree.onDidCollapseElement((event) => {
       updateExpandedState(expanded, context.globalState, event.element, false);
     }),
     runsTree.onDidChangeSelection((event) => {

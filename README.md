@@ -14,12 +14,6 @@ Works with VS Code, Cursor, VSCodium, Windsurf, and other VS Code compatible edi
 - Adaptive polling (fast when active, slower when idle)
 - Status bar summary for running and failed runs
 
-## Screenshots
-
-![Workflow runs](docs/screenshots/workflows.png)
-![Pull requests](docs/screenshots/pull-requests.png)
-![Settings](docs/screenshots/settings.png)
-
 ## Quick Start
 
 1. Install the extension (VSIX or marketplace, depending on your setup).

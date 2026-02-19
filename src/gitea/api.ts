@@ -3,7 +3,6 @@ import { discoverEndpoints, fallbackEndpoints, fetchSwagger, type EndpointMap } 
 import {
   normalizeArtifact,
   normalizeJob,
-  normalizeNotificationThread,
   normalizePullRequest,
   normalizePullRequestReview,
   normalizePullRequestReviewComment,
@@ -11,7 +10,6 @@ import {
   normalizeRun,
   type Artifact,
   type Job,
-  type NotificationThread,
   type PullRequest,
   type PullRequestReview,
   type PullRequestReviewComment,
@@ -193,22 +191,6 @@ export class GiteaApi {
 
   async fetchBinaryUrl(url: string): Promise<Uint8Array> {
     return this.client.getBinary(url);
-  }
-
-  async listNotifications(): Promise<NotificationThread[]> {
-    const url = withQuery("/api/v1/notifications", { "status-types": "unread,pinned" });
-    const response = await this.client.getJson<Record<string, unknown> | unknown[]>(url);
-    const list = Array.isArray(response)
-      ? response
-      : extractArray(response, ["entries", "notifications"]);
-    return list.map((item) => normalizeNotificationThread(item as Record<string, unknown>));
-  }
-
-  async markNotificationRead(id: number | string): Promise<void> {
-    const url = withQuery(`/api/v1/notifications/threads/${encodeURIComponent(String(id))}`, {
-      "to-status": "read",
-    });
-    await this.client.requestText("PATCH", url);
   }
 
   async getCombinedStatus(repo: RepoRef, ref: string): Promise<RepoStatus> {
