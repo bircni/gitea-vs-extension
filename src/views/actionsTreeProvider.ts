@@ -87,7 +87,7 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     if (!settings.baseUrl) {
       return [
         new MessageNode(
-          "Set bircni.gitea-vs-extension.baseUrl to get started.",
+          "Set gitea-vs-extension.baseUrl to get started.",
           "info",
           "configureBaseUrl",
         ),

@@ -95,7 +95,7 @@ export class JobNode extends vscode.TreeItem {
     this.description = buildJobDescription(job);
     this.iconPath = iconForStatus(job.status, job.conclusion);
     this.command = {
-      command: "bircni.gitea-vs-extension.viewJobLogs",
+      command: "gitea-vs-extension.viewJobLogs",
       title: "View Job Logs",
       arguments: [{ repo, run, job }],
     };
@@ -114,7 +114,7 @@ export class StepNode extends vscode.TreeItem {
     this.description = buildStepDescription(step);
     this.iconPath = iconForStatus(step.status, step.conclusion);
     this.command = {
-      command: "bircni.gitea-vs-extension.viewJobLogs",
+      command: "gitea-vs-extension.viewJobLogs",
       title: "View Job Logs",
       arguments: [{ repo, run, job, step }],
     };
@@ -206,13 +206,13 @@ export class MessageNode extends vscode.TreeItem {
     this.iconPath = new vscode.ThemeIcon(severity === "error" ? "warning" : "info");
     if (action === "configureBaseUrl") {
       this.command = {
-        command: "bircni.gitea-vs-extension.openBaseUrlSettings",
+        command: "gitea-vs-extension.openBaseUrlSettings",
         title: "Configure base URL",
       };
     }
     if (action === "setToken") {
       this.command = {
-        command: "bircni.gitea-vs-extension.setToken",
+        command: "gitea-vs-extension.setToken",
         title: "Set token",
       };
     }
@@ -250,7 +250,7 @@ export class ConfigActionNode extends vscode.TreeItem {
     this.contextValue = "giteaConfigAction";
     this.iconPath = new vscode.ThemeIcon("sync");
     this.command = {
-      command: "bircni.gitea-vs-extension.testConnection",
+      command: "gitea-vs-extension.testConnection",
       title: "Test Connection",
     };
   }

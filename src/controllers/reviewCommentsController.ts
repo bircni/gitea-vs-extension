@@ -20,7 +20,7 @@ type ThreadKey = string;
 
 export class ReviewCommentsController implements vscode.Disposable {
   private readonly commentController = vscode.comments.createCommentController(
-    "bircni.gitea-vs-extension.reviewComments",
+    "gitea-vs-extension.reviewComments",
     "Gitea Review Comments",
   );
   private readonly threads = new Map<ThreadKey, vscode.CommentThread>();
