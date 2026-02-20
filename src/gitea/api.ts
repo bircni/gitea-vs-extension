@@ -8,6 +8,7 @@ import {
   type EndpointMap,
 } from "./swagger";
 import {
+  normalizeActionWorkflow,
   normalizeArtifact,
   normalizeJob,
   normalizePullRequest,
@@ -15,6 +16,7 @@ import {
   normalizePullRequestReviewComment,
   normalizeRepoStatus,
   normalizeRun,
+  type ActionWorkflow,
   type Artifact,
   type Job,
   type PullRequest,
@@ -108,6 +110,72 @@ export class GiteaApi {
     const response = await this.client.getJson<Record<string, unknown>>(base);
     const list = extractArray(response, ["artifacts", "entries"]);
     return list.map((item) => normalizeArtifact(item as Record<string, unknown>));
+  }
+
+  async listWorkflows(repo: RepoRef): Promise<ActionWorkflow[]> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.listWorkflows;
+    if (!path) {
+      return [];
+    }
+    const response = await this.client.getJson<Record<string, unknown>>(fillRepoPath(path, repo));
+    const list = extractArray(response, ["workflows", "entries"]);
+    return list.map((item) => normalizeActionWorkflow(item as Record<string, unknown>));
+  }
+
+  async getWorkflow(
+    repo: RepoRef,
+    workflowId: number | string,
+  ): Promise<ActionWorkflow | undefined> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.getWorkflow;
+    if (!path) {
+      return undefined;
+    }
+    const response = await this.client.getJson<Record<string, unknown>>(
+      fillRepoPath(path, repo).replace("{workflow_id}", encodeURIComponent(String(workflowId))),
+    );
+    return normalizeActionWorkflow(response);
+  }
+
+  async dispatchWorkflow(
+    repo: RepoRef,
+    workflowId: number | string,
+    ref: string,
+    inputs?: Record<string, string>,
+  ): Promise<void> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.dispatchWorkflow;
+    if (!path) {
+      throw new EndpointError("Workflow dispatch endpoint not available");
+    }
+    const url = fillRepoPath(path, repo).replace("{workflow_id}", encodeURIComponent(String(workflowId)));
+    await this.client.requestText("POST", url, {
+      body: {
+        ref,
+        inputs,
+      },
+    });
+  }
+
+  async enableWorkflow(repo: RepoRef, workflowId: number | string): Promise<void> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.enableWorkflow;
+    if (!path) {
+      throw new EndpointError("Workflow enable endpoint not available");
+    }
+    const url = fillRepoPath(path, repo).replace("{workflow_id}", encodeURIComponent(String(workflowId)));
+    await this.client.requestText("PUT", url);
+  }
+
+  async disableWorkflow(repo: RepoRef, workflowId: number | string): Promise<void> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.disableWorkflow;
+    if (!path) {
+      throw new EndpointError("Workflow disable endpoint not available");
+    }
+    const url = fillRepoPath(path, repo).replace("{workflow_id}", encodeURIComponent(String(workflowId)));
+    await this.client.requestText("PUT", url);
   }
 
   async listPullRequests(repo: RepoRef): Promise<PullRequest[]> {

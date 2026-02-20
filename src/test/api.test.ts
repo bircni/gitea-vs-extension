@@ -157,6 +157,37 @@ describe("GiteaApi core endpoints", () => {
     );
   });
 
+  test("lists workflows", async () => {
+    client.getJson.mockResolvedValueOnce({ workflows: [{ id: 1, name: "build" }] });
+
+    const workflows = await api.listWorkflows(repo);
+
+    expect(client.getJson).toHaveBeenCalledWith("/api/v1/repos/owner/repo/actions/workflows");
+    expect(workflows[0]?.name).toBe("build");
+  });
+
+  test("dispatches and toggles workflows", async () => {
+    client.requestText.mockResolvedValue("ok");
+
+    await api.dispatchWorkflow(repo, 9, "main", { env: "prod" });
+    await api.enableWorkflow(repo, 9);
+    await api.disableWorkflow(repo, 9);
+
+    expect(client.requestText).toHaveBeenCalledWith(
+      "POST",
+      "/api/v1/repos/owner/repo/actions/workflows/9/dispatches",
+      { body: { ref: "main", inputs: { env: "prod" } } },
+    );
+    expect(client.requestText).toHaveBeenCalledWith(
+      "PUT",
+      "/api/v1/repos/owner/repo/actions/workflows/9/enable",
+    );
+    expect(client.requestText).toHaveBeenCalledWith(
+      "PUT",
+      "/api/v1/repos/owner/repo/actions/workflows/9/disable",
+    );
+  });
+
   test("lists pull requests from array response", async () => {
     client.getJson.mockResolvedValueOnce([{ id: 1, number: 1, title: "PR" }]);
 

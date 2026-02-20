@@ -52,6 +52,17 @@ export type Artifact = {
   downloadUrl?: string;
 };
 
+export type ActionWorkflow = {
+  id: number | string;
+  name: string;
+  path?: string;
+  state?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  url?: string;
+  htmlUrl?: string;
+};
+
 export type PullRequest = {
   id: number | string;
   number: number;
@@ -263,6 +274,20 @@ export function normalizeArtifact(raw: Record<string, unknown>): Artifact {
     createdAt: asString(raw.created_at),
     updatedAt: asString(raw.updated_at),
     downloadUrl: asString(raw.archive_download_url ?? raw.url),
+  };
+}
+
+export function normalizeActionWorkflow(raw: Record<string, unknown>): ActionWorkflow {
+  return {
+    id: asId(raw.id ?? raw.workflow_id),
+    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+    name: asString(raw.name) || asString(raw.path) || "Workflow",
+    path: asString(raw.path),
+    state: asString(raw.state),
+    createdAt: asString(raw.created_at),
+    updatedAt: asString(raw.updated_at),
+    url: asString(raw.url),
+    htmlUrl: asString(raw.html_url),
   };
 }
 

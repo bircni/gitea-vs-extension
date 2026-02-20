@@ -1,5 +1,6 @@
 // ...existing code...
 import {
+  normalizeActionWorkflow,
   normalizeArtifact,
   normalizeConclusion,
   normalizeJob,
@@ -233,6 +234,22 @@ test("normalizes artifact payload with defaults", () => {
   expect(artifact.id).toBe("unknown");
   expect(artifact.name).toBe("Artifact");
   expect(artifact.sizeInBytes).toBeUndefined();
+});
+
+test("normalizes action workflow payload", () => {
+  const workflow = normalizeActionWorkflow({
+    id: 99,
+    path: ".gitea/workflows/build.yml",
+    state: "active",
+    created_at: "2024-01-01T00:00:00Z",
+    html_url: "http://localhost:3000/owner/repo/actions/workflows/99",
+  });
+
+  expect(workflow.id).toBe(99);
+  expect(workflow.name).toBe(".gitea/workflows/build.yml");
+  expect(workflow.path).toBe(".gitea/workflows/build.yml");
+  expect(workflow.state).toBe("active");
+  expect(workflow.htmlUrl).toBe("http://localhost:3000/owner/repo/actions/workflows/99");
 });
 
 test("normalizes pull request payload", () => {
