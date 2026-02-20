@@ -3,6 +3,7 @@ import { getSettings } from "../config/settings";
 import { getToken } from "../config/secrets";
 import type { RepoStateStore } from "../util/cache";
 import { expandedRepoKey, expandedRunKey, expandedWorkflowKey } from "../util/expandedState";
+import { selectBranchRuns } from "../util/runBranchFilter";
 import {
   ArtifactNode,
   ErrorNode,
@@ -146,7 +147,7 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     }
 
     if (entry.error) {
-      return [new ErrorNode(entry.error)];
+      return [this.buildErrorNode(entry.error)];
     }
 
     if (this.mode === "pullRequests") {
@@ -157,6 +158,31 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       if (entry.errors.length) {
         nodes.push(new SectionNode("errors", "Errors", repo));
       }
+      return nodes;
+    }
+
+    if (this.mode === "runs") {
+      const selection = selectBranchRuns({
+        runs: entry.runs,
+        currentBranch: entry.currentBranch,
+        branchWarning: entry.branchWarning,
+      });
+      if (selection.warning) {
+        return [this.buildErrorNode(selection.warning)];
+      }
+
+      const nodes: TreeNode[] = selection.runs.map(
+        (run) => new RunNode(repo, run, this.isExpanded(expandedRunKey(repo, run.id))),
+      );
+
+      if (!nodes.length && selection.emptyMessage) {
+        nodes.push(new MessageNode(selection.emptyMessage));
+      }
+
+      if (entry.errors.length) {
+        nodes.push(new SectionNode("errors", "Errors", repo));
+      }
+
       return nodes;
     }
 
@@ -191,7 +217,7 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       return [new MessageNode("Loading jobs...")];
     }
     if (state === "error") {
-      return [new ErrorNode(error ?? "Failed to load jobs.")];
+      return [this.buildErrorNode(error ?? "Failed to load jobs.")];
     }
 
     const jobs = entry.jobsByRun.get(runKey) ?? [];
@@ -248,7 +274,7 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     if (!entry.errors.length) {
       return [new MessageNode("No errors recorded.")];
     }
-    return entry.errors.map((message) => new ErrorNode(message));
+    return entry.errors.map((message) => this.buildErrorNode(message));
   }
 
   private buildWorkflowGroups(): WorkflowGroupNode[] {
@@ -303,5 +329,13 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
 
   private isExpanded(key: string): boolean {
     return this.expanded.has(key);
+  }
+
+  private buildErrorNode(message: string): ErrorNode {
+    return new ErrorNode(message, this.needsTokenAction(message) ? "setToken" : undefined);
+  }
+
+  private needsTokenAction(message: string): boolean {
+    return /\bunauthorized\b/i.test(message);
   }
 }

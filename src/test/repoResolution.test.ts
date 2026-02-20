@@ -1,5 +1,9 @@
 import * as vscode from "vscode";
-import { resolveRepoFromFolder, resolveWorkspaceRepos } from "../util/repoResolution";
+import {
+  resolveCurrentBranch,
+  resolveRepoFromFolder,
+  resolveWorkspaceRepos,
+} from "../util/repoResolution";
 import { execGit } from "../util/git";
 
 jest.mock("../util/git", () => ({
@@ -62,5 +66,30 @@ describe("repoResolution", () => {
 
     expect(repos).toHaveLength(1);
     expect(repos[0]?.repo.owner).toBe("octo");
+  });
+
+  test("resolves current branch from git head", async () => {
+    (execGit as jest.Mock).mockResolvedValueOnce("main\n");
+
+    const branch = await resolveCurrentBranch("/repo");
+
+    expect(branch).toBe("main");
+    expect(execGit).toHaveBeenCalledWith(["rev-parse", "--abbrev-ref", "HEAD"], "/repo");
+  });
+
+  test("returns undefined when HEAD is detached", async () => {
+    (execGit as jest.Mock).mockResolvedValueOnce("HEAD\n");
+
+    const branch = await resolveCurrentBranch("/repo");
+
+    expect(branch).toBeUndefined();
+  });
+
+  test("returns undefined when branch resolution fails", async () => {
+    (execGit as jest.Mock).mockRejectedValueOnce(new Error("git failed"));
+
+    const branch = await resolveCurrentBranch("/repo");
+
+    expect(branch).toBeUndefined();
   });
 });

@@ -51,7 +51,8 @@ Lists open PRs per repository with author, labels, and last updated time.
 
 ### Workflow Runs
 
-Recent workflow runs per repository. Expand a run to load jobs and steps on demand.
+Recent workflow runs for the current local branch per repository. Expand a run to load jobs and steps on demand.
+If the extension cannot determine a repository's current local branch (for example detached HEAD or no local checkout), the view shows a warning node for that repository.
 
 ### Settings
 

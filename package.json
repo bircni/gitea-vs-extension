@@ -133,92 +133,92 @@
     "commands": [
       {
         "command": "gitea-vs-extension.setToken",
-        "title": "gitea-vs-extension: Set Token",
+        "title": "Set Token",
         "icon": "$(pencil)"
       },
       {
         "command": "gitea-vs-extension.clearToken",
-        "title": "gitea-vs-extension: Clear Token",
+        "title": "Clear Token",
         "icon": "$(trash)"
       },
       {
         "command": "gitea-vs-extension.testConnection",
-        "title": "gitea-vs-extension: Test Connection",
+        "title": "Test Connection",
         "icon": "$(plug)"
       },
       {
         "command": "gitea-vs-extension.refresh",
-        "title": "gitea-vs-extension: Refresh",
+        "title": "Refresh",
         "icon": "$(refresh)"
       },
       {
         "command": "gitea-vs-extension.refreshRepo",
-        "title": "gitea-vs-extension: Refresh Repository",
+        "title": "Refresh Repository",
         "icon": "$(refresh)"
       },
       {
         "command": "gitea-vs-extension.viewJobLogs",
-        "title": "gitea-vs-extension: View Job Logs",
+        "title": "View Job Logs",
         "icon": "$(list-unordered)"
       },
       {
         "command": "gitea-vs-extension.openLatestFailedJobLogs",
-        "title": "gitea-vs-extension: Open Latest Failed Job Logs",
+        "title": "Open Latest Failed Job Logs",
         "icon": "$(error)"
       },
       {
         "command": "gitea-vs-extension.openInBrowser",
-        "title": "gitea-vs-extension: Open in Browser",
+        "title": "Open in Browser",
         "icon": "$(globe)"
       },
       {
         "command": "gitea-vs-extension.copyUrl",
-        "title": "gitea-vs-extension: Copy URL",
+        "title": "Copy URL",
         "icon": "$(copy)"
       },
       {
         "command": "gitea-vs-extension.refreshSecrets",
-        "title": "gitea-vs-extension: Refresh Secrets",
+        "title": "Refresh Secrets",
         "icon": "$(refresh)"
       },
       {
         "command": "gitea-vs-extension.refreshVariables",
-        "title": "gitea-vs-extension: Refresh Variables",
+        "title": "Refresh Variables",
         "icon": "$(refresh)"
       },
       {
         "command": "gitea-vs-extension.createSecret",
-        "title": "gitea-vs-extension: Add Secret",
+        "title": "Add Secret",
         "icon": "$(add)"
       },
       {
         "command": "gitea-vs-extension.updateSecret",
-        "title": "gitea-vs-extension: Update Secret",
+        "title": "Update Secret",
         "icon": "$(pencil)"
       },
       {
         "command": "gitea-vs-extension.deleteSecret",
-        "title": "gitea-vs-extension: Delete Secret",
+        "title": "Delete Secret",
         "icon": "$(trash)"
       },
       {
         "command": "gitea-vs-extension.createVariable",
-        "title": "gitea-vs-extension: Add Variable",
+        "title": "Add Variable",
         "icon": "$(add)"
       },
       {
         "command": "gitea-vs-extension.updateVariable",
-        "title": "gitea-vs-extension: Update Variable",
+        "title": "Update Variable",
         "icon": "$(pencil)"
       },
       {
         "command": "gitea-vs-extension.deleteVariable",
-        "title": "gitea-vs-extension: Delete Variable",
+        "title": "Delete Variable",
         "icon": "$(trash)"
       },
       {
         "command": "gitea-vs-extension.openBaseUrlSettings",
-        "title": "gitea-vs-extension: Open Base URL Settings",
+        "title": "Open Base URL Settings",
         "icon": "$(settings-gear)"
       }
     ],

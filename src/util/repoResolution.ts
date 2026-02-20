@@ -66,6 +66,19 @@ export async function resolveWorkspaceRepos(baseUrl: string): Promise<WorkspaceR
   return uniqWorkspaceRepos(repos);
 }
 
+export async function resolveCurrentBranch(folderPath: string): Promise<string | undefined> {
+  try {
+    const branch = await execGit(["rev-parse", "--abbrev-ref", "HEAD"], folderPath);
+    const normalized = branch.trim();
+    if (!normalized || normalized === "HEAD") {
+      return undefined;
+    }
+    return normalized;
+  } catch {
+    return undefined;
+  }
+}
+
 function getHost(baseUrl: string): string | undefined {
   try {
     return new URL(baseUrl).host;
