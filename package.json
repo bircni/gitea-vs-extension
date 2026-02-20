@@ -18,7 +18,13 @@
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onView:gitea-vs-extension.runsPinned",
+    "onView:gitea-vs-extension.pullRequests",
+    "onView:gitea-vs-extension.runs",
+    "onView:gitea-vs-extension.settings",
+    "onCommand:gitea-vs-extension.refresh",
+    "onCommand:gitea-vs-extension.setToken",
+    "onCommand:gitea-vs-extension.testConnection"
   ],
   "main": "./dist/extension.js",
   "scripts": {
@@ -74,6 +80,11 @@
           "type": "number",
           "default": 60,
           "description": "Refresh interval when idle."
+        },
+        "gitea-vs-extension.refresh.pauseWhenViewsHidden": {
+          "type": "boolean",
+          "default": true,
+          "description": "Pause background refresh polling when all extension views are hidden."
         },
         "gitea-vs-extension.maxRunsPerRepo": {
           "type": "number",

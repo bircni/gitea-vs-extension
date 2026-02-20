@@ -15,6 +15,7 @@ export type RefreshSummary = {
 export class RefreshController {
   private timer?: NodeJS.Timeout;
   private refreshInProgress = false;
+  private pollingEnabled = true;
   private readonly limiter = createLimiter(4);
 
   constructor(
@@ -29,6 +30,21 @@ export class RefreshController {
   dispose(): void {
     if (this.timer) {
       clearTimeout(this.timer);
+    }
+  }
+
+  setPollingEnabled(enabled: boolean): void {
+    if (this.pollingEnabled === enabled) {
+      return;
+    }
+    this.pollingEnabled = enabled;
+    if (!enabled && this.timer) {
+      clearTimeout(this.timer);
+      this.timer = undefined;
+      return;
+    }
+    if (enabled) {
+      this.scheduleNext();
     }
   }
 
@@ -202,6 +218,9 @@ export class RefreshController {
   }
 
   scheduleNext(): void {
+    if (!this.pollingEnabled) {
+      return;
+    }
     const settings = getSettings();
     const intervalMs = this.isAnythingRunning()
       ? settings.runningRefreshSeconds * 1000

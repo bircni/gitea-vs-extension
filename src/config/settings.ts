@@ -8,6 +8,7 @@ export type ExtensionSettings = {
   discoveryMode: DiscoveryMode;
   runningRefreshSeconds: number;
   idleRefreshSeconds: number;
+  pauseWhenViewsHidden: boolean;
   maxRunsPerRepo: number;
   maxJobsPerRun: number;
   debugLogging: boolean;
@@ -35,6 +36,10 @@ export function getSettings(): ExtensionSettings {
       config.get<number>("refresh.idleIntervalSeconds") ??
       legacyConfig.get<number>("refresh.idleIntervalSeconds") ??
       60,
+    pauseWhenViewsHidden:
+      config.get<boolean>("refresh.pauseWhenViewsHidden") ??
+      legacyConfig.get<boolean>("refresh.pauseWhenViewsHidden") ??
+      true,
     maxRunsPerRepo:
       config.get<number>("maxRunsPerRepo") ?? legacyConfig.get<number>("maxRunsPerRepo") ?? 20,
     maxJobsPerRun:

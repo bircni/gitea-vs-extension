@@ -120,6 +120,26 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     settingsProvider,
   );
 
+  const treeViews: vscode.TreeView<unknown>[] = [
+    runsTree,
+    workflowsTree,
+    pullRequestsTree,
+    settingsTree,
+  ];
+  const updatePollingForVisibility = (): boolean => {
+    const settings = getSettings();
+    const anyVisible = treeViews.some((view) => view.visible);
+    const pollingEnabled = settings.pauseWhenViewsHidden ? anyVisible : true;
+    refreshController.setPollingEnabled(pollingEnabled);
+    return anyVisible;
+  };
+  const refreshVisibleViews = (): void => {
+    const anyVisible = updatePollingForVisibility();
+    if (anyVisible || !getSettings().pauseWhenViewsHidden) {
+      void refreshController.refreshAll();
+    }
+  };
+
   context.subscriptions.push(
     runsTree,
     workflowsTree,
@@ -132,36 +152,44 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     ...commands.register(),
     onSettingsChange(() => {
       logger.debug("Settings changed, refreshing.");
-      refreshController.scheduleNext();
-      void refreshController.refreshAll();
+      refreshVisibleViews();
       reviewCommentsController.scheduleRefresh();
     }),
     vscode.workspace.onDidChangeWorkspaceFolders(() => {
-      void refreshController.refreshAll();
+      refreshVisibleViews();
       reviewCommentsController.scheduleRefresh();
     }),
     runsTree.onDidChangeVisibility((event) => {
       if (event.visible) {
-        void refreshController.refreshAll();
+        refreshVisibleViews();
+      } else {
+        updatePollingForVisibility();
       }
     }),
     workflowsTree.onDidChangeVisibility((event) => {
       if (event.visible) {
-        void refreshController.refreshAll();
+        refreshVisibleViews();
+      } else {
+        updatePollingForVisibility();
       }
     }),
     pullRequestsTree.onDidChangeVisibility((event) => {
       if (event.visible) {
-        void refreshController.refreshAll();
+        refreshVisibleViews();
+      } else {
+        updatePollingForVisibility();
       }
     }),
     settingsTree.onDidChangeVisibility((event) => {
       if (event.visible) {
+        refreshVisibleViews();
         const repo = settingsProvider.getCurrentRepo();
         if (repo) {
           void vscode.commands.executeCommand("gitea-vs-extension.refreshSecrets", repo);
           void vscode.commands.executeCommand("gitea-vs-extension.refreshVariables", repo);
         }
+      } else {
+        updatePollingForVisibility();
       }
     }),
     runsTree.onDidExpandElement((event) => {
@@ -208,6 +236,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }),
   );
 
+  if (updatePollingForVisibility() || !getSettings().pauseWhenViewsHidden) {
+    void refreshController.refreshAll();
+  }
   reviewCommentsController.scheduleRefresh();
 }
 
