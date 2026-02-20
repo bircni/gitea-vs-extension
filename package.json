@@ -30,7 +30,8 @@
     "onCommand:gitea-vs-extension.listWorkflows",
     "onCommand:gitea-vs-extension.setRunSearchFilter",
     "onCommand:gitea-vs-extension.checkoutPullRequest",
-    "onCommand:gitea-vs-extension.mergePullRequest"
+    "onCommand:gitea-vs-extension.mergePullRequest",
+    "onCommand:gitea-vs-extension.switchProfile"
   ],
   "main": "./dist/extension.js",
   "scripts": {
@@ -62,6 +63,38 @@
           "type": "string",
           "default": "",
           "description": "Base URL for the Gitea instance, e.g. http://localhost:3000."
+        },
+        "gitea-vs-extension.profiles": {
+          "type": "array",
+          "default": [],
+          "description": "Optional named Gitea profiles. If configured, activeProfileId selects the base URL and TLS behavior.",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "baseUrl"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "baseUrl": {
+                "type": "string"
+              },
+              "tlsInsecureSkipVerify": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "gitea-vs-extension.activeProfileId": {
+          "type": "string",
+          "default": "",
+          "description": "Active profile id from gitea-vs-extension.profiles."
         },
         "gitea-vs-extension.tls.insecureSkipVerify": {
           "type": "boolean",
@@ -172,6 +205,11 @@
         "command": "gitea-vs-extension.setToken",
         "title": "gitea-vs-extension: Set Token",
         "icon": "$(pencil)"
+      },
+      {
+        "command": "gitea-vs-extension.switchProfile",
+        "title": "gitea-vs-extension: Switch Profile",
+        "icon": "$(account)"
       },
       {
         "command": "gitea-vs-extension.clearToken",
@@ -522,6 +560,11 @@
           "command": "gitea-vs-extension.exportDiagnostics",
           "when": "view == gitea-vs-extension.settings && viewItem == giteaConfigRoot",
           "group": "inline@2"
+        },
+        {
+          "command": "gitea-vs-extension.switchProfile",
+          "when": "view == gitea-vs-extension.settings && viewItem == giteaConfigRoot",
+          "group": "inline@1"
         }
       ]
     }

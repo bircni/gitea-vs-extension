@@ -24,14 +24,16 @@ import type { RepoRef } from "./gitea/models";
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const logger = new Logger("gitea-vs-extension", () => getSettings().debugLogging);
-  let cachedToken = await getToken(context.secrets);
+  const loadActiveToken = async (): Promise<string | undefined> =>
+    getToken(context.secrets, getSettings().activeProfileId);
+  let cachedToken = await loadActiveToken();
 
   const settingsProvider = new SettingsTreeProvider();
   settingsProvider.setTokenStatus(Boolean(cachedToken));
 
   context.secrets.onDidChange((event) => {
-    if (event.key === TOKEN_KEY) {
-      void getToken(context.secrets).then((token) => {
+    if (event.key === TOKEN_KEY || event.key.startsWith(`${TOKEN_KEY}:`)) {
+      void loadActiveToken().then((token) => {
         cachedToken = token;
         settingsProvider.setTokenStatus(Boolean(token));
       });
@@ -216,6 +218,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     ...commands.register(),
     onSettingsChange(() => {
       logger.debug("Settings changed, refreshing.", "core");
+      void loadActiveToken().then((token) => {
+        cachedToken = token;
+        settingsProvider.setTokenStatus(Boolean(token));
+      });
       syncCapabilityContext();
       refreshVisibleViews();
       reviewCommentsController.scheduleRefresh();

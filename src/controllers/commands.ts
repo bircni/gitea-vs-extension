@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as vscode from "vscode";
-import { getSettings } from "../config/settings";
+import { getSettings, type GiteaProfile } from "../config/settings";
 import { clearToken, getToken, setToken } from "../config/secrets";
 import type { GiteaApi } from "../gitea/api";
 import type { ActionWorkflow, Job, PullRequest, RepoRef, WorkflowRun } from "../gitea/models";
@@ -37,6 +37,9 @@ export class CommandsController {
   register(): vscode.Disposable[] {
     return [
       vscode.commands.registerCommand("gitea-vs-extension.setToken", () => this.handleSetToken()),
+      vscode.commands.registerCommand("gitea-vs-extension.switchProfile", () =>
+        this.handleSwitchProfile(),
+      ),
       vscode.commands.registerCommand("gitea-vs-extension.clearToken", () =>
         this.handleClearToken(),
       ),
@@ -152,14 +155,35 @@ export class CommandsController {
       return;
     }
 
-    await setToken(this.context.secrets, token.trim());
+    await setToken(this.context.secrets, token.trim(), getSettings().activeProfileId);
     this.settingsProvider.setTokenStatus(true);
     void this.refreshController.refreshAll();
     vscode.window.showInformationMessage("gitea-vs-extension token saved.");
   }
 
+  private async handleSwitchProfile(): Promise<void> {
+    const settings = getSettings();
+    if (!settings.profiles.length) {
+      vscode.window.showInformationMessage(
+        "No profiles configured. Set gitea-vs-extension.profiles first.",
+      );
+      return;
+    }
+    const selected = await pickProfile(settings.profiles, settings.activeProfileId);
+    if (!selected) {
+      return;
+    }
+    await vscode.workspace
+      .getConfiguration("gitea-vs-extension")
+      .update("activeProfileId", selected.id, vscode.ConfigurationTarget.Global);
+    const token = await getToken(this.context.secrets, selected.id);
+    this.settingsProvider.setTokenStatus(Boolean(token));
+    void this.refreshController.refreshAll();
+    vscode.window.showInformationMessage(`Switched to profile: ${selected.name}`);
+  }
+
   private async handleClearToken(): Promise<void> {
-    await clearToken(this.context.secrets);
+    await clearToken(this.context.secrets, getSettings().activeProfileId);
     this.settingsProvider.setTokenStatus(false);
     void this.refreshController.refreshAll();
     vscode.window.showInformationMessage("gitea-vs-extension token cleared.");
@@ -172,7 +196,7 @@ export class CommandsController {
       return;
     }
 
-    const token = await getToken(this.context.secrets);
+    const token = await getToken(this.context.secrets, settings.activeProfileId);
     if (!token) {
       vscode.window.showWarningMessage("Set a token before testing connection.");
       return;
@@ -471,6 +495,9 @@ export class CommandsController {
       generatedAt: new Date().toISOString(),
       vscodeVersion: vscode.version,
       settings: {
+        activeProfileId: settings.activeProfileId,
+        activeProfileName: settings.activeProfileName,
+        profiles: settings.profiles,
         baseUrl: settings.baseUrl,
         tlsInsecureSkipVerify: settings.tlsInsecureSkipVerify,
         discoveryMode: settings.discoveryMode,
@@ -1043,4 +1070,22 @@ function parseWorkflowInputs(raw?: string): Record<string, string> | undefined {
     result[normalizedKey] = value;
   }
   return Object.keys(result).length ? result : undefined;
+}
+
+async function pickProfile(
+  profiles: GiteaProfile[],
+  activeProfileId?: string,
+): Promise<GiteaProfile | undefined> {
+  const picked = await vscode.window.showQuickPick(
+    profiles.map((profile) => ({
+      label: profile.name,
+      description: profile.baseUrl,
+      detail: profile.id === activeProfileId ? "Active profile" : undefined,
+      profile,
+    })),
+    {
+      title: "Select active Gitea profile",
+    },
+  );
+  return picked?.profile;
 }
