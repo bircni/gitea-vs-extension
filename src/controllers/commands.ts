@@ -512,7 +512,9 @@ export class CommandsController {
       },
       capabilities,
       repositories: repos,
-      workspaceFolders: (vscode.workspace.workspaceFolders ?? []).map((folder) => folder.uri.fsPath),
+      workspaceFolders: (vscode.workspace.workspaceFolders ?? []).map(
+        (folder) => folder.uri.fsPath,
+      ),
     };
 
     const document = await vscode.workspace.openTextDocument({
@@ -710,7 +712,10 @@ export class CommandsController {
       return;
     }
     const content = commits
-      .map((commit) => `${commit.sha.slice(0, 7)} ${commit.message}${commit.author ? ` (${commit.author})` : ""}`)
+      .map(
+        (commit) =>
+          `${commit.sha.slice(0, 7)} ${commit.message}${commit.author ? ` (${commit.author})` : ""}`,
+      )
       .join("\n");
     const doc = await vscode.workspace.openTextDocument({
       language: "text",
@@ -735,7 +740,11 @@ export class CommandsController {
     if (!style) {
       return;
     }
-    await this.api.updatePullRequest(payload.repo, payload.pull.number, style.label as "merge" | "rebase");
+    await this.api.updatePullRequest(
+      payload.repo,
+      payload.pull.number,
+      style.label as "merge" | "rebase",
+    );
     vscode.window.showInformationMessage(`PR #${payload.pull.number} updated with ${style.label}.`);
   }
 
@@ -769,7 +778,12 @@ export class CommandsController {
     if (!reviewers.length) {
       return;
     }
-    await this.api.requestPullRequestReviewers(payload.repo, payload.pull.number, reviewers, action.remove);
+    await this.api.requestPullRequestReviewers(
+      payload.repo,
+      payload.pull.number,
+      reviewers,
+      action.remove,
+    );
     vscode.window.showInformationMessage(`Updated reviewers for PR #${payload.pull.number}.`);
   }
 
@@ -805,11 +819,7 @@ export class CommandsController {
       return;
     }
     const mergeType = await vscode.window.showQuickPick(
-      [
-        { label: "merge" },
-        { label: "rebase" },
-        { label: "squash" },
-      ],
+      [{ label: "merge" }, { label: "rebase" }, { label: "squash" }],
       { title: `Merge PR #${payload.pull.number}` },
     );
     if (!mergeType) {

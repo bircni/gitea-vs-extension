@@ -69,25 +69,25 @@ Manage token, test connection, and edit secrets and variables.
 
 ## Configuration
 
-| Setting                                                  | Default     | Description                                           |
-| -------------------------------------------------------- | ----------- | ----------------------------------------------------- |
-| `gitea-vs-extension.baseUrl`                             | -           | Base URL of your Gitea instance                       |
-| `gitea-vs-extension.profiles`                            | `[]`        | Optional named profiles (`id`, `name`, `baseUrl`, TLS) |
-| `gitea-vs-extension.activeProfileId`                     | `""`        | Active profile id from `profiles`                     |
-| `gitea-vs-extension.discovery.mode`                      | `workspace` | How to discover repositories                          |
-| `gitea-vs-extension.refresh.runningIntervalSeconds`      | `15`        | Polling interval while runs are active                |
-| `gitea-vs-extension.refresh.idleIntervalSeconds`         | `60`        | Polling interval while idle                           |
-| `gitea-vs-extension.refresh.pauseWhenViewsHidden`        | `true`      | Pause polling when all extension views are hidden     |
-| `gitea-vs-extension.actions.filters.branch`              | `""`        | Branch filter for runs (contains match)               |
-| `gitea-vs-extension.actions.filters.status`              | `""`        | Status/conclusion filter for runs                     |
-| `gitea-vs-extension.actions.filters.event`               | `""`        | Event filter for runs                                 |
-| `gitea-vs-extension.actions.filters.search`              | `""`        | Quick search filter for runs                          |
-| `gitea-vs-extension.maxRunsPerRepo`                      | `20`        | Maximum runs to fetch per repository                  |
-| `gitea-vs-extension.maxJobsPerRun`                       | `50`        | Maximum jobs to fetch per run                         |
-| `gitea-vs-extension.tls.insecureSkipVerify`              | `false`     | Skip TLS verification (not recommended)               |
-| `gitea-vs-extension.notifications.failedRuns.enabled`    | `false`     | Notify when failed run count increases                |
-| `gitea-vs-extension.logging.debug`                       | `false`     | Enable debug logging                                  |
-| `gitea-vs-extension.reviewComments.enabled`              | `true`      | Enable inline PR review comments                      |
+| Setting                                               | Default     | Description                                            |
+| ----------------------------------------------------- | ----------- | ------------------------------------------------------ |
+| `gitea-vs-extension.baseUrl`                          | -           | Base URL of your Gitea instance                        |
+| `gitea-vs-extension.profiles`                         | `[]`        | Optional named profiles (`id`, `name`, `baseUrl`, TLS) |
+| `gitea-vs-extension.activeProfileId`                  | `""`        | Active profile id from `profiles`                      |
+| `gitea-vs-extension.discovery.mode`                   | `workspace` | How to discover repositories                           |
+| `gitea-vs-extension.refresh.runningIntervalSeconds`   | `15`        | Polling interval while runs are active                 |
+| `gitea-vs-extension.refresh.idleIntervalSeconds`      | `60`        | Polling interval while idle                            |
+| `gitea-vs-extension.refresh.pauseWhenViewsHidden`     | `true`      | Pause polling when all extension views are hidden      |
+| `gitea-vs-extension.actions.filters.branch`           | `""`        | Branch filter for runs (contains match)                |
+| `gitea-vs-extension.actions.filters.status`           | `""`        | Status/conclusion filter for runs                      |
+| `gitea-vs-extension.actions.filters.event`            | `""`        | Event filter for runs                                  |
+| `gitea-vs-extension.actions.filters.search`           | `""`        | Quick search filter for runs                           |
+| `gitea-vs-extension.maxRunsPerRepo`                   | `20`        | Maximum runs to fetch per repository                   |
+| `gitea-vs-extension.maxJobsPerRun`                    | `50`        | Maximum jobs to fetch per run                          |
+| `gitea-vs-extension.tls.insecureSkipVerify`           | `false`     | Skip TLS verification (not recommended)                |
+| `gitea-vs-extension.notifications.failedRuns.enabled` | `false`     | Notify when failed run count increases                 |
+| `gitea-vs-extension.logging.debug`                    | `false`     | Enable debug logging                                   |
+| `gitea-vs-extension.reviewComments.enabled`           | `true`      | Enable inline PR review comments                       |
 
 ### Discovery Modes
 

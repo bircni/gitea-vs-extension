@@ -165,7 +165,10 @@ export class GiteaApi {
     if (!path) {
       throw new EndpointError("Workflow dispatch endpoint not available");
     }
-    const url = fillRepoPath(path, repo).replace("{workflow_id}", encodeURIComponent(String(workflowId)));
+    const url = fillRepoPath(path, repo).replace(
+      "{workflow_id}",
+      encodeURIComponent(String(workflowId)),
+    );
     await this.client.requestText("POST", url, {
       body: {
         ref,
@@ -180,7 +183,10 @@ export class GiteaApi {
     if (!path) {
       throw new EndpointError("Workflow enable endpoint not available");
     }
-    const url = fillRepoPath(path, repo).replace("{workflow_id}", encodeURIComponent(String(workflowId)));
+    const url = fillRepoPath(path, repo).replace(
+      "{workflow_id}",
+      encodeURIComponent(String(workflowId)),
+    );
     await this.client.requestText("PUT", url);
   }
 
@@ -190,7 +196,10 @@ export class GiteaApi {
     if (!path) {
       throw new EndpointError("Workflow disable endpoint not available");
     }
-    const url = fillRepoPath(path, repo).replace("{workflow_id}", encodeURIComponent(String(workflowId)));
+    const url = fillRepoPath(path, repo).replace(
+      "{workflow_id}",
+      encodeURIComponent(String(workflowId)),
+    );
     await this.client.requestText("PUT", url);
   }
 
@@ -223,7 +232,10 @@ export class GiteaApi {
     if (!path) {
       return [];
     }
-    const url = fillRepoPath(path, repo).replace("{index}", encodeURIComponent(String(pullRequestNumber)));
+    const url = fillRepoPath(path, repo).replace(
+      "{index}",
+      encodeURIComponent(String(pullRequestNumber)),
+    );
     const response = await this.client.getJson<Record<string, unknown> | unknown[]>(url);
     const list = Array.isArray(response) ? response : extractArray(response, ["entries", "files"]);
     return list.map((item) => normalizePullRequestFile(item as Record<string, unknown>));
@@ -238,9 +250,14 @@ export class GiteaApi {
     if (!path) {
       return [];
     }
-    const url = fillRepoPath(path, repo).replace("{index}", encodeURIComponent(String(pullRequestNumber)));
+    const url = fillRepoPath(path, repo).replace(
+      "{index}",
+      encodeURIComponent(String(pullRequestNumber)),
+    );
     const response = await this.client.getJson<Record<string, unknown> | unknown[]>(url);
-    const list = Array.isArray(response) ? response : extractArray(response, ["entries", "commits"]);
+    const list = Array.isArray(response)
+      ? response
+      : extractArray(response, ["entries", "commits"]);
     return list.map((item) => normalizePullRequestCommit(item as Record<string, unknown>));
   }
 
@@ -272,7 +289,10 @@ export class GiteaApi {
     if (!path) {
       throw new EndpointError("Pull request reviewer request endpoint not available");
     }
-    const url = fillRepoPath(path, repo).replace("{index}", encodeURIComponent(String(pullRequestNumber)));
+    const url = fillRepoPath(path, repo).replace(
+      "{index}",
+      encodeURIComponent(String(pullRequestNumber)),
+    );
     await this.client.requestText(remove ? "DELETE" : "POST", url, {
       body: {
         reviewers,
@@ -291,7 +311,10 @@ export class GiteaApi {
     if (!path) {
       throw new EndpointError("Pull request reviews endpoint not available");
     }
-    const url = fillRepoPath(path, repo).replace("{index}", encodeURIComponent(String(pullRequestNumber)));
+    const url = fillRepoPath(path, repo).replace(
+      "{index}",
+      encodeURIComponent(String(pullRequestNumber)),
+    );
     await this.client.requestText("POST", url, {
       body: {
         event,
@@ -310,7 +333,10 @@ export class GiteaApi {
     if (!path) {
       throw new EndpointError("Pull request merge endpoint not available");
     }
-    const url = fillRepoPath(path, repo).replace("{index}", encodeURIComponent(String(pullRequestNumber)));
+    const url = fillRepoPath(path, repo).replace(
+      "{index}",
+      encodeURIComponent(String(pullRequestNumber)),
+    );
     await this.client.requestText("POST", url, {
       body: {
         merge_type: options?.mergeType ?? "merge",
@@ -325,7 +351,10 @@ export class GiteaApi {
     if (!path) {
       throw new EndpointError("Pull request merge endpoint not available");
     }
-    const url = fillRepoPath(path, repo).replace("{index}", encodeURIComponent(String(pullRequestNumber)));
+    const url = fillRepoPath(path, repo).replace(
+      "{index}",
+      encodeURIComponent(String(pullRequestNumber)),
+    );
     await this.client.requestText("DELETE", url);
   }
 

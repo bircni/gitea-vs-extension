@@ -110,7 +110,10 @@ export function discoverEndpoints(doc?: SwaggerDoc): EndpointMap {
     /^\/repos\/\{owner\}\/\{repo\}\/actions\/runs\/\{[^}]+\}\/artifacts$/,
   );
   const listRepoArtifacts = pickPath(paths, /^\/repos\/\{owner\}\/\{repo\}\/actions\/artifacts$/);
-  const getArtifact = pickPath(paths, /^\/repos\/\{owner\}\/\{repo\}\/actions\/artifacts\/\{[^}]+\}$/);
+  const getArtifact = pickPath(
+    paths,
+    /^\/repos\/\{owner\}\/\{repo\}\/actions\/artifacts\/\{[^}]+\}$/,
+  );
   const downloadArtifact = pickPath(
     paths,
     /^\/repos\/\{owner\}\/\{repo\}\/actions\/artifacts\/\{[^}]+\}\/zip$/,
@@ -142,8 +145,14 @@ export function discoverEndpoints(doc?: SwaggerDoc): EndpointMap {
     paths,
     /^\/repos\/\{owner\}\/\{repo\}\/pulls\/\{[^}]+\}\/files$/,
   );
-  const mergePullRequest = pickPath(paths, /^\/repos\/\{owner\}\/\{repo\}\/pulls\/\{[^}]+\}\/merge$/);
-  const updatePullRequest = pickPath(paths, /^\/repos\/\{owner\}\/\{repo\}\/pulls\/\{[^}]+\}\/update$/);
+  const mergePullRequest = pickPath(
+    paths,
+    /^\/repos\/\{owner\}\/\{repo\}\/pulls\/\{[^}]+\}\/merge$/,
+  );
+  const updatePullRequest = pickPath(
+    paths,
+    /^\/repos\/\{owner\}\/\{repo\}\/pulls\/\{[^}]+\}\/update$/,
+  );
   const requestedReviewers = pickPath(
     paths,
     /^\/repos\/\{owner\}\/\{repo\}\/pulls\/\{[^}]+\}\/requested_reviewers$/,

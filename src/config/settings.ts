@@ -35,12 +35,18 @@ export function getSettings(): ExtensionSettings {
   const legacyConfig = vscode.workspace.getConfiguration("bircni.gitea-vs-extension");
   const profiles = normalizeProfiles(config.get<unknown[]>("profiles"));
   const configuredActiveProfileId = (
-    config.get<string>("activeProfileId") ?? legacyConfig.get<string>("activeProfileId") ?? ""
+    config.get<string>("activeProfileId") ??
+    legacyConfig.get<string>("activeProfileId") ??
+    ""
   ).trim();
   const activeProfile =
     profiles.find((profile) => profile.id === configuredActiveProfileId) ?? profiles.at(0);
 
-  const legacyBaseUrl = (config.get<string>("baseUrl") ?? legacyConfig.get<string>("baseUrl") ?? "").trim();
+  const legacyBaseUrl = (
+    config.get<string>("baseUrl") ??
+    legacyConfig.get<string>("baseUrl") ??
+    ""
+  ).trim();
   const baseUrl = (activeProfile?.baseUrl ?? legacyBaseUrl).trim();
   const tlsInsecureSkipVerify =
     activeProfile?.tlsInsecureSkipVerify ??
