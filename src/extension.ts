@@ -185,6 +185,21 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
           "gitea.cap.pullRequestUpdate",
           caps.pullRequestUpdate,
         );
+        await vscode.commands.executeCommand(
+          "setContext",
+          "gitea.cap.requestedReviewers",
+          caps.requestedReviewers,
+        );
+        await vscode.commands.executeCommand(
+          "setContext",
+          "gitea.cap.pullRequestMerge",
+          caps.pullRequestMerge,
+        );
+        await vscode.commands.executeCommand(
+          "setContext",
+          "gitea.cap.pullRequestReviews",
+          caps.pullRequestReviews,
+        );
       })
       .catch(() => undefined);
   };

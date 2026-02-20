@@ -29,7 +29,8 @@
     "onCommand:gitea-vs-extension.dispatchWorkflow",
     "onCommand:gitea-vs-extension.listWorkflows",
     "onCommand:gitea-vs-extension.setRunSearchFilter",
-    "onCommand:gitea-vs-extension.checkoutPullRequest"
+    "onCommand:gitea-vs-extension.checkoutPullRequest",
+    "onCommand:gitea-vs-extension.mergePullRequest"
   ],
   "main": "./dist/extension.js",
   "scripts": {
@@ -321,6 +322,26 @@
         "command": "gitea-vs-extension.updatePullRequest",
         "title": "gitea-vs-extension: Update Pull Request",
         "icon": "$(sync)"
+      },
+      {
+        "command": "gitea-vs-extension.requestReviewers",
+        "title": "gitea-vs-extension: Request Reviewers",
+        "icon": "$(person-add)"
+      },
+      {
+        "command": "gitea-vs-extension.submitPullRequestReview",
+        "title": "gitea-vs-extension: Submit Pull Request Review",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "gitea-vs-extension.mergePullRequest",
+        "title": "gitea-vs-extension: Merge Pull Request",
+        "icon": "$(git-merge)"
+      },
+      {
+        "command": "gitea-vs-extension.cancelPullRequestAutoMerge",
+        "title": "gitea-vs-extension: Cancel Pull Request Auto Merge",
+        "icon": "$(circle-slash)"
       }
     ],
     "menus": {
@@ -411,6 +432,26 @@
           "command": "gitea-vs-extension.updatePullRequest",
           "when": "viewItem == giteaPullRequest && gitea.cap.pullRequestUpdate",
           "group": "inline@4"
+        },
+        {
+          "command": "gitea-vs-extension.requestReviewers",
+          "when": "viewItem == giteaPullRequest && gitea.cap.requestedReviewers",
+          "group": "inline@5"
+        },
+        {
+          "command": "gitea-vs-extension.submitPullRequestReview",
+          "when": "viewItem == giteaPullRequest && gitea.cap.pullRequestReviews",
+          "group": "inline@6"
+        },
+        {
+          "command": "gitea-vs-extension.mergePullRequest",
+          "when": "viewItem == giteaPullRequest && gitea.cap.pullRequestMerge",
+          "group": "inline@7"
+        },
+        {
+          "command": "gitea-vs-extension.cancelPullRequestAutoMerge",
+          "when": "viewItem == giteaPullRequest && gitea.cap.pullRequestMerge",
+          "group": "inline@8"
         },
         {
           "command": "gitea-vs-extension.copyUrl",

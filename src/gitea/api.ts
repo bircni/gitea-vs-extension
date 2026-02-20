@@ -261,6 +261,74 @@ export class GiteaApi {
     await this.client.requestText("POST", url);
   }
 
+  async requestPullRequestReviewers(
+    repo: RepoRef,
+    pullRequestNumber: number,
+    reviewers: string[],
+    remove = false,
+  ): Promise<void> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.requestedReviewers;
+    if (!path) {
+      throw new EndpointError("Pull request reviewer request endpoint not available");
+    }
+    const url = fillRepoPath(path, repo).replace("{index}", encodeURIComponent(String(pullRequestNumber)));
+    await this.client.requestText(remove ? "DELETE" : "POST", url, {
+      body: {
+        reviewers,
+      },
+    });
+  }
+
+  async submitPullRequestReview(
+    repo: RepoRef,
+    pullRequestNumber: number,
+    event: "COMMENT" | "APPROVE" | "REQUEST_CHANGES",
+    body?: string,
+  ): Promise<void> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.listPullRequestReviews;
+    if (!path) {
+      throw new EndpointError("Pull request reviews endpoint not available");
+    }
+    const url = fillRepoPath(path, repo).replace("{index}", encodeURIComponent(String(pullRequestNumber)));
+    await this.client.requestText("POST", url, {
+      body: {
+        event,
+        body,
+      },
+    });
+  }
+
+  async mergePullRequest(
+    repo: RepoRef,
+    pullRequestNumber: number,
+    options?: { mergeType?: "merge" | "rebase" | "squash"; deleteBranchAfterMerge?: boolean },
+  ): Promise<void> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.mergePullRequest;
+    if (!path) {
+      throw new EndpointError("Pull request merge endpoint not available");
+    }
+    const url = fillRepoPath(path, repo).replace("{index}", encodeURIComponent(String(pullRequestNumber)));
+    await this.client.requestText("POST", url, {
+      body: {
+        merge_type: options?.mergeType ?? "merge",
+        delete_branch_after_merge: options?.deleteBranchAfterMerge ?? false,
+      },
+    });
+  }
+
+  async cancelPullRequestAutoMerge(repo: RepoRef, pullRequestNumber: number): Promise<void> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.mergePullRequest;
+    if (!path) {
+      throw new EndpointError("Pull request merge endpoint not available");
+    }
+    const url = fillRepoPath(path, repo).replace("{index}", encodeURIComponent(String(pullRequestNumber)));
+    await this.client.requestText("DELETE", url);
+  }
+
   async listPullRequestReviews(
     repo: RepoRef,
     pullRequestNumber: number,

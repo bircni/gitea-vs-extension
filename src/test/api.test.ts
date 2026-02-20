@@ -248,6 +248,35 @@ describe("GiteaApi core endpoints", () => {
     );
   });
 
+  test("requests reviewers, submits review, merges pull request", async () => {
+    client.requestText.mockResolvedValue("ok");
+
+    await api.requestPullRequestReviewers(repo, 10, ["alice", "bob"]);
+    await api.submitPullRequestReview(repo, 10, "APPROVE", "Looks good");
+    await api.mergePullRequest(repo, 10, { mergeType: "squash", deleteBranchAfterMerge: true });
+    await api.cancelPullRequestAutoMerge(repo, 10);
+
+    expect(client.requestText).toHaveBeenCalledWith(
+      "POST",
+      "/api/v1/repos/owner/repo/pulls/10/requested_reviewers",
+      { body: { reviewers: ["alice", "bob"] } },
+    );
+    expect(client.requestText).toHaveBeenCalledWith(
+      "POST",
+      "/api/v1/repos/owner/repo/pulls/10/reviews",
+      { body: { event: "APPROVE", body: "Looks good" } },
+    );
+    expect(client.requestText).toHaveBeenCalledWith(
+      "POST",
+      "/api/v1/repos/owner/repo/pulls/10/merge",
+      { body: { merge_type: "squash", delete_branch_after_merge: true } },
+    );
+    expect(client.requestText).toHaveBeenCalledWith(
+      "DELETE",
+      "/api/v1/repos/owner/repo/pulls/10/merge",
+    );
+  });
+
   test("returns empty when pull request reviews endpoint missing", async () => {
     (api as any).ensureEndpoints = jest.fn(async () => ({}));
 

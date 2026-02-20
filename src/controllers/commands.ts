@@ -125,6 +125,18 @@ export class CommandsController {
       vscode.commands.registerCommand("gitea-vs-extension.updatePullRequest", (arg) =>
         this.handleUpdatePullRequest(arg),
       ),
+      vscode.commands.registerCommand("gitea-vs-extension.requestReviewers", (arg) =>
+        this.handleRequestReviewers(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.submitPullRequestReview", (arg) =>
+        this.handleSubmitPullRequestReview(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.mergePullRequest", (arg) =>
+        this.handleMergePullRequest(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.cancelPullRequestAutoMerge", (arg) =>
+        this.handleCancelPullRequestAutoMerge(arg),
+      ),
     ];
   }
 
@@ -697,6 +709,100 @@ export class CommandsController {
     }
     await this.api.updatePullRequest(payload.repo, payload.pull.number, style.label as "merge" | "rebase");
     vscode.window.showInformationMessage(`PR #${payload.pull.number} updated with ${style.label}.`);
+  }
+
+  private async handleRequestReviewers(arg: unknown): Promise<void> {
+    const payload = normalizePullRequestArg(arg);
+    if (!payload) {
+      vscode.window.showWarningMessage("Pull request not found.");
+      return;
+    }
+    const action = await vscode.window.showQuickPick(
+      [
+        { label: "Request reviewers", remove: false },
+        { label: "Cancel review requests", remove: true },
+      ],
+      { title: `PR #${payload.pull.number}: reviewers` },
+    );
+    if (!action) {
+      return;
+    }
+    const input = await vscode.window.showInputBox({
+      title: "Reviewers",
+      prompt: "Comma-separated usernames",
+    });
+    if (!input?.trim()) {
+      return;
+    }
+    const reviewers = input
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    if (!reviewers.length) {
+      return;
+    }
+    await this.api.requestPullRequestReviewers(payload.repo, payload.pull.number, reviewers, action.remove);
+    vscode.window.showInformationMessage(`Updated reviewers for PR #${payload.pull.number}.`);
+  }
+
+  private async handleSubmitPullRequestReview(arg: unknown): Promise<void> {
+    const payload = normalizePullRequestArg(arg);
+    if (!payload) {
+      vscode.window.showWarningMessage("Pull request not found.");
+      return;
+    }
+    const action = await vscode.window.showQuickPick(
+      [
+        { label: "Comment", event: "COMMENT" as const },
+        { label: "Approve", event: "APPROVE" as const },
+        { label: "Request changes", event: "REQUEST_CHANGES" as const },
+      ],
+      { title: `Submit review for PR #${payload.pull.number}` },
+    );
+    if (!action) {
+      return;
+    }
+    const body = await vscode.window.showInputBox({
+      title: "Review message",
+      prompt: "Optional review text",
+    });
+    await this.api.submitPullRequestReview(payload.repo, payload.pull.number, action.event, body);
+    vscode.window.showInformationMessage(`Submitted ${action.label.toLowerCase()} review.`);
+  }
+
+  private async handleMergePullRequest(arg: unknown): Promise<void> {
+    const payload = normalizePullRequestArg(arg);
+    if (!payload) {
+      vscode.window.showWarningMessage("Pull request not found.");
+      return;
+    }
+    const mergeType = await vscode.window.showQuickPick(
+      [
+        { label: "merge" },
+        { label: "rebase" },
+        { label: "squash" },
+      ],
+      { title: `Merge PR #${payload.pull.number}` },
+    );
+    if (!mergeType) {
+      return;
+    }
+    await this.api.mergePullRequest(payload.repo, payload.pull.number, {
+      mergeType: mergeType.label as "merge" | "rebase" | "squash",
+      deleteBranchAfterMerge: false,
+    });
+    vscode.window.showInformationMessage(`Merged PR #${payload.pull.number}.`);
+    void this.refreshController.refreshRepo(payload.repo, getSettings().maxRunsPerRepo);
+  }
+
+  private async handleCancelPullRequestAutoMerge(arg: unknown): Promise<void> {
+    const payload = normalizePullRequestArg(arg);
+    if (!payload) {
+      vscode.window.showWarningMessage("Pull request not found.");
+      return;
+    }
+    await this.api.cancelPullRequestAutoMerge(payload.repo, payload.pull.number);
+    vscode.window.showInformationMessage(`Cancelled auto-merge for PR #${payload.pull.number}.`);
   }
 
   private async resolveRepoForAction(arg: unknown): Promise<RepoRef | undefined> {
