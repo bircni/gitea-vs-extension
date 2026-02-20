@@ -213,14 +213,13 @@ export class ReviewCommentsController implements vscode.Disposable {
     const key = `${folder.uri.fsPath}:${pullRequestNumber}`;
     if (this.activeKey !== key) {
       this.clear();
-    } else {
-      for (const thread of this.threads.values()) {
-        thread.dispose();
-      }
-      this.threads.clear();
     }
 
     this.activeKey = key;
+    const nextByThread = new Map<
+      ThreadKey,
+      { uri: vscode.Uri; range: vscode.Range; comments: vscode.Comment[] }
+    >();
 
     for (const comment of comments) {
       const line = comment.line ?? comment.originalLine;
@@ -235,13 +234,36 @@ export class ReviewCommentsController implements vscode.Disposable {
 
       const range = new vscode.Range(line - 1, 0, line - 1, 0);
       const threadKey = `${uri.fsPath}:${line}`;
+      const avatarUri = this.avatarCache.getAvatarUri(comment.avatarUrl);
+      const entry = nextByThread.get(threadKey);
+      if (!entry) {
+        nextByThread.set(threadKey, {
+          uri,
+          range,
+          comments: [toVscodeComment(comment, avatarUri)],
+        });
+      } else {
+        entry.comments.push(toVscodeComment(comment, avatarUri));
+      }
+    }
+
+    const nextKeys = new Set(nextByThread.keys());
+    for (const [threadKey, thread] of this.threads) {
+      if (nextKeys.has(threadKey)) {
+        continue;
+      }
+      thread.dispose();
+      this.threads.delete(threadKey);
+    }
+
+    for (const [threadKey, entry] of nextByThread) {
       const thread =
-        this.threads.get(threadKey) ?? this.commentController.createCommentThread(uri, range, []);
+        this.threads.get(threadKey) ??
+        this.commentController.createCommentThread(entry.uri, entry.range, []);
       thread.contextValue = "giteaReviewComment";
       thread.canReply = false;
-      const avatarUri = this.avatarCache.getAvatarUri(comment.avatarUrl);
-      const commentEntry = toVscodeComment(comment, avatarUri);
-      thread.comments = [...thread.comments, commentEntry];
+      thread.range = entry.range;
+      thread.comments = entry.comments;
       this.threads.set(threadKey, thread);
     }
   }
