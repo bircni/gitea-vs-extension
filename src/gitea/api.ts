@@ -123,6 +123,18 @@ export class GiteaApi {
     return list.map((item) => normalizeActionWorkflow(item as Record<string, unknown>));
   }
 
+  async deleteRun(repo: RepoRef, runId: number | string): Promise<void> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.deleteRun;
+    if (!path) {
+      throw new EndpointError("Run deletion endpoint not available");
+    }
+    const url = fillRepoPath(path, repo)
+      .replace("{run}", encodeURIComponent(String(runId)))
+      .replace("{run_id}", encodeURIComponent(String(runId)));
+    await this.client.requestText("DELETE", url);
+  }
+
   async getWorkflow(
     repo: RepoRef,
     workflowId: number | string,
@@ -176,6 +188,17 @@ export class GiteaApi {
     }
     const url = fillRepoPath(path, repo).replace("{workflow_id}", encodeURIComponent(String(workflowId)));
     await this.client.requestText("PUT", url);
+  }
+
+  async downloadArtifact(repo: RepoRef, artifactId: number | string): Promise<Uint8Array> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.downloadArtifact;
+    const url = path
+      ? fillRepoPath(path, repo).replace("{artifact_id}", encodeURIComponent(String(artifactId)))
+      : `/api/v1/repos/${encodeURIComponent(repo.owner)}/${encodeURIComponent(
+          repo.name,
+        )}/actions/artifacts/${encodeURIComponent(String(artifactId))}/zip`;
+    return this.client.getBinary(url);
   }
 
   async listPullRequests(repo: RepoRef): Promise<PullRequest[]> {

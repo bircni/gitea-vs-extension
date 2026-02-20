@@ -154,6 +154,25 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       void refreshController.refreshAll();
     }
   };
+  const syncCapabilityContext = (): void => {
+    void api
+      .getCapabilities()
+      .then(async (caps) => {
+        await vscode.commands.executeCommand("setContext", "gitea.cap.workflows", caps.workflows);
+        await vscode.commands.executeCommand(
+          "setContext",
+          "gitea.cap.workflowDispatch",
+          caps.workflowDispatch,
+        );
+        await vscode.commands.executeCommand("setContext", "gitea.cap.runDelete", caps.runDelete);
+        await vscode.commands.executeCommand(
+          "setContext",
+          "gitea.cap.artifactDownload",
+          caps.artifactDownload,
+        );
+      })
+      .catch(() => undefined);
+  };
 
   context.subscriptions.push(
     runsTree,
@@ -167,6 +186,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     ...commands.register(),
     onSettingsChange(() => {
       logger.debug("Settings changed, refreshing.", "core");
+      syncCapabilityContext();
       refreshVisibleViews();
       reviewCommentsController.scheduleRefresh();
     }),
@@ -254,6 +274,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   if (updatePollingForVisibility() || !getSettings().pauseWhenViewsHidden) {
     void refreshController.refreshAll();
   }
+  syncCapabilityContext();
   reviewCommentsController.scheduleRefresh();
 }
 

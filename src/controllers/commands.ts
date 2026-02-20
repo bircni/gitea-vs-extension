@@ -1,8 +1,9 @@
+import * as fs from "fs";
 import * as vscode from "vscode";
 import { getSettings } from "../config/settings";
 import { clearToken, getToken, setToken } from "../config/secrets";
 import type { GiteaApi } from "../gitea/api";
-import type { Job, PullRequest, RepoRef, WorkflowRun } from "../gitea/models";
+import type { ActionWorkflow, Job, PullRequest, RepoRef, WorkflowRun } from "../gitea/models";
 import type { RepoStateStore } from "../util/cache";
 import type { ActionsTreeProvider } from "../views/actionsTreeProvider";
 import {
@@ -85,6 +86,24 @@ export class CommandsController {
       ),
       vscode.commands.registerCommand("gitea-vs-extension.exportDiagnostics", () =>
         this.handleExportDiagnostics(),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.listWorkflows", (arg) =>
+        this.handleListWorkflows(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.dispatchWorkflow", (arg) =>
+        this.handleDispatchWorkflow(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.enableWorkflow", (arg) =>
+        this.handleEnableWorkflow(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.disableWorkflow", (arg) =>
+        this.handleDisableWorkflow(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.deleteRun", (arg) =>
+        this.handleDeleteRun(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.downloadArtifact", (arg) =>
+        this.handleDownloadArtifact(arg),
       ),
     ];
   }
@@ -420,6 +439,170 @@ export class CommandsController {
     await vscode.window.showTextDocument(document, { preview: false });
   }
 
+  private async handleListWorkflows(arg: unknown): Promise<void> {
+    const repo = await this.resolveRepoForAction(arg);
+    if (!repo) {
+      return;
+    }
+    const workflows = await this.api.listWorkflows(repo);
+    if (!workflows.length) {
+      vscode.window.showInformationMessage("No workflows found for this repository.");
+      return;
+    }
+    const picked = await vscode.window.showQuickPick(
+      workflows.map((workflow) => ({
+        label: workflow.name,
+        description: workflow.state,
+        workflow,
+      })),
+      {
+        title: `Workflows for ${repo.owner}/${repo.name}`,
+      },
+    );
+    if (!picked) {
+      return;
+    }
+    if (picked.workflow.htmlUrl) {
+      await vscode.env.openExternal(vscode.Uri.parse(picked.workflow.htmlUrl));
+      return;
+    }
+    vscode.window.showInformationMessage(`Selected workflow: ${picked.workflow.name}`);
+  }
+
+  private async handleDispatchWorkflow(arg: unknown): Promise<void> {
+    const repo = await this.resolveRepoForAction(arg);
+    if (!repo) {
+      return;
+    }
+    const workflow = await this.pickWorkflow(repo);
+    if (!workflow) {
+      return;
+    }
+    const ref = await vscode.window.showInputBox({
+      title: "Dispatch workflow",
+      prompt: "Git ref (branch or tag)",
+      value: "main",
+    });
+    if (!ref) {
+      return;
+    }
+    const rawInputs = await vscode.window.showInputBox({
+      title: "Workflow inputs",
+      prompt: "Optional: key=value pairs separated by commas",
+    });
+    const inputs = parseWorkflowInputs(rawInputs);
+    await this.api.dispatchWorkflow(repo, workflow.id, ref.trim(), inputs);
+    vscode.window.showInformationMessage(`Workflow dispatched: ${workflow.name}`);
+    void this.refreshController.refreshRepo(repo, getSettings().maxRunsPerRepo);
+  }
+
+  private async handleEnableWorkflow(arg: unknown): Promise<void> {
+    const repo = await this.resolveRepoForAction(arg);
+    if (!repo) {
+      return;
+    }
+    const workflow = await this.pickWorkflow(repo);
+    if (!workflow) {
+      return;
+    }
+    await this.api.enableWorkflow(repo, workflow.id);
+    vscode.window.showInformationMessage(`Workflow enabled: ${workflow.name}`);
+  }
+
+  private async handleDisableWorkflow(arg: unknown): Promise<void> {
+    const repo = await this.resolveRepoForAction(arg);
+    if (!repo) {
+      return;
+    }
+    const workflow = await this.pickWorkflow(repo);
+    if (!workflow) {
+      return;
+    }
+    await this.api.disableWorkflow(repo, workflow.id);
+    vscode.window.showInformationMessage(`Workflow disabled: ${workflow.name}`);
+  }
+
+  private async handleDeleteRun(arg: unknown): Promise<void> {
+    const payload = normalizeRunArg(arg);
+    if (!payload) {
+      vscode.window.showWarningMessage("Run not found.");
+      return;
+    }
+    const confirmed = await vscode.window.showWarningMessage(
+      `Delete workflow run #${payload.run.id}?`,
+      { modal: true },
+      "Delete",
+    );
+    if (confirmed !== "Delete") {
+      return;
+    }
+    await this.api.deleteRun(payload.repo, payload.run.id);
+    void this.refreshController.refreshRepo(payload.repo, getSettings().maxRunsPerRepo);
+    vscode.window.showInformationMessage(`Deleted run #${payload.run.id}.`);
+  }
+
+  private async handleDownloadArtifact(arg: unknown): Promise<void> {
+    const payload = normalizeArtifactArg(arg);
+    if (!payload) {
+      vscode.window.showWarningMessage("Artifact not found.");
+      return;
+    }
+    const target = await vscode.window.showSaveDialog({
+      saveLabel: "Download Artifact",
+      filters: {
+        Zip: ["zip"],
+      },
+      defaultUri: vscode.Uri.file(`${payload.artifact.name}.zip`),
+    });
+    if (!target) {
+      return;
+    }
+    const data = await this.api.downloadArtifact(payload.repo, payload.artifact.id);
+    await fs.promises.writeFile(target.fsPath, Buffer.from(data));
+    vscode.window.showInformationMessage(`Artifact downloaded to ${target.fsPath}`);
+  }
+
+  private async resolveRepoForAction(arg: unknown): Promise<RepoRef | undefined> {
+    return extractRepo(arg) ?? this.settingsProvider.getCurrentRepo() ?? this.pickRepo();
+  }
+
+  private async pickRepo(): Promise<RepoRef | undefined> {
+    const repos = this.store.getRepos();
+    if (!repos.length) {
+      vscode.window.showWarningMessage("No repositories available.");
+      return undefined;
+    }
+    if (repos.length === 1) {
+      return repos[0];
+    }
+    const picked = await vscode.window.showQuickPick(
+      repos.map((repo) => ({
+        label: `${repo.owner}/${repo.name}`,
+        description: repo.host,
+        repo,
+      })),
+      { title: "Select repository" },
+    );
+    return picked?.repo;
+  }
+
+  private async pickWorkflow(repo: RepoRef): Promise<ActionWorkflow | undefined> {
+    const workflows = await this.api.listWorkflows(repo);
+    if (!workflows.length) {
+      vscode.window.showWarningMessage("No workflows found.");
+      return undefined;
+    }
+    const picked = await vscode.window.showQuickPick(
+      workflows.map((workflow) => ({
+        label: workflow.name,
+        description: workflow.state,
+        workflow,
+      })),
+      { title: `Select workflow (${repo.owner}/${repo.name})` },
+    );
+    return picked?.workflow;
+  }
+
   private async ensureRunDetails(repo: RepoRef, run: WorkflowRun): Promise<void> {
     const entry = this.store.getEntry(repo);
     const state = entry?.jobsStateByRun.get(String(run.id));
@@ -431,6 +614,7 @@ export class CommandsController {
 }
 
 type LogArg = { repo: RepoRef; run: WorkflowRun; job: Job; step?: unknown };
+type ArtifactArg = { repo: RepoRef; artifact: { id: number | string; name: string } };
 
 function normalizeLogArg(arg: unknown): LogArg | undefined {
   if (arg && typeof arg === "object" && "repo" in arg && "job" in arg && "run" in arg) {
@@ -441,6 +625,22 @@ function normalizeLogArg(arg: unknown): LogArg | undefined {
   }
   if (arg instanceof StepNode) {
     return { repo: arg.repo, run: arg.run, job: arg.job, step: arg.step };
+  }
+  return undefined;
+}
+
+function normalizeArtifactArg(arg: unknown): ArtifactArg | undefined {
+  if (arg && typeof arg === "object" && "repo" in arg && "artifact" in arg) {
+    return arg as ArtifactArg;
+  }
+  if (arg instanceof ArtifactNode) {
+    return {
+      repo: arg.repo,
+      artifact: {
+        id: arg.artifact.id,
+        name: arg.artifact.name,
+      },
+    };
   }
   return undefined;
 }
@@ -554,4 +754,25 @@ function buildPullRequestUrl(
 
 function trimBase(baseUrl: string): string {
   return baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+}
+
+function parseWorkflowInputs(raw?: string): Record<string, string> | undefined {
+  if (!raw?.trim()) {
+    return undefined;
+  }
+  const result: Record<string, string> = {};
+  for (const entry of raw.split(",")) {
+    const trimmed = entry.trim();
+    if (!trimmed) {
+      continue;
+    }
+    const [key, ...rest] = trimmed.split("=");
+    const normalizedKey = key.trim();
+    const value = rest.join("=").trim();
+    if (!normalizedKey || !value) {
+      continue;
+    }
+    result[normalizedKey] = value;
+  }
+  return Object.keys(result).length ? result : undefined;
 }

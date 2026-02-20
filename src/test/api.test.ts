@@ -188,6 +188,23 @@ describe("GiteaApi core endpoints", () => {
     );
   });
 
+  test("deletes run and downloads artifact", async () => {
+    client.requestText.mockResolvedValueOnce("ok");
+    (client as any).getBinary = jest.fn().mockResolvedValueOnce(new Uint8Array([1, 2, 3]));
+
+    await api.deleteRun(repo, 42);
+    const artifact = await api.downloadArtifact(repo, 77);
+
+    expect(client.requestText).toHaveBeenCalledWith(
+      "DELETE",
+      "/api/v1/repos/owner/repo/actions/runs/42",
+    );
+    expect((client as any).getBinary).toHaveBeenCalledWith(
+      "/api/v1/repos/owner/repo/actions/artifacts/77/zip",
+    );
+    expect(Array.from(artifact)).toEqual([1, 2, 3]);
+  });
+
   test("lists pull requests from array response", async () => {
     client.getJson.mockResolvedValueOnce([{ id: 1, number: 1, title: "PR" }]);
 

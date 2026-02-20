@@ -25,7 +25,9 @@
     "onCommand:gitea-vs-extension.refresh",
     "onCommand:gitea-vs-extension.setToken",
     "onCommand:gitea-vs-extension.testConnection",
-    "onCommand:gitea-vs-extension.exportDiagnostics"
+    "onCommand:gitea-vs-extension.exportDiagnostics",
+    "onCommand:gitea-vs-extension.dispatchWorkflow",
+    "onCommand:gitea-vs-extension.listWorkflows"
   ],
   "main": "./dist/extension.js",
   "scripts": {
@@ -237,6 +239,36 @@
         "command": "gitea-vs-extension.exportDiagnostics",
         "title": "gitea-vs-extension: Export Diagnostics",
         "icon": "$(output)"
+      },
+      {
+        "command": "gitea-vs-extension.listWorkflows",
+        "title": "gitea-vs-extension: List Workflows",
+        "icon": "$(list-tree)"
+      },
+      {
+        "command": "gitea-vs-extension.dispatchWorkflow",
+        "title": "gitea-vs-extension: Dispatch Workflow",
+        "icon": "$(play)"
+      },
+      {
+        "command": "gitea-vs-extension.enableWorkflow",
+        "title": "gitea-vs-extension: Enable Workflow",
+        "icon": "$(check)"
+      },
+      {
+        "command": "gitea-vs-extension.disableWorkflow",
+        "title": "gitea-vs-extension: Disable Workflow",
+        "icon": "$(circle-slash)"
+      },
+      {
+        "command": "gitea-vs-extension.deleteRun",
+        "title": "gitea-vs-extension: Delete Run",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "gitea-vs-extension.downloadArtifact",
+        "title": "gitea-vs-extension: Download Artifact",
+        "icon": "$(cloud-download)"
       }
     ],
     "menus": {
@@ -259,6 +291,16 @@
           "group": "inline@1"
         },
         {
+          "command": "gitea-vs-extension.listWorkflows",
+          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem == giteaRepo && gitea.cap.workflows",
+          "group": "inline@2"
+        },
+        {
+          "command": "gitea-vs-extension.dispatchWorkflow",
+          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem == giteaRepo && gitea.cap.workflowDispatch",
+          "group": "inline@3"
+        },
+        {
           "command": "gitea-vs-extension.openInBrowser",
           "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem == giteaRun",
           "group": "inline"
@@ -267,6 +309,11 @@
           "command": "gitea-vs-extension.openLatestFailedJobLogs",
           "when": "viewItem == giteaRun",
           "group": "inline@1"
+        },
+        {
+          "command": "gitea-vs-extension.deleteRun",
+          "when": "viewItem == giteaRun && gitea.cap.runDelete",
+          "group": "inline@2"
         },
         {
           "command": "gitea-vs-extension.openInBrowser",
@@ -292,6 +339,11 @@
           "command": "gitea-vs-extension.openInBrowser",
           "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem == giteaArtifact",
           "group": "inline"
+        },
+        {
+          "command": "gitea-vs-extension.downloadArtifact",
+          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem == giteaArtifact && gitea.cap.artifactDownload",
+          "group": "inline@1"
         },
         {
           "command": "gitea-vs-extension.refreshSecrets",
