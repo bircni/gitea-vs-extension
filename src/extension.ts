@@ -99,6 +99,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   statusBar.text = "Gitea: idle";
   statusBar.command = "workbench.view.extension.bircniGiteaVsExtension";
   statusBar.show();
+  let previousFailedCount = 0;
+  let lastFailedNotificationAt = 0;
 
   const reviewCommentsController = new ReviewCommentsController(
     api,
@@ -123,7 +125,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       }
     },
     (summary) => {
-      updateStatusBar(statusBar, summary);
+      const failedCountIncreased = summary.failedCount > previousFailedCount;
+      updateStatusBar(statusBar, summary, getSettings().activeProfileName);
+      maybeNotifyOnFailedRuns(summary, previousFailedCount, lastFailedNotificationAt);
+      if (failedCountIncreased) {
+        lastFailedNotificationAt = Date.now();
+      }
+      previousFailedCount = summary.failedCount;
       reviewCommentsController.scheduleRefresh();
     },
   );
@@ -317,10 +325,38 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export function deactivate(): void {}
 
-function updateStatusBar(item: vscode.StatusBarItem, summary: RefreshSummary): void {
+function updateStatusBar(
+  item: vscode.StatusBarItem,
+  summary: RefreshSummary,
+  profileName?: string,
+): void {
   const running = summary.runningCount;
   const failed = summary.failedCount;
-  item.text = `Gitea: ${running} running, ${failed} failed`;
+  const prefix = profileName ? `Gitea (${profileName})` : "Gitea";
+  const indicator = failed > 0 ? "$(error) " : "";
+  item.text = `${indicator}${prefix}: ${running} running, ${failed} failed`;
+  item.tooltip = `${prefix}\nRunning: ${running}\nFailed: ${failed}`;
+}
+
+function maybeNotifyOnFailedRuns(
+  summary: RefreshSummary,
+  previousFailedCount: number,
+  lastFailedNotificationAt: number,
+): void {
+  const settings = getSettings();
+  if (!settings.failedRunNotificationsEnabled) {
+    return;
+  }
+  if (summary.failedCount <= previousFailedCount) {
+    return;
+  }
+  if (Date.now() - lastFailedNotificationAt < 30_000) {
+    return;
+  }
+  const delta = summary.failedCount - previousFailedCount;
+  vscode.window.showWarningMessage(
+    `Gitea: ${delta} new failed run${delta === 1 ? "" : "s"} detected.`,
+  );
 }
 
 function extractRepoFromSelection(selection: readonly unknown[]): RepoRef | undefined {

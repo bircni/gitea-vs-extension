@@ -160,6 +160,11 @@
           "default": false,
           "description": "Enable debug logging to the extension output channel."
         },
+        "gitea-vs-extension.notifications.failedRuns.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show notifications when the number of failed runs increases."
+        },
         "gitea-vs-extension.reviewComments.enabled": {
           "type": "boolean",
           "default": true,

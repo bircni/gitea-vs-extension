@@ -508,6 +508,7 @@ export class CommandsController {
         maxJobsPerRun: settings.maxJobsPerRun,
         debugLogging: settings.debugLogging,
         reviewCommentsEnabled: settings.reviewCommentsEnabled,
+        failedRunNotificationsEnabled: settings.failedRunNotificationsEnabled,
       },
       capabilities,
       repositories: repos,

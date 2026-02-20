@@ -27,6 +27,7 @@ export type ExtensionSettings = {
   maxJobsPerRun: number;
   debugLogging: boolean;
   reviewCommentsEnabled: boolean;
+  failedRunNotificationsEnabled: boolean;
 };
 
 export function getSettings(): ExtensionSettings {
@@ -95,6 +96,10 @@ export function getSettings(): ExtensionSettings {
       config.get<boolean>("reviewComments.enabled") ??
       legacyConfig.get<boolean>("reviewComments.enabled") ??
       true,
+    failedRunNotificationsEnabled:
+      config.get<boolean>("notifications.failedRuns.enabled") ??
+      legacyConfig.get<boolean>("notifications.failedRuns.enabled") ??
+      false,
   };
 }
 
