@@ -28,7 +28,8 @@
     "onCommand:gitea-vs-extension.exportDiagnostics",
     "onCommand:gitea-vs-extension.dispatchWorkflow",
     "onCommand:gitea-vs-extension.listWorkflows",
-    "onCommand:gitea-vs-extension.setRunSearchFilter"
+    "onCommand:gitea-vs-extension.setRunSearchFilter",
+    "onCommand:gitea-vs-extension.checkoutPullRequest"
   ],
   "main": "./dist/extension.js",
   "scripts": {
@@ -300,6 +301,26 @@
         "command": "gitea-vs-extension.downloadArtifact",
         "title": "gitea-vs-extension: Download Artifact",
         "icon": "$(cloud-download)"
+      },
+      {
+        "command": "gitea-vs-extension.checkoutPullRequest",
+        "title": "gitea-vs-extension: Checkout Pull Request",
+        "icon": "$(git-branch)"
+      },
+      {
+        "command": "gitea-vs-extension.viewPullRequestFiles",
+        "title": "gitea-vs-extension: View Pull Request Files",
+        "icon": "$(files)"
+      },
+      {
+        "command": "gitea-vs-extension.viewPullRequestCommits",
+        "title": "gitea-vs-extension: View Pull Request Commits",
+        "icon": "$(git-commit)"
+      },
+      {
+        "command": "gitea-vs-extension.updatePullRequest",
+        "title": "gitea-vs-extension: Update Pull Request",
+        "icon": "$(sync)"
       }
     ],
     "menus": {
@@ -370,6 +391,26 @@
           "command": "gitea-vs-extension.openInBrowser",
           "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned || view == gitea-vs-extension.pullRequests) && viewItem == giteaPullRequest",
           "group": "inline"
+        },
+        {
+          "command": "gitea-vs-extension.checkoutPullRequest",
+          "when": "viewItem == giteaPullRequest",
+          "group": "inline@1"
+        },
+        {
+          "command": "gitea-vs-extension.viewPullRequestFiles",
+          "when": "viewItem == giteaPullRequest && gitea.cap.pullRequestFiles",
+          "group": "inline@2"
+        },
+        {
+          "command": "gitea-vs-extension.viewPullRequestCommits",
+          "when": "viewItem == giteaPullRequest && gitea.cap.pullRequestCommits",
+          "group": "inline@3"
+        },
+        {
+          "command": "gitea-vs-extension.updatePullRequest",
+          "when": "viewItem == giteaPullRequest && gitea.cap.pullRequestUpdate",
+          "group": "inline@4"
         },
         {
           "command": "gitea-vs-extension.copyUrl",

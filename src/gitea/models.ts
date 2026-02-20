@@ -110,6 +110,22 @@ export type PullRequestReviewComment = {
   reviewId?: number | string;
 };
 
+export type PullRequestFile = {
+  filename: string;
+  status?: string;
+  additions?: number;
+  deletions?: number;
+  changes?: number;
+  patch?: string;
+};
+
+export type PullRequestCommit = {
+  sha: string;
+  message: string;
+  author?: string;
+  htmlUrl?: string;
+};
+
 export type RepoStatusState =
   | "pending"
   | "success"
@@ -347,6 +363,27 @@ export function normalizePullRequestReviewComment(
     createdAt: asString(raw.created_at),
     updatedAt: asString(raw.updated_at),
     reviewId: asId(raw.review_id ?? raw.reviewId ?? raw.pull_request_review_id),
+  };
+}
+
+export function normalizePullRequestFile(raw: Record<string, unknown>): PullRequestFile {
+  return {
+    filename: asString(raw.filename ?? raw.path) ?? "unknown",
+    status: asString(raw.status),
+    additions: asNumber(raw.additions),
+    deletions: asNumber(raw.deletions),
+    changes: asNumber(raw.changes),
+    patch: asString(raw.patch),
+  };
+}
+
+export function normalizePullRequestCommit(raw: Record<string, unknown>): PullRequestCommit {
+  const commit = raw.commit as Record<string, unknown> | undefined;
+  return {
+    sha: asString(raw.sha) ?? "unknown",
+    message: asString(commit?.message) ?? "Commit",
+    author: asString((commit?.author as Record<string, unknown> | undefined)?.name),
+    htmlUrl: asString(raw.html_url ?? raw.url),
   };
 }
 

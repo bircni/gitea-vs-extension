@@ -223,6 +223,31 @@ describe("GiteaApi core endpoints", () => {
     expect(prs[0]?.number).toBe(2);
   });
 
+  test("lists pull request files and commits", async () => {
+    client.getJson
+      .mockResolvedValueOnce([{ filename: "src/a.ts", status: "modified", additions: 2 }])
+      .mockResolvedValueOnce([{ sha: "abcdef", commit: { message: "feat: test" } }]);
+
+    const files = await api.listPullRequestFiles(repo, 3);
+    const commits = await api.listPullRequestCommits(repo, 3);
+
+    expect(client.getJson).toHaveBeenCalledWith("/api/v1/repos/owner/repo/pulls/3/files");
+    expect(client.getJson).toHaveBeenCalledWith("/api/v1/repos/owner/repo/pulls/3/commits");
+    expect(files[0]?.filename).toBe("src/a.ts");
+    expect(commits[0]?.message).toBe("feat: test");
+  });
+
+  test("updates pull request branch", async () => {
+    client.requestText.mockResolvedValueOnce("ok");
+
+    await api.updatePullRequest(repo, 4, "rebase");
+
+    expect(client.requestText).toHaveBeenCalledWith(
+      "POST",
+      "/api/v1/repos/owner/repo/pulls/4/update?style=rebase",
+    );
+  });
+
   test("returns empty when pull request reviews endpoint missing", async () => {
     (api as any).ensureEndpoints = jest.fn(async () => ({}));
 

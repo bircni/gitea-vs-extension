@@ -5,6 +5,8 @@ import { clearToken, getToken, setToken } from "../config/secrets";
 import type { GiteaApi } from "../gitea/api";
 import type { ActionWorkflow, Job, PullRequest, RepoRef, WorkflowRun } from "../gitea/models";
 import type { RepoStateStore } from "../util/cache";
+import { execGit } from "../util/git";
+import { resolveWorkspaceRepos } from "../util/repoResolution";
 import type { ActionsTreeProvider } from "../views/actionsTreeProvider";
 import {
   ArtifactNode,
@@ -110,6 +112,18 @@ export class CommandsController {
       ),
       vscode.commands.registerCommand("gitea-vs-extension.downloadArtifact", (arg) =>
         this.handleDownloadArtifact(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.checkoutPullRequest", (arg) =>
+        this.handleCheckoutPullRequest(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.viewPullRequestFiles", (arg) =>
+        this.handleViewPullRequestFiles(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.viewPullRequestCommits", (arg) =>
+        this.handleViewPullRequestCommits(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.updatePullRequest", (arg) =>
+        this.handleUpdatePullRequest(arg),
       ),
     ];
   }
@@ -591,6 +605,100 @@ export class CommandsController {
     vscode.window.showInformationMessage(`Artifact downloaded to ${target.fsPath}`);
   }
 
+  private async handleCheckoutPullRequest(arg: unknown): Promise<void> {
+    const payload = normalizePullRequestArg(arg);
+    if (!payload) {
+      vscode.window.showWarningMessage("Pull request not found.");
+      return;
+    }
+    const branch = payload.pull.headRef;
+    if (!branch) {
+      vscode.window.showWarningMessage("This pull request has no head branch.");
+      return;
+    }
+    const folderPath = await this.resolveRepoFolderPath(payload.repo);
+    if (!folderPath) {
+      vscode.window.showWarningMessage("No workspace folder found for this repository.");
+      return;
+    }
+
+    await execGit(["fetch", "--all"], folderPath);
+    try {
+      await execGit(["checkout", branch], folderPath);
+    } catch {
+      await execGit(["checkout", "-B", branch, `origin/${branch}`], folderPath);
+    }
+
+    vscode.window.showInformationMessage(`Checked out PR #${payload.pull.number} (${branch}).`);
+  }
+
+  private async handleViewPullRequestFiles(arg: unknown): Promise<void> {
+    const payload = normalizePullRequestArg(arg);
+    if (!payload) {
+      vscode.window.showWarningMessage("Pull request not found.");
+      return;
+    }
+    const files = await this.api.listPullRequestFiles(payload.repo, payload.pull.number);
+    if (!files.length) {
+      vscode.window.showInformationMessage("No changed files found.");
+      return;
+    }
+    const content = files
+      .map(
+        (file) =>
+          `${file.filename} [${file.status ?? "unknown"}] +${file.additions ?? 0} -${
+            file.deletions ?? 0
+          }`,
+      )
+      .join("\n");
+    const doc = await vscode.workspace.openTextDocument({
+      language: "text",
+      content,
+    });
+    await vscode.window.showTextDocument(doc, { preview: true });
+  }
+
+  private async handleViewPullRequestCommits(arg: unknown): Promise<void> {
+    const payload = normalizePullRequestArg(arg);
+    if (!payload) {
+      vscode.window.showWarningMessage("Pull request not found.");
+      return;
+    }
+    const commits = await this.api.listPullRequestCommits(payload.repo, payload.pull.number);
+    if (!commits.length) {
+      vscode.window.showInformationMessage("No commits found.");
+      return;
+    }
+    const content = commits
+      .map((commit) => `${commit.sha.slice(0, 7)} ${commit.message}${commit.author ? ` (${commit.author})` : ""}`)
+      .join("\n");
+    const doc = await vscode.workspace.openTextDocument({
+      language: "text",
+      content,
+    });
+    await vscode.window.showTextDocument(doc, { preview: true });
+  }
+
+  private async handleUpdatePullRequest(arg: unknown): Promise<void> {
+    const payload = normalizePullRequestArg(arg);
+    if (!payload) {
+      vscode.window.showWarningMessage("Pull request not found.");
+      return;
+    }
+    const style = await vscode.window.showQuickPick(
+      [
+        { label: "merge", description: "Merge base branch into PR branch" },
+        { label: "rebase", description: "Rebase PR branch on top of base branch" },
+      ],
+      { title: `Update PR #${payload.pull.number}` },
+    );
+    if (!style) {
+      return;
+    }
+    await this.api.updatePullRequest(payload.repo, payload.pull.number, style.label as "merge" | "rebase");
+    vscode.window.showInformationMessage(`PR #${payload.pull.number} updated with ${style.label}.`);
+  }
+
   private async resolveRepoForAction(arg: unknown): Promise<RepoRef | undefined> {
     return extractRepo(arg) ?? this.settingsProvider.getCurrentRepo() ?? this.pickRepo();
   }
@@ -632,6 +740,17 @@ export class CommandsController {
     return picked?.workflow;
   }
 
+  private async resolveRepoFolderPath(repo: RepoRef): Promise<string | undefined> {
+    const workspaceRepos = await resolveWorkspaceRepos(getSettings().baseUrl);
+    const matched = workspaceRepos.find(
+      (entry) =>
+        entry.repo.host === repo.host &&
+        entry.repo.owner === repo.owner &&
+        entry.repo.name === repo.name,
+    );
+    return matched?.folder.uri.fsPath;
+  }
+
   private async ensureRunDetails(repo: RepoRef, run: WorkflowRun): Promise<void> {
     const entry = this.store.getEntry(repo);
     const state = entry?.jobsStateByRun.get(String(run.id));
@@ -644,6 +763,7 @@ export class CommandsController {
 
 type LogArg = { repo: RepoRef; run: WorkflowRun; job: Job; step?: unknown };
 type ArtifactArg = { repo: RepoRef; artifact: { id: number | string; name: string } };
+type PullRequestArg = { repo: RepoRef; pull: PullRequest };
 
 function normalizeLogArg(arg: unknown): LogArg | undefined {
   if (arg && typeof arg === "object" && "repo" in arg && "job" in arg && "run" in arg) {
@@ -669,6 +789,19 @@ function normalizeArtifactArg(arg: unknown): ArtifactArg | undefined {
         id: arg.artifact.id,
         name: arg.artifact.name,
       },
+    };
+  }
+  return undefined;
+}
+
+function normalizePullRequestArg(arg: unknown): PullRequestArg | undefined {
+  if (arg && typeof arg === "object" && "repo" in arg && "pull" in arg) {
+    return arg as PullRequestArg;
+  }
+  if (arg instanceof PullRequestNode) {
+    return {
+      repo: arg.repo,
+      pull: arg.pullRequest,
     };
   }
   return undefined;

@@ -12,6 +12,8 @@ import {
   normalizeArtifact,
   normalizeJob,
   normalizePullRequest,
+  normalizePullRequestCommit,
+  normalizePullRequestFile,
   normalizePullRequestReview,
   normalizePullRequestReviewComment,
   normalizeRepoStatus,
@@ -20,6 +22,8 @@ import {
   type Artifact,
   type Job,
   type PullRequest,
+  type PullRequestCommit,
+  type PullRequestFile,
   type PullRequestReview,
   type PullRequestReviewComment,
   type RepoRef,
@@ -211,6 +215,50 @@ export class GiteaApi {
     const response = await this.client.getJson<Record<string, unknown> | unknown[]>(url);
     const list = Array.isArray(response) ? response : extractArray(response, ["entries", "pulls"]);
     return list.map((item) => normalizePullRequest(item as Record<string, unknown>));
+  }
+
+  async listPullRequestFiles(repo: RepoRef, pullRequestNumber: number): Promise<PullRequestFile[]> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.listPullRequestFiles;
+    if (!path) {
+      return [];
+    }
+    const url = fillRepoPath(path, repo).replace("{index}", encodeURIComponent(String(pullRequestNumber)));
+    const response = await this.client.getJson<Record<string, unknown> | unknown[]>(url);
+    const list = Array.isArray(response) ? response : extractArray(response, ["entries", "files"]);
+    return list.map((item) => normalizePullRequestFile(item as Record<string, unknown>));
+  }
+
+  async listPullRequestCommits(
+    repo: RepoRef,
+    pullRequestNumber: number,
+  ): Promise<PullRequestCommit[]> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.listPullRequestCommits;
+    if (!path) {
+      return [];
+    }
+    const url = fillRepoPath(path, repo).replace("{index}", encodeURIComponent(String(pullRequestNumber)));
+    const response = await this.client.getJson<Record<string, unknown> | unknown[]>(url);
+    const list = Array.isArray(response) ? response : extractArray(response, ["entries", "commits"]);
+    return list.map((item) => normalizePullRequestCommit(item as Record<string, unknown>));
+  }
+
+  async updatePullRequest(
+    repo: RepoRef,
+    pullRequestNumber: number,
+    style: "merge" | "rebase",
+  ): Promise<void> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.updatePullRequest;
+    if (!path) {
+      throw new EndpointError("Pull request update endpoint not available");
+    }
+    const url = withQuery(
+      fillRepoPath(path, repo).replace("{index}", encodeURIComponent(String(pullRequestNumber))),
+      { style },
+    );
+    await this.client.requestText("POST", url);
   }
 
   async listPullRequestReviews(

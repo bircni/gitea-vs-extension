@@ -170,6 +170,21 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
           "gitea.cap.artifactDownload",
           caps.artifactDownload,
         );
+        await vscode.commands.executeCommand(
+          "setContext",
+          "gitea.cap.pullRequestFiles",
+          caps.pullRequestFiles,
+        );
+        await vscode.commands.executeCommand(
+          "setContext",
+          "gitea.cap.pullRequestCommits",
+          caps.pullRequestCommits,
+        );
+        await vscode.commands.executeCommand(
+          "setContext",
+          "gitea.cap.pullRequestUpdate",
+          caps.pullRequestUpdate,
+        );
       })
       .catch(() => undefined);
   };
