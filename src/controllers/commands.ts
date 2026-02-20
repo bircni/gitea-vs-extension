@@ -42,6 +42,12 @@ export class CommandsController {
         this.handleTestConnection(),
       ),
       vscode.commands.registerCommand("gitea-vs-extension.refresh", () => this.handleRefresh()),
+      vscode.commands.registerCommand("gitea-vs-extension.setRunSearchFilter", () =>
+        this.handleSetRunSearchFilter(),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.clearRunSearchFilter", () =>
+        this.handleClearRunSearchFilter(),
+      ),
       vscode.commands.registerCommand("gitea-vs-extension.refreshRepo", (arg) =>
         this.handleRefreshRepo(arg),
       ),
@@ -157,6 +163,29 @@ export class CommandsController {
 
   private handleRefresh(): void {
     void this.refreshController.refreshAll();
+  }
+
+  private async handleSetRunSearchFilter(): Promise<void> {
+    const current = getSettings().actionsFilterSearch;
+    const query = await vscode.window.showInputBox({
+      title: "Run search filter",
+      prompt: "Filter runs by name/workflow/branch/event",
+      value: current,
+    });
+    if (query === undefined) {
+      return;
+    }
+    await vscode.workspace
+      .getConfiguration("gitea-vs-extension")
+      .update("actions.filters.search", query.trim(), vscode.ConfigurationTarget.Workspace);
+    this.treeProvider.refresh();
+  }
+
+  private async handleClearRunSearchFilter(): Promise<void> {
+    await vscode.workspace
+      .getConfiguration("gitea-vs-extension")
+      .update("actions.filters.search", "", vscode.ConfigurationTarget.Workspace);
+    this.treeProvider.refresh();
   }
 
   private handleRefreshRepo(arg: unknown): void {

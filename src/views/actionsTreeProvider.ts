@@ -198,7 +198,8 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       return nodes;
     }
 
-    const nodes: TreeNode[] = entry.runs.map(
+    const runs = this.filterRuns(entry.runs);
+    const nodes: TreeNode[] = runs.map(
       (run) => new RunNode(repo, run, this.isExpanded(expandedRunKey(repo, run.id))),
     );
 
@@ -297,7 +298,7 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       if (entry.error) {
         continue;
       }
-      for (const run of entry.runs) {
+      for (const run of this.filterRuns(entry.runs)) {
         const branchName = run.branch ?? "unknown";
         const existing = groups.get(branchName);
         if (!existing) {
@@ -341,5 +342,42 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
 
   private isExpanded(key: string): boolean {
     return this.expanded.has(key);
+  }
+
+  private filterRuns(runs: WorkflowRun[]): WorkflowRun[] {
+    const settings = getSettings();
+    const branchFilter = settings.actionsFilterBranch.trim().toLowerCase();
+    const statusFilter = settings.actionsFilterStatus.trim().toLowerCase();
+    const eventFilter = settings.actionsFilterEvent.trim().toLowerCase();
+    const searchFilter = settings.actionsFilterSearch.trim().toLowerCase();
+
+    if (!branchFilter && !statusFilter && !eventFilter && !searchFilter) {
+      return runs;
+    }
+
+    return runs.filter((run) => {
+      if (branchFilter && !(run.branch ?? "").toLowerCase().includes(branchFilter)) {
+        return false;
+      }
+      if (eventFilter && !(run.event ?? "").toLowerCase().includes(eventFilter)) {
+        return false;
+      }
+      if (statusFilter) {
+        const status = run.status.toLowerCase();
+        const conclusion = (run.conclusion ?? "").toLowerCase();
+        if (!status.includes(statusFilter) && !conclusion.includes(statusFilter)) {
+          return false;
+        }
+      }
+      if (searchFilter) {
+        const haystack = `${run.name} ${run.workflowName ?? ""} ${run.displayTitle ?? ""} ${
+          run.branch ?? ""
+        } ${run.event ?? ""}`.toLowerCase();
+        if (!haystack.includes(searchFilter)) {
+          return false;
+        }
+      }
+      return true;
+    });
   }
 }

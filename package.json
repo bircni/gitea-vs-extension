@@ -27,7 +27,8 @@
     "onCommand:gitea-vs-extension.testConnection",
     "onCommand:gitea-vs-extension.exportDiagnostics",
     "onCommand:gitea-vs-extension.dispatchWorkflow",
-    "onCommand:gitea-vs-extension.listWorkflows"
+    "onCommand:gitea-vs-extension.listWorkflows",
+    "onCommand:gitea-vs-extension.setRunSearchFilter"
   ],
   "main": "./dist/extension.js",
   "scripts": {
@@ -88,6 +89,26 @@
           "type": "boolean",
           "default": true,
           "description": "Pause background refresh polling when all extension views are hidden."
+        },
+        "gitea-vs-extension.actions.filters.branch": {
+          "type": "string",
+          "default": "",
+          "description": "Filter workflow runs by branch name (contains match)."
+        },
+        "gitea-vs-extension.actions.filters.status": {
+          "type": "string",
+          "default": "",
+          "description": "Filter workflow runs by run status or conclusion (contains match)."
+        },
+        "gitea-vs-extension.actions.filters.event": {
+          "type": "string",
+          "default": "",
+          "description": "Filter workflow runs by event name (contains match)."
+        },
+        "gitea-vs-extension.actions.filters.search": {
+          "type": "string",
+          "default": "",
+          "description": "Quick search filter for workflow runs."
         },
         "gitea-vs-extension.maxRunsPerRepo": {
           "type": "number",
@@ -164,6 +185,16 @@
         "command": "gitea-vs-extension.refresh",
         "title": "gitea-vs-extension: Refresh",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "gitea-vs-extension.setRunSearchFilter",
+        "title": "gitea-vs-extension: Set Run Search Filter",
+        "icon": "$(search)"
+      },
+      {
+        "command": "gitea-vs-extension.clearRunSearchFilter",
+        "title": "gitea-vs-extension: Clear Run Search Filter",
+        "icon": "$(close)"
       },
       {
         "command": "gitea-vs-extension.refreshRepo",
@@ -277,6 +308,16 @@
           "command": "gitea-vs-extension.refresh",
           "when": "view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned || view == gitea-vs-extension.pullRequests",
           "group": "navigation"
+        },
+        {
+          "command": "gitea-vs-extension.setRunSearchFilter",
+          "when": "view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned",
+          "group": "navigation@1"
+        },
+        {
+          "command": "gitea-vs-extension.clearRunSearchFilter",
+          "when": "view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned",
+          "group": "navigation@2"
         }
       ],
       "view/item/context": [

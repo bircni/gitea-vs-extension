@@ -9,6 +9,10 @@ export type ExtensionSettings = {
   runningRefreshSeconds: number;
   idleRefreshSeconds: number;
   pauseWhenViewsHidden: boolean;
+  actionsFilterBranch: string;
+  actionsFilterStatus: string;
+  actionsFilterEvent: string;
+  actionsFilterSearch: string;
   maxRunsPerRepo: number;
   maxJobsPerRun: number;
   debugLogging: boolean;
@@ -40,6 +44,22 @@ export function getSettings(): ExtensionSettings {
       config.get<boolean>("refresh.pauseWhenViewsHidden") ??
       legacyConfig.get<boolean>("refresh.pauseWhenViewsHidden") ??
       true,
+    actionsFilterBranch:
+      config.get<string>("actions.filters.branch") ??
+      legacyConfig.get<string>("actions.filters.branch") ??
+      "",
+    actionsFilterStatus:
+      config.get<string>("actions.filters.status") ??
+      legacyConfig.get<string>("actions.filters.status") ??
+      "",
+    actionsFilterEvent:
+      config.get<string>("actions.filters.event") ??
+      legacyConfig.get<string>("actions.filters.event") ??
+      "",
+    actionsFilterSearch:
+      config.get<string>("actions.filters.search") ??
+      legacyConfig.get<string>("actions.filters.search") ??
+      "",
     maxRunsPerRepo:
       config.get<number>("maxRunsPerRepo") ?? legacyConfig.get<number>("maxRunsPerRepo") ?? 20,
     maxJobsPerRun:
