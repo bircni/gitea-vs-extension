@@ -24,14 +24,16 @@ import type { RepoRef } from "./gitea/models";
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const logger = new Logger("gitea-vs-extension", () => getSettings().debugLogging);
-  let cachedToken = await getToken(context.secrets);
+  const loadActiveToken = async (): Promise<string | undefined> =>
+    getToken(context.secrets, getSettings().activeProfileId);
+  let cachedToken = await loadActiveToken();
 
   const settingsProvider = new SettingsTreeProvider();
   settingsProvider.setTokenStatus(Boolean(cachedToken));
 
   context.secrets.onDidChange((event) => {
-    if (event.key === TOKEN_KEY) {
-      void getToken(context.secrets).then((token) => {
+    if (event.key === TOKEN_KEY || event.key.startsWith(`${TOKEN_KEY}:`)) {
+      void loadActiveToken().then((token) => {
         cachedToken = token;
         settingsProvider.setTokenStatus(Boolean(token));
       });
@@ -52,13 +54,28 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const discovery = new RepoDiscovery(api);
   const expanded = loadExpandedState(context.globalState);
 
-  const runsProvider = new ActionsTreeProvider("runs", store, context.secrets, expanded);
-  const workflowsProvider = new ActionsTreeProvider("workflows", store, context.secrets, expanded);
+  const capabilitiesProvider = async () => api.getCapabilities();
+
+  const runsProvider = new ActionsTreeProvider(
+    "runs",
+    store,
+    context.secrets,
+    expanded,
+    capabilitiesProvider,
+  );
+  const workflowsProvider = new ActionsTreeProvider(
+    "workflows",
+    store,
+    context.secrets,
+    expanded,
+    capabilitiesProvider,
+  );
   const pullRequestsProvider = new ActionsTreeProvider(
     "pullRequests",
     store,
     context.secrets,
     expanded,
+    capabilitiesProvider,
   );
 
   const workflowsTree = vscode.window.createTreeView("gitea-vs-extension.runsPinned", {
@@ -82,6 +99,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   statusBar.text = "Gitea: idle";
   statusBar.command = "workbench.view.extension.bircniGiteaVsExtension";
   statusBar.show();
+  let previousFailedCount = 0;
+  let lastFailedNotificationAt = 0;
 
   const reviewCommentsController = new ReviewCommentsController(
     api,
@@ -106,7 +125,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       }
     },
     (summary) => {
-      updateStatusBar(statusBar, summary);
+      const failedCountIncreased = summary.failedCount > previousFailedCount;
+      updateStatusBar(statusBar, summary, getSettings().activeProfileName);
+      maybeNotifyOnFailedRuns(summary, previousFailedCount, lastFailedNotificationAt);
+      if (failedCountIncreased) {
+        lastFailedNotificationAt = Date.now();
+      }
+      previousFailedCount = summary.failedCount;
       reviewCommentsController.scheduleRefresh();
     },
   );
@@ -120,6 +145,75 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     settingsProvider,
   );
 
+  const treeViews: vscode.TreeView<unknown>[] = [
+    runsTree,
+    workflowsTree,
+    pullRequestsTree,
+    settingsTree,
+  ];
+  const updatePollingForVisibility = (): boolean => {
+    const settings = getSettings();
+    const anyVisible = treeViews.some((view) => view.visible);
+    const pollingEnabled = settings.pauseWhenViewsHidden ? anyVisible : true;
+    refreshController.setPollingEnabled(pollingEnabled);
+    return anyVisible;
+  };
+  const refreshVisibleViews = (): void => {
+    const anyVisible = updatePollingForVisibility();
+    if (anyVisible || !getSettings().pauseWhenViewsHidden) {
+      void refreshController.refreshAll();
+    }
+  };
+  const syncCapabilityContext = (): void => {
+    void api
+      .getCapabilities()
+      .then(async (caps) => {
+        await vscode.commands.executeCommand("setContext", "gitea.cap.workflows", caps.workflows);
+        await vscode.commands.executeCommand(
+          "setContext",
+          "gitea.cap.workflowDispatch",
+          caps.workflowDispatch,
+        );
+        await vscode.commands.executeCommand("setContext", "gitea.cap.runDelete", caps.runDelete);
+        await vscode.commands.executeCommand(
+          "setContext",
+          "gitea.cap.artifactDownload",
+          caps.artifactDownload,
+        );
+        await vscode.commands.executeCommand(
+          "setContext",
+          "gitea.cap.pullRequestFiles",
+          caps.pullRequestFiles,
+        );
+        await vscode.commands.executeCommand(
+          "setContext",
+          "gitea.cap.pullRequestCommits",
+          caps.pullRequestCommits,
+        );
+        await vscode.commands.executeCommand(
+          "setContext",
+          "gitea.cap.pullRequestUpdate",
+          caps.pullRequestUpdate,
+        );
+        await vscode.commands.executeCommand(
+          "setContext",
+          "gitea.cap.requestedReviewers",
+          caps.requestedReviewers,
+        );
+        await vscode.commands.executeCommand(
+          "setContext",
+          "gitea.cap.pullRequestMerge",
+          caps.pullRequestMerge,
+        );
+        await vscode.commands.executeCommand(
+          "setContext",
+          "gitea.cap.pullRequestReviews",
+          caps.pullRequestReviews,
+        );
+      })
+      .catch(() => undefined);
+  };
+
   context.subscriptions.push(
     runsTree,
     workflowsTree,
@@ -131,37 +225,50 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     { dispose: () => refreshController.dispose() },
     ...commands.register(),
     onSettingsChange(() => {
-      logger.debug("Settings changed, refreshing.");
-      refreshController.scheduleNext();
-      void refreshController.refreshAll();
+      logger.debug("Settings changed, refreshing.", "core");
+      void loadActiveToken().then((token) => {
+        cachedToken = token;
+        settingsProvider.setTokenStatus(Boolean(token));
+      });
+      syncCapabilityContext();
+      refreshVisibleViews();
       reviewCommentsController.scheduleRefresh();
     }),
     vscode.workspace.onDidChangeWorkspaceFolders(() => {
-      void refreshController.refreshAll();
+      refreshVisibleViews();
       reviewCommentsController.scheduleRefresh();
     }),
     runsTree.onDidChangeVisibility((event) => {
       if (event.visible) {
-        void refreshController.refreshAll();
+        refreshVisibleViews();
+      } else {
+        updatePollingForVisibility();
       }
     }),
     workflowsTree.onDidChangeVisibility((event) => {
       if (event.visible) {
-        void refreshController.refreshAll();
+        refreshVisibleViews();
+      } else {
+        updatePollingForVisibility();
       }
     }),
     pullRequestsTree.onDidChangeVisibility((event) => {
       if (event.visible) {
-        void refreshController.refreshAll();
+        refreshVisibleViews();
+      } else {
+        updatePollingForVisibility();
       }
     }),
     settingsTree.onDidChangeVisibility((event) => {
       if (event.visible) {
+        refreshVisibleViews();
         const repo = settingsProvider.getCurrentRepo();
         if (repo) {
           void vscode.commands.executeCommand("gitea-vs-extension.refreshSecrets", repo);
           void vscode.commands.executeCommand("gitea-vs-extension.refreshVariables", repo);
         }
+      } else {
+        updatePollingForVisibility();
       }
     }),
     runsTree.onDidExpandElement((event) => {
@@ -208,16 +315,48 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }),
   );
 
+  if (updatePollingForVisibility() || !getSettings().pauseWhenViewsHidden) {
+    void refreshController.refreshAll();
+  }
+  syncCapabilityContext();
   reviewCommentsController.scheduleRefresh();
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export function deactivate(): void {}
 
-function updateStatusBar(item: vscode.StatusBarItem, summary: RefreshSummary): void {
+function updateStatusBar(
+  item: vscode.StatusBarItem,
+  summary: RefreshSummary,
+  profileName?: string,
+): void {
   const running = summary.runningCount;
   const failed = summary.failedCount;
-  item.text = `Gitea: ${running} running, ${failed} failed`;
+  const prefix = profileName ? `Gitea (${profileName})` : "Gitea";
+  const indicator = failed > 0 ? "$(error) " : "";
+  item.text = `${indicator}${prefix}: ${running} running, ${failed} failed`;
+  item.tooltip = `${prefix}\nRunning: ${running}\nFailed: ${failed}`;
+}
+
+function maybeNotifyOnFailedRuns(
+  summary: RefreshSummary,
+  previousFailedCount: number,
+  lastFailedNotificationAt: number,
+): void {
+  const settings = getSettings();
+  if (!settings.failedRunNotificationsEnabled) {
+    return;
+  }
+  if (summary.failedCount <= previousFailedCount) {
+    return;
+  }
+  if (Date.now() - lastFailedNotificationAt < 30_000) {
+    return;
+  }
+  const delta = summary.failedCount - previousFailedCount;
+  vscode.window.showWarningMessage(
+    `Gitea: ${delta} new failed run${delta === 1 ? "" : "s"} detected.`,
+  );
 }
 
 function extractRepoFromSelection(selection: readonly unknown[]): RepoRef | undefined {

@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import { discoverEndpoints, fetchSwagger } from "../gitea/swagger";
+import { capabilitiesFromEndpoints, discoverEndpoints, fetchSwagger } from "../gitea/swagger";
 import { HttpError } from "../gitea/client";
 
 test("finds actions endpoints", () => {
@@ -16,7 +16,16 @@ test("finds actions endpoints", () => {
   expect(endpoints.listRunArtifacts).toBe(
     "/api/v1/repos/{owner}/{repo}/actions/runs/{run}/artifacts",
   );
+  expect(endpoints.listWorkflows).toBe("/api/v1/repos/{owner}/{repo}/actions/workflows");
+  expect(endpoints.dispatchWorkflow).toBe(
+    "/api/v1/repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches",
+  );
   expect(endpoints.listPullRequests).toBe("/api/v1/repos/{owner}/{repo}/pulls");
+  expect(endpoints.mergePullRequest).toBe("/api/v1/repos/{owner}/{repo}/pulls/{index}/merge");
+  expect(endpoints.updatePullRequest).toBe("/api/v1/repos/{owner}/{repo}/pulls/{index}/update");
+  expect(endpoints.requestedReviewers).toBe(
+    "/api/v1/repos/{owner}/{repo}/pulls/{index}/requested_reviewers",
+  );
   expect(endpoints.listPullRequestReviews).toBe(
     "/api/v1/repos/{owner}/{repo}/pulls/{index}/reviews",
   );
@@ -29,6 +38,7 @@ test("uses fallback endpoints when swagger is missing", () => {
   const endpoints = discoverEndpoints(undefined);
   expect(endpoints.listRuns).toBe("/api/v1/repos/{owner}/{repo}/actions/runs");
   expect(endpoints.listJobs).toBe("/api/v1/repos/{owner}/{repo}/actions/runs/{run}/jobs");
+  expect(endpoints.listWorkflows).toBe("/api/v1/repos/{owner}/{repo}/actions/workflows");
   expect(endpoints.version).toBe("/api/v1/version");
   expect(endpoints.listPullRequestReviews).toBe(
     "/api/v1/repos/{owner}/{repo}/pulls/{index}/reviews",
@@ -36,6 +46,25 @@ test("uses fallback endpoints when swagger is missing", () => {
   expect(endpoints.listPullRequestReviewComments).toBe(
     "/api/v1/repos/{owner}/{repo}/pulls/{index}/reviews/{id}/comments",
   );
+});
+
+test("builds capability map from discovered endpoints", () => {
+  const capabilities = capabilitiesFromEndpoints({
+    listRuns: "/api/v1/repos/{owner}/{repo}/actions/runs",
+    listJobs: "/api/v1/repos/{owner}/{repo}/actions/runs/{run}/jobs",
+    jobLogs: "/api/v1/repos/{owner}/{repo}/actions/jobs/{job_id}/logs",
+    listRunArtifacts: "/api/v1/repos/{owner}/{repo}/actions/runs/{run}/artifacts",
+    listPullRequests: "/api/v1/repos/{owner}/{repo}/pulls",
+  });
+
+  expect(capabilities.runs).toBe(true);
+  expect(capabilities.jobs).toBe(true);
+  expect(capabilities.jobLogs).toBe(true);
+  expect(capabilities.runArtifacts).toBe(true);
+  expect(capabilities.workflows).toBe(false);
+  expect(capabilities.pullRequests).toBe(true);
+  expect(capabilities.pullRequestReviews).toBe(false);
+  expect(capabilities.reposListing).toBe(false);
 });
 
 test("prefixes discovered endpoints with basePath", () => {

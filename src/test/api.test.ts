@@ -157,6 +157,54 @@ describe("GiteaApi core endpoints", () => {
     );
   });
 
+  test("lists workflows", async () => {
+    client.getJson.mockResolvedValueOnce({ workflows: [{ id: 1, name: "build" }] });
+
+    const workflows = await api.listWorkflows(repo);
+
+    expect(client.getJson).toHaveBeenCalledWith("/api/v1/repos/owner/repo/actions/workflows");
+    expect(workflows[0]?.name).toBe("build");
+  });
+
+  test("dispatches and toggles workflows", async () => {
+    client.requestText.mockResolvedValue("ok");
+
+    await api.dispatchWorkflow(repo, 9, "main", { env: "prod" });
+    await api.enableWorkflow(repo, 9);
+    await api.disableWorkflow(repo, 9);
+
+    expect(client.requestText).toHaveBeenCalledWith(
+      "POST",
+      "/api/v1/repos/owner/repo/actions/workflows/9/dispatches",
+      { body: { ref: "main", inputs: { env: "prod" } } },
+    );
+    expect(client.requestText).toHaveBeenCalledWith(
+      "PUT",
+      "/api/v1/repos/owner/repo/actions/workflows/9/enable",
+    );
+    expect(client.requestText).toHaveBeenCalledWith(
+      "PUT",
+      "/api/v1/repos/owner/repo/actions/workflows/9/disable",
+    );
+  });
+
+  test("deletes run and downloads artifact", async () => {
+    client.requestText.mockResolvedValueOnce("ok");
+    (client as any).getBinary = jest.fn().mockResolvedValueOnce(new Uint8Array([1, 2, 3]));
+
+    await api.deleteRun(repo, 42);
+    const artifact = await api.downloadArtifact(repo, 77);
+
+    expect(client.requestText).toHaveBeenCalledWith(
+      "DELETE",
+      "/api/v1/repos/owner/repo/actions/runs/42",
+    );
+    expect((client as any).getBinary).toHaveBeenCalledWith(
+      "/api/v1/repos/owner/repo/actions/artifacts/77/zip",
+    );
+    expect(Array.from(artifact)).toEqual([1, 2, 3]);
+  });
+
   test("lists pull requests from array response", async () => {
     client.getJson.mockResolvedValueOnce([{ id: 1, number: 1, title: "PR" }]);
 
@@ -173,6 +221,60 @@ describe("GiteaApi core endpoints", () => {
 
     expect(prs).toHaveLength(1);
     expect(prs[0]?.number).toBe(2);
+  });
+
+  test("lists pull request files and commits", async () => {
+    client.getJson
+      .mockResolvedValueOnce([{ filename: "src/a.ts", status: "modified", additions: 2 }])
+      .mockResolvedValueOnce([{ sha: "abcdef", commit: { message: "feat: test" } }]);
+
+    const files = await api.listPullRequestFiles(repo, 3);
+    const commits = await api.listPullRequestCommits(repo, 3);
+
+    expect(client.getJson).toHaveBeenCalledWith("/api/v1/repos/owner/repo/pulls/3/files");
+    expect(client.getJson).toHaveBeenCalledWith("/api/v1/repos/owner/repo/pulls/3/commits");
+    expect(files[0]?.filename).toBe("src/a.ts");
+    expect(commits[0]?.message).toBe("feat: test");
+  });
+
+  test("updates pull request branch", async () => {
+    client.requestText.mockResolvedValueOnce("ok");
+
+    await api.updatePullRequest(repo, 4, "rebase");
+
+    expect(client.requestText).toHaveBeenCalledWith(
+      "POST",
+      "/api/v1/repos/owner/repo/pulls/4/update?style=rebase",
+    );
+  });
+
+  test("requests reviewers, submits review, merges pull request", async () => {
+    client.requestText.mockResolvedValue("ok");
+
+    await api.requestPullRequestReviewers(repo, 10, ["alice", "bob"]);
+    await api.submitPullRequestReview(repo, 10, "APPROVE", "Looks good");
+    await api.mergePullRequest(repo, 10, { mergeType: "squash", deleteBranchAfterMerge: true });
+    await api.cancelPullRequestAutoMerge(repo, 10);
+
+    expect(client.requestText).toHaveBeenCalledWith(
+      "POST",
+      "/api/v1/repos/owner/repo/pulls/10/requested_reviewers",
+      { body: { reviewers: ["alice", "bob"] } },
+    );
+    expect(client.requestText).toHaveBeenCalledWith(
+      "POST",
+      "/api/v1/repos/owner/repo/pulls/10/reviews",
+      { body: { event: "APPROVE", body: "Looks good" } },
+    );
+    expect(client.requestText).toHaveBeenCalledWith(
+      "POST",
+      "/api/v1/repos/owner/repo/pulls/10/merge",
+      { body: { merge_type: "squash", delete_branch_after_merge: true } },
+    );
+    expect(client.requestText).toHaveBeenCalledWith(
+      "DELETE",
+      "/api/v1/repos/owner/repo/pulls/10/merge",
+    );
   });
 
   test("returns empty when pull request reviews endpoint missing", async () => {
@@ -341,5 +443,21 @@ describe("GiteaApi core endpoints", () => {
     const version = await api.testConnection();
 
     expect(version).toBe("fallback2");
+  });
+
+  test("returns capability map from discovered endpoints", async () => {
+    (fetchSwagger as jest.Mock).mockResolvedValueOnce({
+      basePath: "/api/v1",
+      paths: {
+        "/repos/{owner}/{repo}/actions/runs": {},
+        "/repos/{owner}/{repo}/pulls": {},
+      },
+    });
+
+    const caps = await api.getCapabilities();
+
+    expect(caps.runs).toBe(true);
+    expect(caps.pullRequests).toBe(true);
+    expect(caps.pullRequestReviews).toBe(false);
   });
 });

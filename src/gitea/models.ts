@@ -52,6 +52,17 @@ export type Artifact = {
   downloadUrl?: string;
 };
 
+export type ActionWorkflow = {
+  id: number | string;
+  name: string;
+  path?: string;
+  state?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  url?: string;
+  htmlUrl?: string;
+};
+
 export type PullRequest = {
   id: number | string;
   number: number;
@@ -97,6 +108,22 @@ export type PullRequestReviewComment = {
   createdAt?: string;
   updatedAt?: string;
   reviewId?: number | string;
+};
+
+export type PullRequestFile = {
+  filename: string;
+  status?: string;
+  additions?: number;
+  deletions?: number;
+  changes?: number;
+  patch?: string;
+};
+
+export type PullRequestCommit = {
+  sha: string;
+  message: string;
+  author?: string;
+  htmlUrl?: string;
 };
 
 export type RepoStatusState =
@@ -266,6 +293,20 @@ export function normalizeArtifact(raw: Record<string, unknown>): Artifact {
   };
 }
 
+export function normalizeActionWorkflow(raw: Record<string, unknown>): ActionWorkflow {
+  return {
+    id: asId(raw.id ?? raw.workflow_id),
+    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+    name: asString(raw.name) || asString(raw.path) || "Workflow",
+    path: asString(raw.path),
+    state: asString(raw.state),
+    createdAt: asString(raw.created_at),
+    updatedAt: asString(raw.updated_at),
+    url: asString(raw.url),
+    htmlUrl: asString(raw.html_url),
+  };
+}
+
 export function normalizePullRequest(raw: Record<string, unknown>): PullRequest {
   const stateRaw = asString(raw.state);
   let state: PullRequest["state"] = "unknown";
@@ -322,6 +363,27 @@ export function normalizePullRequestReviewComment(
     createdAt: asString(raw.created_at),
     updatedAt: asString(raw.updated_at),
     reviewId: asId(raw.review_id ?? raw.reviewId ?? raw.pull_request_review_id),
+  };
+}
+
+export function normalizePullRequestFile(raw: Record<string, unknown>): PullRequestFile {
+  return {
+    filename: asString(raw.filename ?? raw.path) ?? "unknown",
+    status: asString(raw.status),
+    additions: asNumber(raw.additions),
+    deletions: asNumber(raw.deletions),
+    changes: asNumber(raw.changes),
+    patch: asString(raw.patch),
+  };
+}
+
+export function normalizePullRequestCommit(raw: Record<string, unknown>): PullRequestCommit {
+  const commit = raw.commit as Record<string, unknown> | undefined;
+  return {
+    sha: asString(raw.sha) ?? "unknown",
+    message: asString(commit?.message) ?? "Commit",
+    author: asString((commit?.author as Record<string, unknown> | undefined)?.name),
+    htmlUrl: asString(raw.html_url ?? raw.url),
   };
 }
 

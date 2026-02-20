@@ -1,9 +1,12 @@
 // ...existing code...
 import {
+  normalizeActionWorkflow,
   normalizeArtifact,
   normalizeConclusion,
   normalizeJob,
   normalizePullRequest,
+  normalizePullRequestCommit,
+  normalizePullRequestFile,
   normalizePullRequestReviewComment,
   normalizeRun,
   normalizeRepoStatus,
@@ -235,6 +238,22 @@ test("normalizes artifact payload with defaults", () => {
   expect(artifact.sizeInBytes).toBeUndefined();
 });
 
+test("normalizes action workflow payload", () => {
+  const workflow = normalizeActionWorkflow({
+    id: 99,
+    path: ".gitea/workflows/build.yml",
+    state: "active",
+    created_at: "2024-01-01T00:00:00Z",
+    html_url: "http://localhost:3000/owner/repo/actions/workflows/99",
+  });
+
+  expect(workflow.id).toBe(99);
+  expect(workflow.name).toBe(".gitea/workflows/build.yml");
+  expect(workflow.path).toBe(".gitea/workflows/build.yml");
+  expect(workflow.state).toBe("active");
+  expect(workflow.htmlUrl).toBe("http://localhost:3000/owner/repo/actions/workflows/99");
+});
+
 test("normalizes pull request payload", () => {
   const pr = normalizePullRequest({
     id: 2,
@@ -329,4 +348,33 @@ test("normalizes pull request review comment payload", () => {
   expect(comment.diffHunk).toBe("@@ -1,2 +1,3 @@");
   expect(comment.author).toBe("octo");
   expect(comment.reviewId).toBe(9);
+});
+
+test("normalizes pull request file payload", () => {
+  const file = normalizePullRequestFile({
+    filename: "src/index.ts",
+    status: "modified",
+    additions: 12,
+    deletions: 3,
+    patch: "@@",
+  });
+
+  expect(file.filename).toBe("src/index.ts");
+  expect(file.status).toBe("modified");
+  expect(file.additions).toBe(12);
+  expect(file.deletions).toBe(3);
+  expect(file.patch).toBe("@@");
+});
+
+test("normalizes pull request commit payload", () => {
+  const commit = normalizePullRequestCommit({
+    sha: "abcdef123456",
+    commit: { message: "feat: add endpoint", author: { name: "octo" } },
+    html_url: "http://localhost/commit/abcdef",
+  });
+
+  expect(commit.sha).toBe("abcdef123456");
+  expect(commit.message).toBe("feat: add endpoint");
+  expect(commit.author).toBe("octo");
+  expect(commit.htmlUrl).toBe("http://localhost/commit/abcdef");
 });

@@ -1,16 +1,29 @@
 import { HttpError, type GiteaHttpClient } from "./client";
-import { discoverEndpoints, fallbackEndpoints, fetchSwagger, type EndpointMap } from "./swagger";
 import {
+  capabilitiesFromEndpoints,
+  discoverEndpoints,
+  fallbackEndpoints,
+  fetchSwagger,
+  type CapabilityMap,
+  type EndpointMap,
+} from "./swagger";
+import {
+  normalizeActionWorkflow,
   normalizeArtifact,
   normalizeJob,
   normalizePullRequest,
+  normalizePullRequestCommit,
+  normalizePullRequestFile,
   normalizePullRequestReview,
   normalizePullRequestReviewComment,
   normalizeRepoStatus,
   normalizeRun,
+  type ActionWorkflow,
   type Artifact,
   type Job,
   type PullRequest,
+  type PullRequestCommit,
+  type PullRequestFile,
   type PullRequestReview,
   type PullRequestReviewComment,
   type RepoRef,
@@ -24,8 +37,11 @@ export class EndpointError extends Error {
   }
 }
 
+export type GiteaCapabilities = CapabilityMap;
+
 export class GiteaApi {
   private endpoints?: EndpointMap;
+  private capabilities?: GiteaCapabilities;
   private lastBaseUrl?: string;
 
   constructor(
@@ -100,6 +116,104 @@ export class GiteaApi {
     return list.map((item) => normalizeArtifact(item as Record<string, unknown>));
   }
 
+  async listWorkflows(repo: RepoRef): Promise<ActionWorkflow[]> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.listWorkflows;
+    if (!path) {
+      return [];
+    }
+    const response = await this.client.getJson<Record<string, unknown>>(fillRepoPath(path, repo));
+    const list = extractArray(response, ["workflows", "entries"]);
+    return list.map((item) => normalizeActionWorkflow(item as Record<string, unknown>));
+  }
+
+  async deleteRun(repo: RepoRef, runId: number | string): Promise<void> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.deleteRun;
+    if (!path) {
+      throw new EndpointError("Run deletion endpoint not available");
+    }
+    const url = fillRepoPath(path, repo)
+      .replace("{run}", encodeURIComponent(String(runId)))
+      .replace("{run_id}", encodeURIComponent(String(runId)));
+    await this.client.requestText("DELETE", url);
+  }
+
+  async getWorkflow(
+    repo: RepoRef,
+    workflowId: number | string,
+  ): Promise<ActionWorkflow | undefined> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.getWorkflow;
+    if (!path) {
+      return undefined;
+    }
+    const response = await this.client.getJson<Record<string, unknown>>(
+      fillRepoPath(path, repo).replace("{workflow_id}", encodeURIComponent(String(workflowId))),
+    );
+    return normalizeActionWorkflow(response);
+  }
+
+  async dispatchWorkflow(
+    repo: RepoRef,
+    workflowId: number | string,
+    ref: string,
+    inputs?: Record<string, string>,
+  ): Promise<void> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.dispatchWorkflow;
+    if (!path) {
+      throw new EndpointError("Workflow dispatch endpoint not available");
+    }
+    const url = fillRepoPath(path, repo).replace(
+      "{workflow_id}",
+      encodeURIComponent(String(workflowId)),
+    );
+    await this.client.requestText("POST", url, {
+      body: {
+        ref,
+        inputs,
+      },
+    });
+  }
+
+  async enableWorkflow(repo: RepoRef, workflowId: number | string): Promise<void> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.enableWorkflow;
+    if (!path) {
+      throw new EndpointError("Workflow enable endpoint not available");
+    }
+    const url = fillRepoPath(path, repo).replace(
+      "{workflow_id}",
+      encodeURIComponent(String(workflowId)),
+    );
+    await this.client.requestText("PUT", url);
+  }
+
+  async disableWorkflow(repo: RepoRef, workflowId: number | string): Promise<void> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.disableWorkflow;
+    if (!path) {
+      throw new EndpointError("Workflow disable endpoint not available");
+    }
+    const url = fillRepoPath(path, repo).replace(
+      "{workflow_id}",
+      encodeURIComponent(String(workflowId)),
+    );
+    await this.client.requestText("PUT", url);
+  }
+
+  async downloadArtifact(repo: RepoRef, artifactId: number | string): Promise<Uint8Array> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.downloadArtifact;
+    const url = path
+      ? fillRepoPath(path, repo).replace("{artifact_id}", encodeURIComponent(String(artifactId)))
+      : `/api/v1/repos/${encodeURIComponent(repo.owner)}/${encodeURIComponent(
+          repo.name,
+        )}/actions/artifacts/${encodeURIComponent(String(artifactId))}/zip`;
+    return this.client.getBinary(url);
+  }
+
   async listPullRequests(repo: RepoRef): Promise<PullRequest[]> {
     const endpoints = await this.ensureEndpoints();
     const path = endpoints.listPullRequests;
@@ -110,6 +224,138 @@ export class GiteaApi {
     const response = await this.client.getJson<Record<string, unknown> | unknown[]>(url);
     const list = Array.isArray(response) ? response : extractArray(response, ["entries", "pulls"]);
     return list.map((item) => normalizePullRequest(item as Record<string, unknown>));
+  }
+
+  async listPullRequestFiles(repo: RepoRef, pullRequestNumber: number): Promise<PullRequestFile[]> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.listPullRequestFiles;
+    if (!path) {
+      return [];
+    }
+    const url = fillRepoPath(path, repo).replace(
+      "{index}",
+      encodeURIComponent(String(pullRequestNumber)),
+    );
+    const response = await this.client.getJson<Record<string, unknown> | unknown[]>(url);
+    const list = Array.isArray(response) ? response : extractArray(response, ["entries", "files"]);
+    return list.map((item) => normalizePullRequestFile(item as Record<string, unknown>));
+  }
+
+  async listPullRequestCommits(
+    repo: RepoRef,
+    pullRequestNumber: number,
+  ): Promise<PullRequestCommit[]> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.listPullRequestCommits;
+    if (!path) {
+      return [];
+    }
+    const url = fillRepoPath(path, repo).replace(
+      "{index}",
+      encodeURIComponent(String(pullRequestNumber)),
+    );
+    const response = await this.client.getJson<Record<string, unknown> | unknown[]>(url);
+    const list = Array.isArray(response)
+      ? response
+      : extractArray(response, ["entries", "commits"]);
+    return list.map((item) => normalizePullRequestCommit(item as Record<string, unknown>));
+  }
+
+  async updatePullRequest(
+    repo: RepoRef,
+    pullRequestNumber: number,
+    style: "merge" | "rebase",
+  ): Promise<void> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.updatePullRequest;
+    if (!path) {
+      throw new EndpointError("Pull request update endpoint not available");
+    }
+    const url = withQuery(
+      fillRepoPath(path, repo).replace("{index}", encodeURIComponent(String(pullRequestNumber))),
+      { style },
+    );
+    await this.client.requestText("POST", url);
+  }
+
+  async requestPullRequestReviewers(
+    repo: RepoRef,
+    pullRequestNumber: number,
+    reviewers: string[],
+    remove = false,
+  ): Promise<void> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.requestedReviewers;
+    if (!path) {
+      throw new EndpointError("Pull request reviewer request endpoint not available");
+    }
+    const url = fillRepoPath(path, repo).replace(
+      "{index}",
+      encodeURIComponent(String(pullRequestNumber)),
+    );
+    await this.client.requestText(remove ? "DELETE" : "POST", url, {
+      body: {
+        reviewers,
+      },
+    });
+  }
+
+  async submitPullRequestReview(
+    repo: RepoRef,
+    pullRequestNumber: number,
+    event: "COMMENT" | "APPROVE" | "REQUEST_CHANGES",
+    body?: string,
+  ): Promise<void> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.listPullRequestReviews;
+    if (!path) {
+      throw new EndpointError("Pull request reviews endpoint not available");
+    }
+    const url = fillRepoPath(path, repo).replace(
+      "{index}",
+      encodeURIComponent(String(pullRequestNumber)),
+    );
+    await this.client.requestText("POST", url, {
+      body: {
+        event,
+        body,
+      },
+    });
+  }
+
+  async mergePullRequest(
+    repo: RepoRef,
+    pullRequestNumber: number,
+    options?: { mergeType?: "merge" | "rebase" | "squash"; deleteBranchAfterMerge?: boolean },
+  ): Promise<void> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.mergePullRequest;
+    if (!path) {
+      throw new EndpointError("Pull request merge endpoint not available");
+    }
+    const url = fillRepoPath(path, repo).replace(
+      "{index}",
+      encodeURIComponent(String(pullRequestNumber)),
+    );
+    await this.client.requestText("POST", url, {
+      body: {
+        merge_type: options?.mergeType ?? "merge",
+        delete_branch_after_merge: options?.deleteBranchAfterMerge ?? false,
+      },
+    });
+  }
+
+  async cancelPullRequestAutoMerge(repo: RepoRef, pullRequestNumber: number): Promise<void> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints.mergePullRequest;
+    if (!path) {
+      throw new EndpointError("Pull request merge endpoint not available");
+    }
+    const url = fillRepoPath(path, repo).replace(
+      "{index}",
+      encodeURIComponent(String(pullRequestNumber)),
+    );
+    await this.client.requestText("DELETE", url);
   }
 
   async listPullRequestReviews(
@@ -329,7 +575,13 @@ export class GiteaApi {
     }
 
     this.lastBaseUrl = baseUrl;
+    this.capabilities = capabilitiesFromEndpoints(this.endpoints);
     return this.endpoints;
+  }
+
+  async getCapabilities(): Promise<GiteaCapabilities> {
+    await this.ensureEndpoints();
+    return this.capabilities ?? capabilitiesFromEndpoints(fallbackEndpoints());
   }
 }
 

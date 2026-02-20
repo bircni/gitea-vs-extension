@@ -1,9 +1,12 @@
+import * as fs from "fs";
 import * as vscode from "vscode";
-import { getSettings } from "../config/settings";
+import { getSettings, type GiteaProfile } from "../config/settings";
 import { clearToken, getToken, setToken } from "../config/secrets";
 import type { GiteaApi } from "../gitea/api";
-import type { Job, PullRequest, RepoRef, WorkflowRun } from "../gitea/models";
+import type { ActionWorkflow, Job, PullRequest, RepoRef, WorkflowRun } from "../gitea/models";
 import type { RepoStateStore } from "../util/cache";
+import { execGit } from "../util/git";
+import { resolveWorkspaceRepos } from "../util/repoResolution";
 import type { ActionsTreeProvider } from "../views/actionsTreeProvider";
 import {
   ArtifactNode,
@@ -34,6 +37,9 @@ export class CommandsController {
   register(): vscode.Disposable[] {
     return [
       vscode.commands.registerCommand("gitea-vs-extension.setToken", () => this.handleSetToken()),
+      vscode.commands.registerCommand("gitea-vs-extension.switchProfile", () =>
+        this.handleSwitchProfile(),
+      ),
       vscode.commands.registerCommand("gitea-vs-extension.clearToken", () =>
         this.handleClearToken(),
       ),
@@ -41,6 +47,12 @@ export class CommandsController {
         this.handleTestConnection(),
       ),
       vscode.commands.registerCommand("gitea-vs-extension.refresh", () => this.handleRefresh()),
+      vscode.commands.registerCommand("gitea-vs-extension.setRunSearchFilter", () =>
+        this.handleSetRunSearchFilter(),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.clearRunSearchFilter", () =>
+        this.handleClearRunSearchFilter(),
+      ),
       vscode.commands.registerCommand("gitea-vs-extension.refreshRepo", (arg) =>
         this.handleRefreshRepo(arg),
       ),
@@ -83,6 +95,51 @@ export class CommandsController {
       vscode.commands.registerCommand("gitea-vs-extension.openBaseUrlSettings", () =>
         this.handleOpenBaseUrlSettings(),
       ),
+      vscode.commands.registerCommand("gitea-vs-extension.exportDiagnostics", () =>
+        this.handleExportDiagnostics(),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.listWorkflows", (arg) =>
+        this.handleListWorkflows(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.dispatchWorkflow", (arg) =>
+        this.handleDispatchWorkflow(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.enableWorkflow", (arg) =>
+        this.handleEnableWorkflow(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.disableWorkflow", (arg) =>
+        this.handleDisableWorkflow(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.deleteRun", (arg) =>
+        this.handleDeleteRun(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.downloadArtifact", (arg) =>
+        this.handleDownloadArtifact(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.checkoutPullRequest", (arg) =>
+        this.handleCheckoutPullRequest(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.viewPullRequestFiles", (arg) =>
+        this.handleViewPullRequestFiles(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.viewPullRequestCommits", (arg) =>
+        this.handleViewPullRequestCommits(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.updatePullRequest", (arg) =>
+        this.handleUpdatePullRequest(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.requestReviewers", (arg) =>
+        this.handleRequestReviewers(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.submitPullRequestReview", (arg) =>
+        this.handleSubmitPullRequestReview(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.mergePullRequest", (arg) =>
+        this.handleMergePullRequest(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.cancelPullRequestAutoMerge", (arg) =>
+        this.handleCancelPullRequestAutoMerge(arg),
+      ),
     ];
   }
 
@@ -98,14 +155,35 @@ export class CommandsController {
       return;
     }
 
-    await setToken(this.context.secrets, token.trim());
+    await setToken(this.context.secrets, token.trim(), getSettings().activeProfileId);
     this.settingsProvider.setTokenStatus(true);
     void this.refreshController.refreshAll();
     vscode.window.showInformationMessage("gitea-vs-extension token saved.");
   }
 
+  private async handleSwitchProfile(): Promise<void> {
+    const settings = getSettings();
+    if (!settings.profiles.length) {
+      vscode.window.showInformationMessage(
+        "No profiles configured. Set gitea-vs-extension.profiles first.",
+      );
+      return;
+    }
+    const selected = await pickProfile(settings.profiles, settings.activeProfileId);
+    if (!selected) {
+      return;
+    }
+    await vscode.workspace
+      .getConfiguration("gitea-vs-extension")
+      .update("activeProfileId", selected.id, vscode.ConfigurationTarget.Global);
+    const token = await getToken(this.context.secrets, selected.id);
+    this.settingsProvider.setTokenStatus(Boolean(token));
+    void this.refreshController.refreshAll();
+    vscode.window.showInformationMessage(`Switched to profile: ${selected.name}`);
+  }
+
   private async handleClearToken(): Promise<void> {
-    await clearToken(this.context.secrets);
+    await clearToken(this.context.secrets, getSettings().activeProfileId);
     this.settingsProvider.setTokenStatus(false);
     void this.refreshController.refreshAll();
     vscode.window.showInformationMessage("gitea-vs-extension token cleared.");
@@ -118,7 +196,7 @@ export class CommandsController {
       return;
     }
 
-    const token = await getToken(this.context.secrets);
+    const token = await getToken(this.context.secrets, settings.activeProfileId);
     if (!token) {
       vscode.window.showWarningMessage("Set a token before testing connection.");
       return;
@@ -135,6 +213,29 @@ export class CommandsController {
 
   private handleRefresh(): void {
     void this.refreshController.refreshAll();
+  }
+
+  private async handleSetRunSearchFilter(): Promise<void> {
+    const current = getSettings().actionsFilterSearch;
+    const query = await vscode.window.showInputBox({
+      title: "Run search filter",
+      prompt: "Filter runs by name/workflow/branch/event",
+      value: current,
+    });
+    if (query === undefined) {
+      return;
+    }
+    await vscode.workspace
+      .getConfiguration("gitea-vs-extension")
+      .update("actions.filters.search", query.trim(), vscode.ConfigurationTarget.Workspace);
+    this.treeProvider.refresh();
+  }
+
+  private async handleClearRunSearchFilter(): Promise<void> {
+    await vscode.workspace
+      .getConfiguration("gitea-vs-extension")
+      .update("actions.filters.search", "", vscode.ConfigurationTarget.Workspace);
+    this.treeProvider.refresh();
   }
 
   private handleRefreshRepo(arg: unknown): void {
@@ -378,6 +479,422 @@ export class CommandsController {
     await vscode.commands.executeCommand("workbench.action.openSettings", "@gitea-vs-extension");
   }
 
+  private async handleExportDiagnostics(): Promise<void> {
+    const settings = getSettings();
+    const capabilities = await this.api.getCapabilities().catch(() => undefined);
+    const repos = this.store.getEntries().map((entry) => ({
+      repo: `${entry.repo.owner}/${entry.repo.name}`,
+      runs: entry.runs.length,
+      pullRequests: entry.pullRequests.length,
+      loading: entry.loading,
+      error: entry.error,
+      recentErrors: entry.errors,
+      lastUpdated: entry.lastUpdated ? new Date(entry.lastUpdated).toISOString() : undefined,
+    }));
+    const payload = {
+      generatedAt: new Date().toISOString(),
+      vscodeVersion: vscode.version,
+      settings: {
+        activeProfileId: settings.activeProfileId,
+        activeProfileName: settings.activeProfileName,
+        profiles: settings.profiles,
+        baseUrl: settings.baseUrl,
+        tlsInsecureSkipVerify: settings.tlsInsecureSkipVerify,
+        discoveryMode: settings.discoveryMode,
+        runningRefreshSeconds: settings.runningRefreshSeconds,
+        idleRefreshSeconds: settings.idleRefreshSeconds,
+        pauseWhenViewsHidden: settings.pauseWhenViewsHidden,
+        maxRunsPerRepo: settings.maxRunsPerRepo,
+        maxJobsPerRun: settings.maxJobsPerRun,
+        debugLogging: settings.debugLogging,
+        reviewCommentsEnabled: settings.reviewCommentsEnabled,
+        failedRunNotificationsEnabled: settings.failedRunNotificationsEnabled,
+      },
+      capabilities,
+      repositories: repos,
+      workspaceFolders: (vscode.workspace.workspaceFolders ?? []).map(
+        (folder) => folder.uri.fsPath,
+      ),
+    };
+
+    const document = await vscode.workspace.openTextDocument({
+      language: "json",
+      content: JSON.stringify(payload, null, 2),
+    });
+    await vscode.window.showTextDocument(document, { preview: false });
+  }
+
+  private async handleListWorkflows(arg: unknown): Promise<void> {
+    const repo = await this.resolveRepoForAction(arg);
+    if (!repo) {
+      return;
+    }
+    const workflows = await this.api.listWorkflows(repo);
+    if (!workflows.length) {
+      vscode.window.showInformationMessage("No workflows found for this repository.");
+      return;
+    }
+    const picked = await vscode.window.showQuickPick(
+      workflows.map((workflow) => ({
+        label: workflow.name,
+        description: workflow.state,
+        workflow,
+      })),
+      {
+        title: `Workflows for ${repo.owner}/${repo.name}`,
+      },
+    );
+    if (!picked) {
+      return;
+    }
+    if (picked.workflow.htmlUrl) {
+      await vscode.env.openExternal(vscode.Uri.parse(picked.workflow.htmlUrl));
+      return;
+    }
+    vscode.window.showInformationMessage(`Selected workflow: ${picked.workflow.name}`);
+  }
+
+  private async handleDispatchWorkflow(arg: unknown): Promise<void> {
+    const repo = await this.resolveRepoForAction(arg);
+    if (!repo) {
+      return;
+    }
+    const workflow = await this.pickWorkflow(repo);
+    if (!workflow) {
+      return;
+    }
+    const ref = await vscode.window.showInputBox({
+      title: "Dispatch workflow",
+      prompt: "Git ref (branch or tag)",
+      value: "main",
+    });
+    if (!ref) {
+      return;
+    }
+    const rawInputs = await vscode.window.showInputBox({
+      title: "Workflow inputs",
+      prompt: "Optional: key=value pairs separated by commas",
+    });
+    const inputs = parseWorkflowInputs(rawInputs);
+    await this.api.dispatchWorkflow(repo, workflow.id, ref.trim(), inputs);
+    vscode.window.showInformationMessage(`Workflow dispatched: ${workflow.name}`);
+    void this.refreshController.refreshRepo(repo, getSettings().maxRunsPerRepo);
+  }
+
+  private async handleEnableWorkflow(arg: unknown): Promise<void> {
+    const repo = await this.resolveRepoForAction(arg);
+    if (!repo) {
+      return;
+    }
+    const workflow = await this.pickWorkflow(repo);
+    if (!workflow) {
+      return;
+    }
+    await this.api.enableWorkflow(repo, workflow.id);
+    vscode.window.showInformationMessage(`Workflow enabled: ${workflow.name}`);
+  }
+
+  private async handleDisableWorkflow(arg: unknown): Promise<void> {
+    const repo = await this.resolveRepoForAction(arg);
+    if (!repo) {
+      return;
+    }
+    const workflow = await this.pickWorkflow(repo);
+    if (!workflow) {
+      return;
+    }
+    await this.api.disableWorkflow(repo, workflow.id);
+    vscode.window.showInformationMessage(`Workflow disabled: ${workflow.name}`);
+  }
+
+  private async handleDeleteRun(arg: unknown): Promise<void> {
+    const payload = normalizeRunArg(arg);
+    if (!payload) {
+      vscode.window.showWarningMessage("Run not found.");
+      return;
+    }
+    const confirmed = await vscode.window.showWarningMessage(
+      `Delete workflow run #${payload.run.id}?`,
+      { modal: true },
+      "Delete",
+    );
+    if (confirmed !== "Delete") {
+      return;
+    }
+    await this.api.deleteRun(payload.repo, payload.run.id);
+    void this.refreshController.refreshRepo(payload.repo, getSettings().maxRunsPerRepo);
+    vscode.window.showInformationMessage(`Deleted run #${payload.run.id}.`);
+  }
+
+  private async handleDownloadArtifact(arg: unknown): Promise<void> {
+    const payload = normalizeArtifactArg(arg);
+    if (!payload) {
+      vscode.window.showWarningMessage("Artifact not found.");
+      return;
+    }
+    const target = await vscode.window.showSaveDialog({
+      saveLabel: "Download Artifact",
+      filters: {
+        Zip: ["zip"],
+      },
+      defaultUri: vscode.Uri.file(`${payload.artifact.name}.zip`),
+    });
+    if (!target) {
+      return;
+    }
+    const data = await this.api.downloadArtifact(payload.repo, payload.artifact.id);
+    await fs.promises.writeFile(target.fsPath, Buffer.from(data));
+    vscode.window.showInformationMessage(`Artifact downloaded to ${target.fsPath}`);
+  }
+
+  private async handleCheckoutPullRequest(arg: unknown): Promise<void> {
+    const payload = normalizePullRequestArg(arg);
+    if (!payload) {
+      vscode.window.showWarningMessage("Pull request not found.");
+      return;
+    }
+    const branch = payload.pull.headRef;
+    if (!branch) {
+      vscode.window.showWarningMessage("This pull request has no head branch.");
+      return;
+    }
+    const folderPath = await this.resolveRepoFolderPath(payload.repo);
+    if (!folderPath) {
+      vscode.window.showWarningMessage("No workspace folder found for this repository.");
+      return;
+    }
+
+    await execGit(["fetch", "--all"], folderPath);
+    try {
+      await execGit(["checkout", branch], folderPath);
+    } catch {
+      await execGit(["checkout", "-B", branch, `origin/${branch}`], folderPath);
+    }
+
+    vscode.window.showInformationMessage(`Checked out PR #${payload.pull.number} (${branch}).`);
+  }
+
+  private async handleViewPullRequestFiles(arg: unknown): Promise<void> {
+    const payload = normalizePullRequestArg(arg);
+    if (!payload) {
+      vscode.window.showWarningMessage("Pull request not found.");
+      return;
+    }
+    const files = await this.api.listPullRequestFiles(payload.repo, payload.pull.number);
+    if (!files.length) {
+      vscode.window.showInformationMessage("No changed files found.");
+      return;
+    }
+    const content = files
+      .map(
+        (file) =>
+          `${file.filename} [${file.status ?? "unknown"}] +${file.additions ?? 0} -${
+            file.deletions ?? 0
+          }`,
+      )
+      .join("\n");
+    const doc = await vscode.workspace.openTextDocument({
+      language: "text",
+      content,
+    });
+    await vscode.window.showTextDocument(doc, { preview: true });
+  }
+
+  private async handleViewPullRequestCommits(arg: unknown): Promise<void> {
+    const payload = normalizePullRequestArg(arg);
+    if (!payload) {
+      vscode.window.showWarningMessage("Pull request not found.");
+      return;
+    }
+    const commits = await this.api.listPullRequestCommits(payload.repo, payload.pull.number);
+    if (!commits.length) {
+      vscode.window.showInformationMessage("No commits found.");
+      return;
+    }
+    const content = commits
+      .map(
+        (commit) =>
+          `${commit.sha.slice(0, 7)} ${commit.message}${commit.author ? ` (${commit.author})` : ""}`,
+      )
+      .join("\n");
+    const doc = await vscode.workspace.openTextDocument({
+      language: "text",
+      content,
+    });
+    await vscode.window.showTextDocument(doc, { preview: true });
+  }
+
+  private async handleUpdatePullRequest(arg: unknown): Promise<void> {
+    const payload = normalizePullRequestArg(arg);
+    if (!payload) {
+      vscode.window.showWarningMessage("Pull request not found.");
+      return;
+    }
+    const style = await vscode.window.showQuickPick(
+      [
+        { label: "merge", description: "Merge base branch into PR branch" },
+        { label: "rebase", description: "Rebase PR branch on top of base branch" },
+      ],
+      { title: `Update PR #${payload.pull.number}` },
+    );
+    if (!style) {
+      return;
+    }
+    await this.api.updatePullRequest(
+      payload.repo,
+      payload.pull.number,
+      style.label as "merge" | "rebase",
+    );
+    vscode.window.showInformationMessage(`PR #${payload.pull.number} updated with ${style.label}.`);
+  }
+
+  private async handleRequestReviewers(arg: unknown): Promise<void> {
+    const payload = normalizePullRequestArg(arg);
+    if (!payload) {
+      vscode.window.showWarningMessage("Pull request not found.");
+      return;
+    }
+    const action = await vscode.window.showQuickPick(
+      [
+        { label: "Request reviewers", remove: false },
+        { label: "Cancel review requests", remove: true },
+      ],
+      { title: `PR #${payload.pull.number}: reviewers` },
+    );
+    if (!action) {
+      return;
+    }
+    const input = await vscode.window.showInputBox({
+      title: "Reviewers",
+      prompt: "Comma-separated usernames",
+    });
+    if (!input?.trim()) {
+      return;
+    }
+    const reviewers = input
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    if (!reviewers.length) {
+      return;
+    }
+    await this.api.requestPullRequestReviewers(
+      payload.repo,
+      payload.pull.number,
+      reviewers,
+      action.remove,
+    );
+    vscode.window.showInformationMessage(`Updated reviewers for PR #${payload.pull.number}.`);
+  }
+
+  private async handleSubmitPullRequestReview(arg: unknown): Promise<void> {
+    const payload = normalizePullRequestArg(arg);
+    if (!payload) {
+      vscode.window.showWarningMessage("Pull request not found.");
+      return;
+    }
+    const action = await vscode.window.showQuickPick(
+      [
+        { label: "Comment", event: "COMMENT" as const },
+        { label: "Approve", event: "APPROVE" as const },
+        { label: "Request changes", event: "REQUEST_CHANGES" as const },
+      ],
+      { title: `Submit review for PR #${payload.pull.number}` },
+    );
+    if (!action) {
+      return;
+    }
+    const body = await vscode.window.showInputBox({
+      title: "Review message",
+      prompt: "Optional review text",
+    });
+    await this.api.submitPullRequestReview(payload.repo, payload.pull.number, action.event, body);
+    vscode.window.showInformationMessage(`Submitted ${action.label.toLowerCase()} review.`);
+  }
+
+  private async handleMergePullRequest(arg: unknown): Promise<void> {
+    const payload = normalizePullRequestArg(arg);
+    if (!payload) {
+      vscode.window.showWarningMessage("Pull request not found.");
+      return;
+    }
+    const mergeType = await vscode.window.showQuickPick(
+      [{ label: "merge" }, { label: "rebase" }, { label: "squash" }],
+      { title: `Merge PR #${payload.pull.number}` },
+    );
+    if (!mergeType) {
+      return;
+    }
+    await this.api.mergePullRequest(payload.repo, payload.pull.number, {
+      mergeType: mergeType.label as "merge" | "rebase" | "squash",
+      deleteBranchAfterMerge: false,
+    });
+    vscode.window.showInformationMessage(`Merged PR #${payload.pull.number}.`);
+    void this.refreshController.refreshRepo(payload.repo, getSettings().maxRunsPerRepo);
+  }
+
+  private async handleCancelPullRequestAutoMerge(arg: unknown): Promise<void> {
+    const payload = normalizePullRequestArg(arg);
+    if (!payload) {
+      vscode.window.showWarningMessage("Pull request not found.");
+      return;
+    }
+    await this.api.cancelPullRequestAutoMerge(payload.repo, payload.pull.number);
+    vscode.window.showInformationMessage(`Cancelled auto-merge for PR #${payload.pull.number}.`);
+  }
+
+  private async resolveRepoForAction(arg: unknown): Promise<RepoRef | undefined> {
+    return extractRepo(arg) ?? this.settingsProvider.getCurrentRepo() ?? this.pickRepo();
+  }
+
+  private async pickRepo(): Promise<RepoRef | undefined> {
+    const repos = this.store.getRepos();
+    if (!repos.length) {
+      vscode.window.showWarningMessage("No repositories available.");
+      return undefined;
+    }
+    if (repos.length === 1) {
+      return repos[0];
+    }
+    const picked = await vscode.window.showQuickPick(
+      repos.map((repo) => ({
+        label: `${repo.owner}/${repo.name}`,
+        description: repo.host,
+        repo,
+      })),
+      { title: "Select repository" },
+    );
+    return picked?.repo;
+  }
+
+  private async pickWorkflow(repo: RepoRef): Promise<ActionWorkflow | undefined> {
+    const workflows = await this.api.listWorkflows(repo);
+    if (!workflows.length) {
+      vscode.window.showWarningMessage("No workflows found.");
+      return undefined;
+    }
+    const picked = await vscode.window.showQuickPick(
+      workflows.map((workflow) => ({
+        label: workflow.name,
+        description: workflow.state,
+        workflow,
+      })),
+      { title: `Select workflow (${repo.owner}/${repo.name})` },
+    );
+    return picked?.workflow;
+  }
+
+  private async resolveRepoFolderPath(repo: RepoRef): Promise<string | undefined> {
+    const workspaceRepos = await resolveWorkspaceRepos(getSettings().baseUrl);
+    const matched = workspaceRepos.find(
+      (entry) =>
+        entry.repo.host === repo.host &&
+        entry.repo.owner === repo.owner &&
+        entry.repo.name === repo.name,
+    );
+    return matched?.folder.uri.fsPath;
+  }
+
   private async ensureRunDetails(repo: RepoRef, run: WorkflowRun): Promise<void> {
     const entry = this.store.getEntry(repo);
     const state = entry?.jobsStateByRun.get(String(run.id));
@@ -389,6 +906,8 @@ export class CommandsController {
 }
 
 type LogArg = { repo: RepoRef; run: WorkflowRun; job: Job; step?: unknown };
+type ArtifactArg = { repo: RepoRef; artifact: { id: number | string; name: string } };
+type PullRequestArg = { repo: RepoRef; pull: PullRequest };
 
 function normalizeLogArg(arg: unknown): LogArg | undefined {
   if (arg && typeof arg === "object" && "repo" in arg && "job" in arg && "run" in arg) {
@@ -399,6 +918,35 @@ function normalizeLogArg(arg: unknown): LogArg | undefined {
   }
   if (arg instanceof StepNode) {
     return { repo: arg.repo, run: arg.run, job: arg.job, step: arg.step };
+  }
+  return undefined;
+}
+
+function normalizeArtifactArg(arg: unknown): ArtifactArg | undefined {
+  if (arg && typeof arg === "object" && "repo" in arg && "artifact" in arg) {
+    return arg as ArtifactArg;
+  }
+  if (arg instanceof ArtifactNode) {
+    return {
+      repo: arg.repo,
+      artifact: {
+        id: arg.artifact.id,
+        name: arg.artifact.name,
+      },
+    };
+  }
+  return undefined;
+}
+
+function normalizePullRequestArg(arg: unknown): PullRequestArg | undefined {
+  if (arg && typeof arg === "object" && "repo" in arg && "pull" in arg) {
+    return arg as PullRequestArg;
+  }
+  if (arg instanceof PullRequestNode) {
+    return {
+      repo: arg.repo,
+      pull: arg.pullRequest,
+    };
   }
   return undefined;
 }
@@ -512,4 +1060,43 @@ function buildPullRequestUrl(
 
 function trimBase(baseUrl: string): string {
   return baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+}
+
+function parseWorkflowInputs(raw?: string): Record<string, string> | undefined {
+  if (!raw?.trim()) {
+    return undefined;
+  }
+  const result: Record<string, string> = {};
+  for (const entry of raw.split(",")) {
+    const trimmed = entry.trim();
+    if (!trimmed) {
+      continue;
+    }
+    const [key, ...rest] = trimmed.split("=");
+    const normalizedKey = key.trim();
+    const value = rest.join("=").trim();
+    if (!normalizedKey || !value) {
+      continue;
+    }
+    result[normalizedKey] = value;
+  }
+  return Object.keys(result).length ? result : undefined;
+}
+
+async function pickProfile(
+  profiles: GiteaProfile[],
+  activeProfileId?: string,
+): Promise<GiteaProfile | undefined> {
+  const picked = await vscode.window.showQuickPick(
+    profiles.map((profile) => ({
+      label: profile.name,
+      description: profile.baseUrl,
+      detail: profile.id === activeProfileId ? "Active profile" : undefined,
+      profile,
+    })),
+    {
+      title: "Select active Gitea profile",
+    },
+  );
+  return picked?.profile;
 }

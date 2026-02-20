@@ -18,7 +18,20 @@
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onView:gitea-vs-extension.runsPinned",
+    "onView:gitea-vs-extension.pullRequests",
+    "onView:gitea-vs-extension.runs",
+    "onView:gitea-vs-extension.settings",
+    "onCommand:gitea-vs-extension.refresh",
+    "onCommand:gitea-vs-extension.setToken",
+    "onCommand:gitea-vs-extension.testConnection",
+    "onCommand:gitea-vs-extension.exportDiagnostics",
+    "onCommand:gitea-vs-extension.dispatchWorkflow",
+    "onCommand:gitea-vs-extension.listWorkflows",
+    "onCommand:gitea-vs-extension.setRunSearchFilter",
+    "onCommand:gitea-vs-extension.checkoutPullRequest",
+    "onCommand:gitea-vs-extension.mergePullRequest",
+    "onCommand:gitea-vs-extension.switchProfile"
   ],
   "main": "./dist/extension.js",
   "scripts": {
@@ -51,6 +64,38 @@
           "default": "",
           "description": "Base URL for the Gitea instance, e.g. http://localhost:3000."
         },
+        "gitea-vs-extension.profiles": {
+          "type": "array",
+          "default": [],
+          "description": "Optional named Gitea profiles. If configured, activeProfileId selects the base URL and TLS behavior.",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "baseUrl"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "baseUrl": {
+                "type": "string"
+              },
+              "tlsInsecureSkipVerify": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "gitea-vs-extension.activeProfileId": {
+          "type": "string",
+          "default": "",
+          "description": "Active profile id from gitea-vs-extension.profiles."
+        },
         "gitea-vs-extension.tls.insecureSkipVerify": {
           "type": "boolean",
           "default": false,
@@ -75,6 +120,31 @@
           "default": 60,
           "description": "Refresh interval when idle."
         },
+        "gitea-vs-extension.refresh.pauseWhenViewsHidden": {
+          "type": "boolean",
+          "default": true,
+          "description": "Pause background refresh polling when all extension views are hidden."
+        },
+        "gitea-vs-extension.actions.filters.branch": {
+          "type": "string",
+          "default": "",
+          "description": "Filter workflow runs by branch name (contains match)."
+        },
+        "gitea-vs-extension.actions.filters.status": {
+          "type": "string",
+          "default": "",
+          "description": "Filter workflow runs by run status or conclusion (contains match)."
+        },
+        "gitea-vs-extension.actions.filters.event": {
+          "type": "string",
+          "default": "",
+          "description": "Filter workflow runs by event name (contains match)."
+        },
+        "gitea-vs-extension.actions.filters.search": {
+          "type": "string",
+          "default": "",
+          "description": "Quick search filter for workflow runs."
+        },
         "gitea-vs-extension.maxRunsPerRepo": {
           "type": "number",
           "default": 20,
@@ -89,6 +159,11 @@
           "type": "boolean",
           "default": false,
           "description": "Enable debug logging to the extension output channel."
+        },
+        "gitea-vs-extension.notifications.failedRuns.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show notifications when the number of failed runs increases."
         },
         "gitea-vs-extension.reviewComments.enabled": {
           "type": "boolean",
@@ -137,6 +212,11 @@
         "icon": "$(pencil)"
       },
       {
+        "command": "gitea-vs-extension.switchProfile",
+        "title": "gitea-vs-extension: Switch Profile",
+        "icon": "$(account)"
+      },
+      {
         "command": "gitea-vs-extension.clearToken",
         "title": "gitea-vs-extension: Clear Token",
         "icon": "$(trash)"
@@ -150,6 +230,16 @@
         "command": "gitea-vs-extension.refresh",
         "title": "gitea-vs-extension: Refresh",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "gitea-vs-extension.setRunSearchFilter",
+        "title": "gitea-vs-extension: Set Run Search Filter",
+        "icon": "$(search)"
+      },
+      {
+        "command": "gitea-vs-extension.clearRunSearchFilter",
+        "title": "gitea-vs-extension: Clear Run Search Filter",
+        "icon": "$(close)"
       },
       {
         "command": "gitea-vs-extension.refreshRepo",
@@ -220,6 +310,81 @@
         "command": "gitea-vs-extension.openBaseUrlSettings",
         "title": "gitea-vs-extension: Open Base URL Settings",
         "icon": "$(settings-gear)"
+      },
+      {
+        "command": "gitea-vs-extension.exportDiagnostics",
+        "title": "gitea-vs-extension: Export Diagnostics",
+        "icon": "$(output)"
+      },
+      {
+        "command": "gitea-vs-extension.listWorkflows",
+        "title": "gitea-vs-extension: List Workflows",
+        "icon": "$(list-tree)"
+      },
+      {
+        "command": "gitea-vs-extension.dispatchWorkflow",
+        "title": "gitea-vs-extension: Dispatch Workflow",
+        "icon": "$(play)"
+      },
+      {
+        "command": "gitea-vs-extension.enableWorkflow",
+        "title": "gitea-vs-extension: Enable Workflow",
+        "icon": "$(check)"
+      },
+      {
+        "command": "gitea-vs-extension.disableWorkflow",
+        "title": "gitea-vs-extension: Disable Workflow",
+        "icon": "$(circle-slash)"
+      },
+      {
+        "command": "gitea-vs-extension.deleteRun",
+        "title": "gitea-vs-extension: Delete Run",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "gitea-vs-extension.downloadArtifact",
+        "title": "gitea-vs-extension: Download Artifact",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "gitea-vs-extension.checkoutPullRequest",
+        "title": "gitea-vs-extension: Checkout Pull Request",
+        "icon": "$(git-branch)"
+      },
+      {
+        "command": "gitea-vs-extension.viewPullRequestFiles",
+        "title": "gitea-vs-extension: View Pull Request Files",
+        "icon": "$(files)"
+      },
+      {
+        "command": "gitea-vs-extension.viewPullRequestCommits",
+        "title": "gitea-vs-extension: View Pull Request Commits",
+        "icon": "$(git-commit)"
+      },
+      {
+        "command": "gitea-vs-extension.updatePullRequest",
+        "title": "gitea-vs-extension: Update Pull Request",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "gitea-vs-extension.requestReviewers",
+        "title": "gitea-vs-extension: Request Reviewers",
+        "icon": "$(person-add)"
+      },
+      {
+        "command": "gitea-vs-extension.submitPullRequestReview",
+        "title": "gitea-vs-extension: Submit Pull Request Review",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "gitea-vs-extension.mergePullRequest",
+        "title": "gitea-vs-extension: Merge Pull Request",
+        "icon": "$(git-merge)"
+      },
+      {
+        "command": "gitea-vs-extension.cancelPullRequestAutoMerge",
+        "title": "gitea-vs-extension: Cancel Pull Request Auto Merge",
+        "icon": "$(circle-slash)"
       }
     ],
     "menus": {
@@ -228,6 +393,16 @@
           "command": "gitea-vs-extension.refresh",
           "when": "view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned || view == gitea-vs-extension.pullRequests",
           "group": "navigation"
+        },
+        {
+          "command": "gitea-vs-extension.setRunSearchFilter",
+          "when": "view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned",
+          "group": "navigation@1"
+        },
+        {
+          "command": "gitea-vs-extension.clearRunSearchFilter",
+          "when": "view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned",
+          "group": "navigation@2"
         }
       ],
       "view/item/context": [
@@ -242,6 +417,16 @@
           "group": "inline@1"
         },
         {
+          "command": "gitea-vs-extension.listWorkflows",
+          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem == giteaRepo && gitea.cap.workflows",
+          "group": "inline@2"
+        },
+        {
+          "command": "gitea-vs-extension.dispatchWorkflow",
+          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem == giteaRepo && gitea.cap.workflowDispatch",
+          "group": "inline@3"
+        },
+        {
           "command": "gitea-vs-extension.openInBrowser",
           "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem == giteaRun",
           "group": "inline"
@@ -250,6 +435,11 @@
           "command": "gitea-vs-extension.openLatestFailedJobLogs",
           "when": "viewItem == giteaRun",
           "group": "inline@1"
+        },
+        {
+          "command": "gitea-vs-extension.deleteRun",
+          "when": "viewItem == giteaRun && gitea.cap.runDelete",
+          "group": "inline@2"
         },
         {
           "command": "gitea-vs-extension.openInBrowser",
@@ -267,6 +457,46 @@
           "group": "inline"
         },
         {
+          "command": "gitea-vs-extension.checkoutPullRequest",
+          "when": "viewItem == giteaPullRequest",
+          "group": "inline@1"
+        },
+        {
+          "command": "gitea-vs-extension.viewPullRequestFiles",
+          "when": "viewItem == giteaPullRequest && gitea.cap.pullRequestFiles",
+          "group": "inline@2"
+        },
+        {
+          "command": "gitea-vs-extension.viewPullRequestCommits",
+          "when": "viewItem == giteaPullRequest && gitea.cap.pullRequestCommits",
+          "group": "inline@3"
+        },
+        {
+          "command": "gitea-vs-extension.updatePullRequest",
+          "when": "viewItem == giteaPullRequest && gitea.cap.pullRequestUpdate",
+          "group": "inline@4"
+        },
+        {
+          "command": "gitea-vs-extension.requestReviewers",
+          "when": "viewItem == giteaPullRequest && gitea.cap.requestedReviewers",
+          "group": "inline@5"
+        },
+        {
+          "command": "gitea-vs-extension.submitPullRequestReview",
+          "when": "viewItem == giteaPullRequest && gitea.cap.pullRequestReviews",
+          "group": "inline@6"
+        },
+        {
+          "command": "gitea-vs-extension.mergePullRequest",
+          "when": "viewItem == giteaPullRequest && gitea.cap.pullRequestMerge",
+          "group": "inline@7"
+        },
+        {
+          "command": "gitea-vs-extension.cancelPullRequestAutoMerge",
+          "when": "viewItem == giteaPullRequest && gitea.cap.pullRequestMerge",
+          "group": "inline@8"
+        },
+        {
           "command": "gitea-vs-extension.copyUrl",
           "when": "viewItem == giteaRepo || viewItem == giteaRun || viewItem == giteaJob || viewItem == giteaStep || viewItem == giteaPullRequest || viewItem == giteaArtifact",
           "group": "inline@2"
@@ -275,6 +505,11 @@
           "command": "gitea-vs-extension.openInBrowser",
           "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem == giteaArtifact",
           "group": "inline"
+        },
+        {
+          "command": "gitea-vs-extension.downloadArtifact",
+          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem == giteaArtifact && gitea.cap.artifactDownload",
+          "group": "inline@1"
         },
         {
           "command": "gitea-vs-extension.refreshSecrets",
@@ -324,6 +559,16 @@
         {
           "command": "gitea-vs-extension.clearToken",
           "when": "view == gitea-vs-extension.settings && viewItem == giteaToken",
+          "group": "inline@1"
+        },
+        {
+          "command": "gitea-vs-extension.exportDiagnostics",
+          "when": "view == gitea-vs-extension.settings && viewItem == giteaConfigRoot",
+          "group": "inline@2"
+        },
+        {
+          "command": "gitea-vs-extension.switchProfile",
+          "when": "view == gitea-vs-extension.settings && viewItem == giteaConfigRoot",
           "group": "inline@1"
         }
       ]

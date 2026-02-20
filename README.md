@@ -8,18 +8,26 @@ Works with VS Code, Cursor, VSCodium, Windsurf, and other VS Code compatible edi
 
 - Workflow runs with colored status icons
 - Workflows grouped by branch
+- Workflow actions: list, dispatch, enable/disable
+- Run lifecycle actions: delete run, download artifacts
 - Pull Requests view with author, labels, and last updated time
+- Pull request actions: checkout branch, inspect files/commits, update branch, request reviewers, submit review, merge
 - Jobs and step logs with one click
 - Secrets and variables management
-- Adaptive polling (fast when active, slower when idle)
-- Status bar summary for running and failed runs
+- Run filters (branch, status, event, quick search)
+- Adaptive polling (fast when active, slower when idle, optional pause when views are hidden)
+- Status bar summary with active profile and failure indicator
+- Optional failed-run notifications
+- Diagnostics export command
+- Multi-profile configuration with profile-scoped tokens
 
 ## Quick Start
 
 1. Install the extension (VSIX or marketplace, depending on your setup).
 2. Set `gitea-vs-extension.baseUrl` to your Gitea instance (for example, `http://localhost:3000`).
-3. Open the Gitea VS Extension activity bar view.
-4. In Settings, set your personal access token and click Test Connection.
+3. Optional: configure `gitea-vs-extension.profiles` and set `gitea-vs-extension.activeProfileId`.
+4. Open the Gitea VS Extension activity bar view.
+5. In Settings, set your personal access token and click Test Connection.
 
 ### Required Gitea Token Scopes
 
@@ -36,7 +44,9 @@ If you do not plan to manage secrets or variables, you can use a read-only token
 
 - Discovers repositories from your workspace git remotes or API (based on discovery mode).
 - Polls for workflow runs and pull requests using an adaptive refresh interval.
+- Can pause polling when all extension views are hidden.
 - Loads jobs, steps, artifacts, secrets, and variables only when you expand a node.
+- Uses capability detection from the server swagger/endpoints to show only supported actions.
 - Uses the built-in SecretStorage to keep your token off disk.
 
 ## Tree Views
@@ -59,16 +69,25 @@ Manage token, test connection, and edit secrets and variables.
 
 ## Configuration
 
-| Setting                                             | Default     | Description                             |
-| --------------------------------------------------- | ----------- | --------------------------------------- |
-| `gitea-vs-extension.baseUrl`                        | -           | Base URL of your Gitea instance         |
-| `gitea-vs-extension.discovery.mode`                 | `workspace` | How to discover repositories            |
-| `gitea-vs-extension.refresh.runningIntervalSeconds` | `15`        | Polling interval while runs are active  |
-| `gitea-vs-extension.refresh.idleIntervalSeconds`    | `60`        | Polling interval while idle             |
-| `gitea-vs-extension.maxRunsPerRepo`                 | `20`        | Maximum runs to fetch per repository    |
-| `gitea-vs-extension.maxJobsPerRun`                  | `50`        | Maximum jobs to fetch per run           |
-| `gitea-vs-extension.tls.insecureSkipVerify`         | `false`     | Skip TLS verification (not recommended) |
-| `gitea-vs-extension.logging.debug`                  | `false`     | Enable debug logging                    |
+| Setting                                               | Default     | Description                                            |
+| ----------------------------------------------------- | ----------- | ------------------------------------------------------ |
+| `gitea-vs-extension.baseUrl`                          | -           | Base URL of your Gitea instance                        |
+| `gitea-vs-extension.profiles`                         | `[]`        | Optional named profiles (`id`, `name`, `baseUrl`, TLS) |
+| `gitea-vs-extension.activeProfileId`                  | `""`        | Active profile id from `profiles`                      |
+| `gitea-vs-extension.discovery.mode`                   | `workspace` | How to discover repositories                           |
+| `gitea-vs-extension.refresh.runningIntervalSeconds`   | `15`        | Polling interval while runs are active                 |
+| `gitea-vs-extension.refresh.idleIntervalSeconds`      | `60`        | Polling interval while idle                            |
+| `gitea-vs-extension.refresh.pauseWhenViewsHidden`     | `true`      | Pause polling when all extension views are hidden      |
+| `gitea-vs-extension.actions.filters.branch`           | `""`        | Branch filter for runs (contains match)                |
+| `gitea-vs-extension.actions.filters.status`           | `""`        | Status/conclusion filter for runs                      |
+| `gitea-vs-extension.actions.filters.event`            | `""`        | Event filter for runs                                  |
+| `gitea-vs-extension.actions.filters.search`           | `""`        | Quick search filter for runs                           |
+| `gitea-vs-extension.maxRunsPerRepo`                   | `20`        | Maximum runs to fetch per repository                   |
+| `gitea-vs-extension.maxJobsPerRun`                    | `50`        | Maximum jobs to fetch per run                          |
+| `gitea-vs-extension.tls.insecureSkipVerify`           | `false`     | Skip TLS verification (not recommended)                |
+| `gitea-vs-extension.notifications.failedRuns.enabled` | `false`     | Notify when failed run count increases                 |
+| `gitea-vs-extension.logging.debug`                    | `false`     | Enable debug logging                                   |
+| `gitea-vs-extension.reviewComments.enabled`           | `true`      | Enable inline PR review comments                       |
 
 ### Discovery Modes
 
@@ -81,6 +100,8 @@ Manage token, test connection, and edit secrets and variables.
 
 - Expand runs only when you need jobs or artifacts for faster refresh.
 - Right click on items for context actions like Open in Browser.
+- Use `Set Run Search Filter` from the view title actions for quick run filtering.
+- Use `Switch Profile` in Settings to change active Gitea instance.
 - Click the status bar entry to jump to the extension view.
 
 ## Troubleshooting

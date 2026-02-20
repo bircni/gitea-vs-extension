@@ -31,4 +31,15 @@ describe("Logger", () => {
     logger.debug("dbg");
     expect(channel.appendLine).not.toHaveBeenCalledWith("[debug] dbg");
   });
+
+  test("writes categorized log lines", () => {
+    const logger = new Logger("gitea", () => true);
+    const channel = (vscode.window.createOutputChannel as jest.Mock).mock.results[0].value;
+
+    logger.info("hello", "core");
+    logger.debug("diag", "diagnostics");
+
+    expect(channel.appendLine).toHaveBeenCalledWith("[info] [core] hello");
+    expect(channel.appendLine).toHaveBeenCalledWith("[debug] [diagnostics] diag");
+  });
 });
