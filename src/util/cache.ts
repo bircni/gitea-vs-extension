@@ -4,6 +4,8 @@ export type LoadState = "unloaded" | "loading" | "idle" | "error";
 
 export type RepoCacheEntry = {
   repo: RepoRef;
+  currentBranch?: string;
+  branchWarning?: string;
   runs: WorkflowRun[];
   jobsByRun: Map<string, Job[]>;
   jobsStateByRun: Map<string, LoadState>;

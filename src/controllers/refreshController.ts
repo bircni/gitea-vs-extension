@@ -2,6 +2,7 @@ import { getSettings } from "../config/settings";
 import type { RepoStateStore } from "../util/cache";
 import { createLimiter } from "../util/limiter";
 import type { Logger } from "../util/logging";
+import { resolveCurrentBranch, resolveWorkspaceRepos } from "../util/repoResolution";
 import { EndpointError, type GiteaApi } from "../gitea/api";
 import { HttpError } from "../gitea/client";
 import type { RepoDiscovery } from "../gitea/discovery";
@@ -56,6 +57,9 @@ export class RefreshController {
 
       this.store.setRepos(repos);
       this.store.setReposLoading(false);
+
+      await this.updateRepoBranchContext(settings.baseUrl, repos);
+
       if (!hadRepos) {
         this.onDidUpdate();
       }
@@ -76,6 +80,7 @@ export class RefreshController {
     this.store.updateEntry(repo, (entry) => {
       entry.loading = true;
       entry.error = undefined;
+      entry.errors = [];
       if (hasData) {
         entry.loading = false;
       }
@@ -251,6 +256,43 @@ export class RefreshController {
       const next = [message, ...entry.errors].slice(0, 10);
       entry.errors = next;
     });
+  }
+
+  private async updateRepoBranchContext(baseUrl: string, repos: RepoRef[]): Promise<void> {
+    const branchByRepo = new Map<string, string | undefined>();
+
+    try {
+      const workspaceRepos = await resolveWorkspaceRepos(baseUrl);
+      await Promise.all(
+        workspaceRepos.map(async (entry) => {
+          const branch = await resolveCurrentBranch(entry.folder.uri.fsPath);
+          branchByRepo.set(this.repoKey(entry.repo), branch);
+        }),
+      );
+    } catch (error) {
+      this.logger.debug(`Failed to resolve workspace branches: ${formatError(error)}`);
+    }
+
+    for (const repo of repos) {
+      const key = this.repoKey(repo);
+      const branch = branchByRepo.get(key);
+      const hasWorkspaceCheckout = branchByRepo.has(key);
+      let branchWarning: string | undefined;
+      if (hasWorkspaceCheckout && !branch) {
+        branchWarning = `Cannot determine current branch for ${repo.owner}/${repo.name} (detached HEAD).`;
+      } else if (!hasWorkspaceCheckout) {
+        branchWarning = `Cannot determine current branch for ${repo.owner}/${repo.name}: repository is not checked out in the workspace.`;
+      }
+
+      this.store.updateEntry(repo, (entry) => {
+        entry.currentBranch = branch;
+        entry.branchWarning = branchWarning;
+      });
+    }
+  }
+
+  private repoKey(repo: RepoRef): string {
+    return `${repo.host}/${repo.owner}/${repo.name}`;
   }
 }
 

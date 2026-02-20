@@ -220,10 +220,16 @@ export class MessageNode extends vscode.TreeItem {
 }
 
 export class ErrorNode extends vscode.TreeItem {
-  constructor(message: string) {
+  constructor(message: string, action?: "setToken") {
     super(message, vscode.TreeItemCollapsibleState.None);
     this.contextValue = "giteaError";
     this.iconPath = new vscode.ThemeIcon("warning");
+    if (action === "setToken") {
+      this.command = {
+        command: "gitea-vs-extension.setToken",
+        title: "Set token",
+      };
+    }
   }
 }
 
