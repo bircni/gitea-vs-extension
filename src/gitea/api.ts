@@ -1,5 +1,12 @@
 import { HttpError, type GiteaHttpClient } from "./client";
-import { discoverEndpoints, fallbackEndpoints, fetchSwagger, type EndpointMap } from "./swagger";
+import {
+  capabilitiesFromEndpoints,
+  discoverEndpoints,
+  fallbackEndpoints,
+  fetchSwagger,
+  type CapabilityMap,
+  type EndpointMap,
+} from "./swagger";
 import {
   normalizeArtifact,
   normalizeJob,
@@ -24,8 +31,11 @@ export class EndpointError extends Error {
   }
 }
 
+export type GiteaCapabilities = CapabilityMap;
+
 export class GiteaApi {
   private endpoints?: EndpointMap;
+  private capabilities?: GiteaCapabilities;
   private lastBaseUrl?: string;
 
   constructor(
@@ -329,7 +339,13 @@ export class GiteaApi {
     }
 
     this.lastBaseUrl = baseUrl;
+    this.capabilities = capabilitiesFromEndpoints(this.endpoints);
     return this.endpoints;
+  }
+
+  async getCapabilities(): Promise<GiteaCapabilities> {
+    await this.ensureEndpoints();
+    return this.capabilities ?? capabilitiesFromEndpoints(fallbackEndpoints());
   }
 }
 

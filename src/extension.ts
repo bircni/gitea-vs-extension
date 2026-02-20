@@ -52,13 +52,28 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const discovery = new RepoDiscovery(api);
   const expanded = loadExpandedState(context.globalState);
 
-  const runsProvider = new ActionsTreeProvider("runs", store, context.secrets, expanded);
-  const workflowsProvider = new ActionsTreeProvider("workflows", store, context.secrets, expanded);
+  const capabilitiesProvider = async () => api.getCapabilities();
+
+  const runsProvider = new ActionsTreeProvider(
+    "runs",
+    store,
+    context.secrets,
+    expanded,
+    capabilitiesProvider,
+  );
+  const workflowsProvider = new ActionsTreeProvider(
+    "workflows",
+    store,
+    context.secrets,
+    expanded,
+    capabilitiesProvider,
+  );
   const pullRequestsProvider = new ActionsTreeProvider(
     "pullRequests",
     store,
     context.secrets,
     expanded,
+    capabilitiesProvider,
   );
 
   const workflowsTree = vscode.window.createTreeView("gitea-vs-extension.runsPinned", {

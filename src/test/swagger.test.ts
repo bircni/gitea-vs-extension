@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import { discoverEndpoints, fetchSwagger } from "../gitea/swagger";
+import { capabilitiesFromEndpoints, discoverEndpoints, fetchSwagger } from "../gitea/swagger";
 import { HttpError } from "../gitea/client";
 
 test("finds actions endpoints", () => {
@@ -36,6 +36,24 @@ test("uses fallback endpoints when swagger is missing", () => {
   expect(endpoints.listPullRequestReviewComments).toBe(
     "/api/v1/repos/{owner}/{repo}/pulls/{index}/reviews/{id}/comments",
   );
+});
+
+test("builds capability map from discovered endpoints", () => {
+  const capabilities = capabilitiesFromEndpoints({
+    listRuns: "/api/v1/repos/{owner}/{repo}/actions/runs",
+    listJobs: "/api/v1/repos/{owner}/{repo}/actions/runs/{run}/jobs",
+    jobLogs: "/api/v1/repos/{owner}/{repo}/actions/jobs/{job_id}/logs",
+    listRunArtifacts: "/api/v1/repos/{owner}/{repo}/actions/runs/{run}/artifacts",
+    listPullRequests: "/api/v1/repos/{owner}/{repo}/pulls",
+  });
+
+  expect(capabilities.runs).toBe(true);
+  expect(capabilities.jobs).toBe(true);
+  expect(capabilities.jobLogs).toBe(true);
+  expect(capabilities.runArtifacts).toBe(true);
+  expect(capabilities.pullRequests).toBe(true);
+  expect(capabilities.pullRequestReviews).toBe(false);
+  expect(capabilities.reposListing).toBe(false);
 });
 
 test("prefixes discovered endpoints with basePath", () => {

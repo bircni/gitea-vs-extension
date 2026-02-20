@@ -342,4 +342,20 @@ describe("GiteaApi core endpoints", () => {
 
     expect(version).toBe("fallback2");
   });
+
+  test("returns capability map from discovered endpoints", async () => {
+    (fetchSwagger as jest.Mock).mockResolvedValueOnce({
+      basePath: "/api/v1",
+      paths: {
+        "/repos/{owner}/{repo}/actions/runs": {},
+        "/repos/{owner}/{repo}/pulls": {},
+      },
+    });
+
+    const caps = await api.getCapabilities();
+
+    expect(caps.runs).toBe(true);
+    expect(caps.pullRequests).toBe(true);
+    expect(caps.pullRequestReviews).toBe(false);
+  });
 });

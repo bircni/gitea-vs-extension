@@ -18,6 +18,19 @@ export type EndpointMap = {
   version?: string;
 };
 
+export type CapabilityMap = {
+  runs: boolean;
+  jobs: boolean;
+  jobLogs: boolean;
+  runArtifacts: boolean;
+  repoArtifacts: boolean;
+  pullRequests: boolean;
+  pullRequestReviews: boolean;
+  pullRequestReviewComments: boolean;
+  reposListing: boolean;
+  version: boolean;
+};
+
 const SWAGGER_PATHS = [
   "/swagger.v1.json",
   "/api/swagger.v1.json",
@@ -101,6 +114,21 @@ export function fallbackEndpoints(): EndpointMap {
     listPullRequestReviewComments: `${basePath}/repos/{owner}/{repo}/pulls/{index}/reviews/{id}/comments`,
     listRepos: `${basePath}/user/repos`,
     version: `${basePath}/version`,
+  };
+}
+
+export function capabilitiesFromEndpoints(endpoints: EndpointMap): CapabilityMap {
+  return {
+    runs: Boolean(endpoints.listRuns),
+    jobs: Boolean(endpoints.listJobs),
+    jobLogs: Boolean(endpoints.jobLogs),
+    runArtifacts: Boolean(endpoints.listRunArtifacts),
+    repoArtifacts: Boolean(endpoints.listRepoArtifacts),
+    pullRequests: Boolean(endpoints.listPullRequests),
+    pullRequestReviews: Boolean(endpoints.listPullRequestReviews),
+    pullRequestReviewComments: Boolean(endpoints.listPullRequestReviewComments),
+    reposListing: Boolean(endpoints.listRepos),
+    version: Boolean(endpoints.version),
   };
 }
 

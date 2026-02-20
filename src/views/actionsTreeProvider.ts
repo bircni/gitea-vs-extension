@@ -3,6 +3,7 @@ import { getSettings } from "../config/settings";
 import { getToken } from "../config/secrets";
 import type { RepoStateStore } from "../util/cache";
 import { expandedRepoKey, expandedRunKey, expandedWorkflowKey } from "../util/expandedState";
+import type { GiteaCapabilities } from "../gitea/api";
 import {
   ArtifactNode,
   ErrorNode,
@@ -29,6 +30,19 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     private readonly store: RepoStateStore,
     private readonly secrets: vscode.SecretStorage,
     private readonly expanded: Set<string>,
+    private readonly capabilitiesProvider: () => Promise<GiteaCapabilities> = () =>
+      Promise.resolve({
+        runs: true,
+        jobs: true,
+        jobLogs: true,
+        runArtifacts: true,
+        repoArtifacts: true,
+        pullRequests: true,
+        pullRequestReviews: true,
+        pullRequestReviewComments: true,
+        reposListing: true,
+        version: true,
+      }),
   ) {}
 
   refresh(node?: TreeNode): void {
@@ -97,6 +111,14 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const token = await getToken(this.secrets);
     if (!token) {
       return [new MessageNode("Set a token to access Gitea.", "info", "setToken")];
+    }
+
+    const capabilities = await this.capabilitiesProvider();
+    if (this.mode === "pullRequests" && !capabilities.pullRequests) {
+      return [new MessageNode("Pull requests endpoint not available in this Gitea instance.")];
+    }
+    if ((this.mode === "runs" || this.mode === "workflows") && !capabilities.runs) {
+      return [new MessageNode("Actions runs endpoint not available in this Gitea instance.")];
     }
 
     if (this.store.isReposLoading()) {
