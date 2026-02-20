@@ -87,7 +87,7 @@ export class ReviewCommentsController implements vscode.Disposable {
       const resolved = await this.resolveDiffPositions(context.repo, pullRequest.number, comments);
       this.renderComments(context.folder, pullRequest.number, resolved);
     } catch (error) {
-      this.logger.debug(`Failed to refresh review comments: ${formatError(error)}`);
+      this.logger.debug(`Failed to refresh review comments: ${formatError(error)}`, "review");
     } finally {
       this.refreshInProgress = false;
       if (this.pendingRefresh) {
@@ -197,7 +197,10 @@ export class ReviewCommentsController implements vscode.Disposable {
         };
       });
     } catch (error) {
-      this.logger.debug(`Failed to load diff for PR #${pullRequestNumber}: ${formatError(error)}`);
+      this.logger.debug(
+        `Failed to load diff for PR #${pullRequestNumber}: ${formatError(error)}`,
+        "review",
+      );
       return comments;
     }
   }
@@ -428,7 +431,7 @@ class AvatarCache {
     void this.download(url, cachedPath)
       .then(() => this.onReady())
       .catch((error) => {
-        this.logger.debug(`Failed to cache avatar: ${formatError(error)}`);
+        this.logger.debug(`Failed to cache avatar: ${formatError(error)}`, "review");
       })
       .finally(() => {
         this.inflight.delete(url);

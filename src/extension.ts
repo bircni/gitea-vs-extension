@@ -166,7 +166,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     { dispose: () => refreshController.dispose() },
     ...commands.register(),
     onSettingsChange(() => {
-      logger.debug("Settings changed, refreshing.");
+      logger.debug("Settings changed, refreshing.", "core");
       refreshVisibleViews();
       reviewCommentsController.scheduleRefresh();
     }),

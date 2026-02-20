@@ -24,7 +24,8 @@
     "onView:gitea-vs-extension.settings",
     "onCommand:gitea-vs-extension.refresh",
     "onCommand:gitea-vs-extension.setToken",
-    "onCommand:gitea-vs-extension.testConnection"
+    "onCommand:gitea-vs-extension.testConnection",
+    "onCommand:gitea-vs-extension.exportDiagnostics"
   ],
   "main": "./dist/extension.js",
   "scripts": {
@@ -231,6 +232,11 @@
         "command": "gitea-vs-extension.openBaseUrlSettings",
         "title": "gitea-vs-extension: Open Base URL Settings",
         "icon": "$(settings-gear)"
+      },
+      {
+        "command": "gitea-vs-extension.exportDiagnostics",
+        "title": "gitea-vs-extension: Export Diagnostics",
+        "icon": "$(output)"
       }
     ],
     "menus": {
@@ -336,6 +342,11 @@
           "command": "gitea-vs-extension.clearToken",
           "when": "view == gitea-vs-extension.settings && viewItem == giteaToken",
           "group": "inline@1"
+        },
+        {
+          "command": "gitea-vs-extension.exportDiagnostics",
+          "when": "view == gitea-vs-extension.settings && viewItem == giteaConfigRoot",
+          "group": "inline@2"
         }
       ]
     }

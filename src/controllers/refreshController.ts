@@ -67,7 +67,7 @@ export class RefreshController {
       try {
         repos = await this.discovery.discoverRepos(settings.discoveryMode, settings.baseUrl);
       } catch (error) {
-        this.logger.warn(`Repository discovery failed: ${formatError(error)}`);
+        this.logger.warn(`Repository discovery failed: ${formatError(error)}`, "discovery");
       }
 
       this.store.setRepos(repos);
@@ -118,6 +118,7 @@ export class RefreshController {
           } catch (error) {
             this.logger.debug(
               `Failed to load repo status for ${repo.owner}/${repo.name}: ${formatError(error)}`,
+              "refresh",
             );
           }
         }
@@ -130,6 +131,7 @@ export class RefreshController {
         this.recordError(repo, `Pull requests: ${formatError(error)}`);
         this.logger.debug(
           `Failed to load pull requests for ${repo.owner}/${repo.name}: ${formatError(error)}`,
+          "refresh",
         );
       }
 
@@ -167,7 +169,7 @@ export class RefreshController {
       });
     } catch (error) {
       const message = formatError(error);
-      this.logger.warn(`Failed to refresh ${repo.owner}/${repo.name}: ${message}`);
+      this.logger.warn(`Failed to refresh ${repo.owner}/${repo.name}: ${message}`, "refresh");
       this.store.updateEntry(repo, (entry) => {
         entry.error = message;
         entry.loading = false;
@@ -205,6 +207,7 @@ export class RefreshController {
       const message = formatError(error);
       this.logger.debug(
         `Failed to load run details for ${repo.owner}/${repo.name} run ${runId}: ${message}`,
+        "refresh",
       );
       this.store.updateEntry(repo, (entry) => {
         entry.jobsStateByRun.set(runKey, "error");

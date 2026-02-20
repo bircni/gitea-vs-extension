@@ -83,6 +83,9 @@ export class CommandsController {
       vscode.commands.registerCommand("gitea-vs-extension.openBaseUrlSettings", () =>
         this.handleOpenBaseUrlSettings(),
       ),
+      vscode.commands.registerCommand("gitea-vs-extension.exportDiagnostics", () =>
+        this.handleExportDiagnostics(),
+      ),
     ];
   }
 
@@ -376,6 +379,45 @@ export class CommandsController {
 
   private async handleOpenBaseUrlSettings(): Promise<void> {
     await vscode.commands.executeCommand("workbench.action.openSettings", "@gitea-vs-extension");
+  }
+
+  private async handleExportDiagnostics(): Promise<void> {
+    const settings = getSettings();
+    const capabilities = await this.api.getCapabilities().catch(() => undefined);
+    const repos = this.store.getEntries().map((entry) => ({
+      repo: `${entry.repo.owner}/${entry.repo.name}`,
+      runs: entry.runs.length,
+      pullRequests: entry.pullRequests.length,
+      loading: entry.loading,
+      error: entry.error,
+      recentErrors: entry.errors,
+      lastUpdated: entry.lastUpdated ? new Date(entry.lastUpdated).toISOString() : undefined,
+    }));
+    const payload = {
+      generatedAt: new Date().toISOString(),
+      vscodeVersion: vscode.version,
+      settings: {
+        baseUrl: settings.baseUrl,
+        tlsInsecureSkipVerify: settings.tlsInsecureSkipVerify,
+        discoveryMode: settings.discoveryMode,
+        runningRefreshSeconds: settings.runningRefreshSeconds,
+        idleRefreshSeconds: settings.idleRefreshSeconds,
+        pauseWhenViewsHidden: settings.pauseWhenViewsHidden,
+        maxRunsPerRepo: settings.maxRunsPerRepo,
+        maxJobsPerRun: settings.maxJobsPerRun,
+        debugLogging: settings.debugLogging,
+        reviewCommentsEnabled: settings.reviewCommentsEnabled,
+      },
+      capabilities,
+      repositories: repos,
+      workspaceFolders: (vscode.workspace.workspaceFolders ?? []).map((folder) => folder.uri.fsPath),
+    };
+
+    const document = await vscode.workspace.openTextDocument({
+      language: "json",
+      content: JSON.stringify(payload, null, 2),
+    });
+    await vscode.window.showTextDocument(document, { preview: false });
   }
 
   private async ensureRunDetails(repo: RepoRef, run: WorkflowRun): Promise<void> {
