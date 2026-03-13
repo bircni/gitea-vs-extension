@@ -4,8 +4,8 @@ Thanks for your interest in contributing. This guide covers local setup, scripts
 
 ## Prerequisites
 
-- Node.js 18+
-- Yarn 4+
+- Node.js 24 (see `.node-version` in the repo root)
+- npm
 - VS Code or Cursor
 
 ## Getting Started
@@ -13,17 +13,17 @@ Thanks for your interest in contributing. This guide covers local setup, scripts
 ```bash
 git clone https://github.com/bircni/gitea-vs-extension.git
 cd gitea-vs-extension
-yarn install
+npm install
 ```
 
 ## Build and Run
 
 ```bash
 # Build TypeScript
-yarn compile
+npm run compile
 
 # Watch mode
-yarn watch
+npm run watch
 ```
 
 ### Run the Extension
@@ -34,19 +34,19 @@ yarn watch
 
 ## Scripts
 
-| Script              | Description                   |
-| ------------------- | ----------------------------- |
-| `yarn compile`      | Build TypeScript to `dist/`   |
-| `yarn watch`        | Build and watch for changes   |
-| `yarn lint`         | Run ESLint                    |
-| `yarn format`       | Check formatting              |
-| `yarn format:write` | Auto format files             |
-| `yarn test`         | Run unit tests                |
-| `yarn test:watch`   | Run tests in watch mode       |
-| `yarn coverage`     | Run tests with coverage       |
-| `yarn bundle`       | Bundle extension with esbuild |
-| `yarn package`      | Create a VSIX package         |
-| `yarn build`        | Compile, bundle, and package  |
+| Script                 | Description                   |
+| ---------------------- | ----------------------------- |
+| `npm run compile`      | Build TypeScript to `dist/`   |
+| `npm run watch`        | Build and watch for changes   |
+| `npm run lint`         | Run ESLint                    |
+| `npm run format`       | Check formatting              |
+| `npm run format:write` | Auto format files             |
+| `npm test`             | Run unit tests                |
+| `npm run test:watch`   | Run tests in watch mode       |
+| `npm run coverage`     | Run tests with coverage       |
+| `npm run bundle`       | Bundle extension with esbuild |
+| `npm run package`      | Create a VSIX package         |
+| `npm run build`        | Compile, bundle, and package  |
 
 ## Project Structure
 
@@ -66,9 +66,9 @@ src/
 Tests use Jest and live in `src/test`.
 
 ```bash
-yarn test
-yarn test:watch
-yarn coverage
+npm test
+npm run test:watch
+npm run coverage
 ```
 
 ## Code Style
@@ -80,7 +80,7 @@ yarn coverage
 ## Packaging
 
 ```bash
-yarn build
+npm run build
 ```
 
 ## Questions

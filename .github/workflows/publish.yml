@@ -17,27 +17,23 @@ jobs:
         with:
           lfs: true
 
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Use Node.js LTS
+      - name: Use Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: lts/*
-          cache: "yarn"
+          node-version-file: '.node-version'
+          cache: "npm"
 
       - name: Install dependencies
-        run: yarn install --immutable
+        run: npm ci
 
       - name: Build
-        run: yarn build
+        run: npm run build
 
       - name: Package extension
-        run: yarn package
+        run: npm run package
 
       - name: Publish to VS Code Marketplace
-      # Cannot use yarn as vsce does not support the newer version of yarn
-        run: npx @vscode/vsce publish --packagePath dist/extension.vsix --pat ${{ secrets.AZURE_DEVOPS_TOKEN }} --no-yarn
+        run: npx @vscode/vsce publish --packagePath dist/extension.vsix --pat ${{ secrets.AZURE_DEVOPS_TOKEN }}
 
     #   - name: Publish to Open VSX Registry
     #     run: npx ovsx publish dist/extension.vsix --pat "$OVSX_PAT"
@@ -51,23 +47,20 @@ jobs:
         with:
           lfs: true
 
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Use Node.js LTS
+      - name: Use Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: lts/*
-          cache: "yarn"
+          node-version-file: '.node-version'
+          cache: "npm"
 
       - name: Install dependencies
-        run: yarn install --immutable
+        run: npm ci
 
       - name: Build
-        run: yarn build
+        run: npm run build
 
       - name: Package extension
-        run: yarn package
+        run: npm run package
 
       - name: Create a release
         uses: softprops/action-gh-release@v2

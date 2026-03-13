@@ -12,10 +12,6 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    strategy:
-      matrix:
-        node-version: [lts/*, current]
-
     env:
       CI: true
     steps:
@@ -24,32 +20,29 @@ jobs:
         with:
             lfs: true
 
-      - name: Enable Corepack
-        run: corepack enable
-        
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Use Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'yarn'
+          node-version-file: '.node-version'
+          cache: 'npm'
 
       - name: Install dependencies
-        run: yarn install --immutable
+        run: npm ci
 
       - name: Check unused dependencies
-        run: yarn check-unused
+        run: npm run check-unused
 
       - name: Check formatting
-        run: yarn format
+        run: npm run format
 
       - name: Lint
-        run: yarn lint
+        run: npm run lint
 
       - name: Build
-        run: yarn build
+        run: npm run build
 
       - name: Test
-        run: yarn test
+        run: npm test
 
   security:
     runs-on: ubuntu-latest
@@ -62,17 +55,14 @@ jobs:
         with:
             lfs: true
 
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Use Node.js LTS
+      - name: Use Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: lts/*
-          cache: 'yarn'
+          node-version-file: '.node-version'
+          cache: 'npm'
 
       - name: Install dependencies
-        run: yarn install --immutable
+        run: npm ci
 
       - name: Run security audit
-        run: yarn npm audit --all --severity moderate 
+        run: npm audit --audit-level=moderate
