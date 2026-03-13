@@ -70,11 +70,11 @@ try {
   // Run validation checks
   log("🔍 Running validation checks...");
   log("  📝 Validating feature file structure...");
-  run("yarn lint");
+  run("npm run lint");
   log("  🧪 Running tests...");
-  run("yarn test");
+  run("npm test");
   log("  🔨 Building extension...");
-  run("yarn build");
+  run("npm run build");
   log("✅ All validation checks passed");
 
   // Check if git-cliff is available
@@ -84,7 +84,7 @@ try {
     run("npx --yes git-cliff --version", { stdio: "pipe" });
   } catch {
     throw new Error(
-      "git-cliff is not available. Run 'yarn install' to install dev dependencies, or install globally with: npm install -g git-cliff",
+      "git-cliff is not available. Run 'npm install' to install dev dependencies, or install globally with: npm install -g git-cliff",
     );
   }
 
@@ -116,7 +116,7 @@ try {
 
   // Commit changes
   log("✅ Committing changes...");
-  run("git add CHANGELOG.md package.json yarn.lock");
+  run("git add CHANGELOG.md package.json package-lock.json");
   run(`git commit -m "chore(release): ${tagVersion}"`);
 
   // Create git tag

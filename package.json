@@ -6,7 +6,6 @@
   "version": "0.0.2",
   "publisher": "bircni",
   "license": "MIT",
-  "packageManager": "yarn@4.12.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/bircni/gitea-vs-extension"
@@ -23,7 +22,7 @@
   "main": "./dist/extension.js",
   "scripts": {
     "audit": "npm audit --severity high",
-    "build": "yarn compile && yarn bundle && yarn package",
+    "build": "npm run compile && npm run bundle && npm run package",
     "bundle": "esbuild src/extension.ts --bundle --platform=node --format=cjs --target=node18 --external:vscode --outfile=dist/extension.js --sourcemap",
     "check-unused": "depcheck .",
     "clean": "rimraf dist",
@@ -31,7 +30,7 @@
     "coverage": "jest --coverage",
     "format": "prettier --check \"src/**/*.ts\" \"*.json\" \"*.md\"",
     "format:write": "prettier --write \"src/**/*.ts\" \"*.json\" \"*.md\"",
-    "install:debug": "yarn build && code --install-extension dist/extension.vsix --force",
+    "install:debug": "npm run build && code --install-extension dist/extension.vsix --force",
     "uninstall:debug": "code --uninstall-extension bircni.gitea-vs-extension",
     "lint": "eslint .",
     "package": "vsce package --out dist/extension.vsix --no-yarn",

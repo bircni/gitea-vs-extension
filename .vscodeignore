@@ -46,9 +46,7 @@ test-*.md
 # Cursor files
 .cursor/**
 
-.yarn/**
 *.config.ts
-.yarnrc.yml
 .depcheckrc
 .tmp/**
 cliff.toml
