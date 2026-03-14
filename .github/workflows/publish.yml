@@ -35,10 +35,10 @@ jobs:
       - name: Publish to VS Code Marketplace
         run: npx @vscode/vsce publish --packagePath dist/extension.vsix --pat ${{ secrets.AZURE_DEVOPS_TOKEN }}
 
-    #   - name: Publish to Open VSX Registry
-    #     run: npx ovsx publish dist/extension.vsix --pat "$OVSX_PAT"
-    #     env:
-    #       OVSX_PAT: ${{ secrets.OVSX_PAT }}
+      - name: Publish to Open VSX Registry
+        run: npx ovsx publish dist/extension.vsix --pat "$OVSX_PAT"
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
 
   deploy:
     runs-on: ubuntu-latest
