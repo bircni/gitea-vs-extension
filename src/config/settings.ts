@@ -12,6 +12,7 @@ export type ExtensionSettings = {
   maxJobsPerRun: number;
   debugLogging: boolean;
   reviewCommentsEnabled: boolean;
+  jobLogsSaveToRepo: boolean;
 };
 
 export function getSettings(): ExtensionSettings {
@@ -44,6 +45,10 @@ export function getSettings(): ExtensionSettings {
     reviewCommentsEnabled:
       config.get<boolean>("reviewComments.enabled") ??
       legacyConfig.get<boolean>("reviewComments.enabled") ??
+      true,
+    jobLogsSaveToRepo:
+      config.get<boolean>("jobLogs.saveToRepo") ??
+      legacyConfig.get<boolean>("jobLogs.saveToRepo") ??
       true,
   };
 }
