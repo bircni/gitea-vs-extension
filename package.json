@@ -347,6 +347,6 @@
     "typescript-eslint": "8.56.0"
   },
   "dependencies": {
-    "undici": "7.22"
+    "undici": "7.24"
   }
 }
