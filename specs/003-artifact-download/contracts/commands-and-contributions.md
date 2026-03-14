@@ -11,16 +11,19 @@ Contract for the new commands and contribution points. Existing extension comman
 
 | Command ID | Description | When / Where |
 |------------|-------------|----------------|
-| `gitea-vs-extension.downloadArtifact` | Downloads the artifact to the configured directory and shows the save path. | Invoked from context menu on an artifact node (Current Branch Runs / Workflows). Receives one argument: the tree item (e.g. `ArtifactNode`). |
-| `gitea-vs-extension.revealArtifactInExplorer` | Opens the folder (or file) containing the downloaded artifact in the OS file manager. If not yet downloaded, shows a message to download first. | Same as above. Receives same argument. |
+| `gitea-vs-extension.downloadArtifact` | Downloads the artifact to the configured directory and shows the save path. | Context menu and inline button on an artifact node (Current Branch Runs / Workflows). Receives one argument: the tree item (e.g. `ArtifactNode`). |
+| `gitea-vs-extension.openInBrowser` | Opens the artifact URL in the browser. | Shown on artifact nodes (inline and context). |
+| `gitea-vs-extension.openOrRevealArtifact` | If the artifact file exists locally, opens it in the editor; otherwise shows "Download the artifact first." | **Double-click** (and Enter) on an artifact node. Tree item `command` set so this runs by default. Receives `ArtifactNode`. |
+| `gitea-vs-extension.revealArtifactInExplorer` | Opens the folder (or file) in the OS file manager. If not yet downloaded, shows a message to download first. | Implemented but **not** on artifact menu; requires artifact context. Not reachable from the tree in current UX. |
 
-**Argument contract**: Both commands MUST receive the first argument from the menu so that in multi-repo workspaces the correct repo/run/artifact is used. Handler MUST accept `arg` (e.g. `ArtifactNode | undefined`) and validate that `arg instanceof ArtifactNode` before proceeding.
+**Argument contract**: Commands invoked from the tree MUST receive the first argument from the menu so that in multi-repo workspaces the correct repo/run/artifact is used. Handlers MUST accept `arg` (e.g. `ArtifactNode | undefined`) and validate that `arg instanceof ArtifactNode` before proceeding.
 
 ---
 
 ## Menus (contribution points)
 
-- **View/item/context** (or equivalent for tree views): Add “Download” and “Reveal in File Explorer” when `when` is artifact context (e.g. `viewItem == giteaArtifact`). Exact `when` clause to match existing pattern (e.g. `view == giteaCurrentBranchRuns` or `view == giteaWorkflows` plus context value `giteaArtifact`).
+- **View/item/context**: On artifact nodes (`viewItem == giteaArtifact`), show only **Download** and **Open in browser** (inline and context menu). Do **not** add "Reveal in File Explorer" or "Copy URL" to artifact nodes.
+- **Double-click / default command**: Each artifact tree item has `command` set to `gitea-vs-extension.openOrRevealArtifact` so that double-click (or Enter) opens the file in the editor when present, or shows "Download the artifact first."
 
 ---
 
@@ -35,6 +38,6 @@ Contract for the new commands and contribution points. Existing extension comman
 
 ## Package.json contributions
 
-- **contributes.commands**: Add the two commands with title and category consistent with existing (e.g. “Download”, “Reveal in File Explorer”).
+- **contributes.commands**: Register Download, Open in browser (reused), openOrRevealArtifact (for double-click), and optionally revealArtifactInExplorer (not on artifact menu).
 - **contributes.configuration**: Add `artifacts.downloadPath` under `gitea-vs-extension` with type, default, and description.
-- **contributes.menus**: Add menu items for the artifact context so both commands appear on artifact nodes.
+- **contributes.menus**: Add **Download** and **Open in browser** only for artifact context. Do not add Reveal in File Explorer to artifact menu.

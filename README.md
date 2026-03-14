@@ -10,7 +10,7 @@ Works with VS Code, Cursor, VSCodium, Windsurf, and other VS Code compatible edi
 - Workflows grouped by branch
 - Pull Requests view with author, labels, and last updated time
 - Jobs and step logs with one click
-- Download workflow artifacts from the tree (context menu) and reveal in file explorer
+- Download workflow artifacts from the tree (context menu); double-click an artifact to open it in the editor (or be prompted to download first)
 - Secrets and variables management
 - Adaptive polling (fast when active, slower when idle)
 - Status bar summary for running and failed runs
@@ -48,7 +48,7 @@ Shows **all** workflow runs in the repo, grouped by branch. No branch filter is 
 
 ### Current Branch Runs
 
-Shows workflow runs for your **current branch** only (when the repo is from your workspace). Use the branch filter (toolbar or context menu on the repo) to view another branch or all branches. Expand a run to load jobs and steps on demand. Under Artifacts, right-click an artifact to download (saves to a configurable directory) or reveal in file explorer.
+Shows workflow runs for your **current branch** only (when the repo is from your workspace). Use the branch filter (toolbar or context menu on the repo) to view another branch or all branches. Expand a run to load jobs and steps on demand. Under Artifacts, use the row buttons or context menu to **Download** or **Open in browser**; double-click an artifact to open the file in the editor if already downloaded, or see "Download the artifact first" otherwise.
 
 ### Pull Requests
 

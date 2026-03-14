@@ -36,6 +36,8 @@ As a user who has just downloaded an artifact (or who knows where artifacts are 
 1. **Given** an artifact has been downloaded to a known path, **When** the user chooses "Reveal in file explorer" from the artifact context menu (or a post-download option), **Then** the system file explorer opens showing the folder containing the downloaded file(s) or the file itself when it is a single file.
 2. **Given** the user has not yet downloaded the artifact, **When** the user chooses "Reveal in file explorer", **Then** the system shows a clear message that the artifact must be downloaded first (e.g. "Download the artifact first").
 
+**Implemented UX (aligned with docs)**: Opening the downloaded artifact is achieved by **double-clicking** the artifact node (or Enter): the file opens in the editor when present, or the user sees "Download the artifact first." The artifact row and context menu show only **Download** and **Open in browser**; "Reveal in File Explorer" is not on the tree, so that command is not reachable from the tree (and requires artifact context).
+
 ---
 
 ### User Story 3 - Configure where artifacts are saved (Priority: P3)

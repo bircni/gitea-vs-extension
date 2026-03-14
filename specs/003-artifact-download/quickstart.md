@@ -27,9 +27,9 @@ Manual flows to verify the feature after implementation. Run from a workspace wi
 
 ## Scenario 2: Reveal after download (US2)
 
-1. After downloading an artifact (Scenario 1), right-click the same artifact node → **Reveal in File Explorer**.
-2. **Expected**: OS file manager opens showing the folder containing the downloaded file (or the file itself if single file).
-3. Without having downloaded, right-click another artifact → **Reveal in File Explorer**.
+1. After downloading an artifact (Scenario 1), **double-click** the same artifact node (or select it and press Enter).
+2. **Expected**: The downloaded file opens in the editor (e.g. zip or single file).
+3. Without having downloaded, double-click another artifact.
 4. **Expected**: Message like “Download the artifact first.” No automatic download.
 
 ---
@@ -63,5 +63,5 @@ Manual flows to verify the feature after implementation. Run from a workspace wi
 ## Checklist before release
 
 - [ ] All five scenarios pass.
-- [ ] README (or Settings UI) describes Download, Reveal, and the download path setting.
+- [ ] README (or Settings UI) describes Download, Open in browser, double-click to open file, and the download path setting.
 - [ ] Required token scope for artifact download is documented.
