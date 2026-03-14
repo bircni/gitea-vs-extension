@@ -1,4 +1,5 @@
 import type { Artifact, Job, PullRequest, RepoRef, RepoStatus, WorkflowRun } from "../gitea/models";
+import type { BranchContext, BranchFilterState } from "./branchContext";
 
 export type LoadState = "unloaded" | "loading" | "idle" | "error";
 
@@ -23,6 +24,9 @@ export class RepoStateStore {
   private repos: RepoRef[] = [];
   private entries = new Map<string, RepoCacheEntry>();
   private loadingRepos = false;
+  private readonly branchContextByRepo = new Map<string, BranchContext>();
+  private readonly branchFilterByRepo = new Map<string, BranchFilterState>();
+  private workspaceFolderByRepo = new Map<string, string>();
 
   setRepos(repos: RepoRef[]): void {
     this.repos = repos;
@@ -50,6 +54,30 @@ export class RepoStateStore {
     }
 
     this.entries = nextEntries;
+  }
+
+  setWorkspaceFolders(repoToFolderPath: Map<string, string>): void {
+    this.workspaceFolderByRepo = new Map(repoToFolderPath);
+  }
+
+  getWorkspaceFolderPath(repo: RepoRef): string | undefined {
+    return this.workspaceFolderByRepo.get(this.key(repo));
+  }
+
+  getBranchContext(repo: RepoRef): BranchContext | undefined {
+    return this.branchContextByRepo.get(this.key(repo));
+  }
+
+  setBranchContext(context: BranchContext): void {
+    this.branchContextByRepo.set(this.key(context.repo), context);
+  }
+
+  getBranchFilter(repo: RepoRef): BranchFilterState | undefined {
+    return this.branchFilterByRepo.get(this.key(repo));
+  }
+
+  setBranchFilter(filter: BranchFilterState): void {
+    this.branchFilterByRepo.set(this.key(filter.repo), filter);
   }
 
   getRepos(): RepoRef[] {

@@ -43,15 +43,15 @@ If you do not plan to manage secrets or variables, you can use a read-only token
 
 ### Workflows
 
-Groups runs by branch so you can scan what is active per branch.
+Shows **all** workflow runs in the repo, grouped by branch. No branch filter is applied.
+
+### Current Branch Runs
+
+Shows workflow runs for your **current branch** only (when the repo is from your workspace). Use the branch filter (toolbar or context menu on the repo) to view another branch or all branches. Expand a run to load jobs and steps on demand.
 
 ### Pull Requests
 
 Lists open PRs per repository with author, labels, and last updated time.
-
-### Workflow Runs
-
-Recent workflow runs per repository. Expand a run to load jobs and steps on demand.
 
 ### Settings
 
