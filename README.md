@@ -10,6 +10,7 @@ Works with VS Code, Cursor, VSCodium, Windsurf, and other VS Code compatible edi
 - Workflows grouped by branch
 - Pull Requests view with author, labels, and last updated time
 - Jobs and step logs with one click
+- Download workflow artifacts from the tree (context menu) and reveal in file explorer
 - Secrets and variables management
 - Adaptive polling (fast when active, slower when idle)
 - Status bar summary for running and failed runs
@@ -26,7 +27,7 @@ Works with VS Code, Cursor, VSCodium, Windsurf, and other VS Code compatible edi
 Use a personal access token with scopes that allow:
 
 - Reading repositories
-- Reading Actions runs, jobs, artifacts
+- Reading Actions runs, jobs, and artifacts
 - Reading pull requests
 - Managing secrets/variables if you want to use the Settings view for those actions
 
@@ -47,7 +48,7 @@ Shows **all** workflow runs in the repo, grouped by branch. No branch filter is 
 
 ### Current Branch Runs
 
-Shows workflow runs for your **current branch** only (when the repo is from your workspace). Use the branch filter (toolbar or context menu on the repo) to view another branch or all branches. Expand a run to load jobs and steps on demand.
+Shows workflow runs for your **current branch** only (when the repo is from your workspace). Use the branch filter (toolbar or context menu on the repo) to view another branch or all branches. Expand a run to load jobs and steps on demand. Under Artifacts, right-click an artifact to download (saves to a configurable directory) or reveal in file explorer.
 
 ### Pull Requests
 
@@ -59,16 +60,17 @@ Manage token, test connection, and edit secrets and variables.
 
 ## Configuration
 
-| Setting                                             | Default     | Description                             |
-| --------------------------------------------------- | ----------- | --------------------------------------- |
-| `gitea-vs-extension.baseUrl`                        | -           | Base URL of your Gitea instance         |
-| `gitea-vs-extension.discovery.mode`                 | `workspace` | How to discover repositories            |
-| `gitea-vs-extension.refresh.runningIntervalSeconds` | `15`        | Polling interval while runs are active  |
-| `gitea-vs-extension.refresh.idleIntervalSeconds`    | `60`        | Polling interval while idle             |
-| `gitea-vs-extension.maxRunsPerRepo`                 | `20`        | Maximum runs to fetch per repository    |
-| `gitea-vs-extension.maxJobsPerRun`                  | `50`        | Maximum jobs to fetch per run           |
-| `gitea-vs-extension.tls.insecureSkipVerify`         | `false`     | Skip TLS verification (not recommended) |
-| `gitea-vs-extension.logging.debug`                  | `false`     | Enable debug logging                    |
+| Setting                                             | Default                 | Description                                      |
+| --------------------------------------------------- | ----------------------- | ------------------------------------------------ |
+| `gitea-vs-extension.baseUrl`                        | -                       | Base URL of your Gitea instance                  |
+| `gitea-vs-extension.discovery.mode`                 | `workspace`             | How to discover repositories                     |
+| `gitea-vs-extension.refresh.runningIntervalSeconds` | `15`                    | Polling interval while runs are active           |
+| `gitea-vs-extension.refresh.idleIntervalSeconds`    | `60`                    | Polling interval while idle                      |
+| `gitea-vs-extension.maxRunsPerRepo`                 | `20`                    | Maximum runs to fetch per repository             |
+| `gitea-vs-extension.maxJobsPerRun`                  | `50`                    | Maximum jobs to fetch per run                    |
+| `gitea-vs-extension.tls.insecureSkipVerify`         | `false`                 | Skip TLS verification (not recommended)          |
+| `gitea-vs-extension.logging.debug`                  | `false`                 | Enable debug logging                             |
+| `gitea-vs-extension.artifacts.downloadPath`         | `.tmp/gitea-artifacts/` | Base directory for downloaded workflow artifacts |
 
 ### Discovery Modes
 
