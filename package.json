@@ -109,8 +109,8 @@
       "bircniGiteaVsExtension": [
         {
           "type": "tree",
-          "id": "gitea-vs-extension.runsPinned",
-          "name": "Workflows"
+          "id": "gitea-vs-extension.runs",
+          "name": "Current Branch Runs"
         },
         {
           "type": "tree",

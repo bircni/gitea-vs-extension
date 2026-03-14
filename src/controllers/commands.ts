@@ -1,3 +1,5 @@
+import * as fs from "fs";
+import * as path from "path";
 import * as vscode from "vscode";
 import { getSettings } from "../config/settings";
 import { clearToken, getToken, setToken } from "../config/secrets";
@@ -155,6 +157,25 @@ export class CommandsController {
 
     try {
       const content = await this.api.getJobLogs(payload.repo, payload.job.id);
+      const settings = getSettings();
+
+      if (settings.jobLogsSaveToRepo) {
+        const folderPath = this.store.getWorkspaceFolderPath(payload.repo);
+        if (folderPath) {
+          const safe = (id: number | string) =>
+            String(id).replace(/[^a-zA-Z0-9.-]/g, "-");
+          const fileName = `run-${safe(payload.run.id)}-job-${safe(payload.job.id)}.log`;
+          const logDir = path.join(folderPath, ".tmp", "gitea-logs");
+          const filePath = path.join(logDir, fileName);
+          fs.mkdirSync(logDir, { recursive: true });
+          fs.writeFileSync(filePath, content, "utf8");
+          const uri = vscode.Uri.file(filePath);
+          const doc = await vscode.workspace.openTextDocument(uri);
+          await vscode.window.showTextDocument(doc, { preview: true });
+          return;
+        }
+      }
+
       const doc = await vscode.workspace.openTextDocument({
         content,
         language: "log",
