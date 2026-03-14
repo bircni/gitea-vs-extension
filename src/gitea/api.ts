@@ -469,7 +469,7 @@ function extractRedirectUrlFromHtml(buffer: Uint8Array): string | null {
   if (!trimmed.startsWith("<")) {
     return null;
   }
-  const hrefMatch = text.match(/href\s*=\s*["']([^"']+)["']/i);
+  const hrefMatch = /href\s*=\s*["']([^"']+)["']/i.exec(text);
   if (!hrefMatch?.[1]) {
     return null;
   }
