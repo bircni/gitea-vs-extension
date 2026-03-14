@@ -1,0 +1,41 @@
+---
+description: Project Development Guidelines
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# gitea-vs-extension Development Guidelines
+
+Auto-generated from all feature plans. Last updated: 2026-03-13
+
+## Active Technologies
+- TypeScript (strict), Node.js 24 (source of truth: `.node-version`) + VS Code extension API, undici; tooling: esbuild, Jest, ESLint, Prettier, vsce (002-remove-yarn-use-npm)
+- N/A (extension state uses editor APIs) (002-remove-yarn-use-npm)
+- TypeScript 5.9 targeting the VS Code extension host (Node.js 18+/LTS) + VS Code extension API, `undici` for HTTP, Jest, ESLint, Prettier, esbuild, internal `gitea/*`, `config/*`, and `views/*` modules (001-current-branch-workflows)
+- N/A (state kept in memory via `RepoStateStore` and VS Code APIs; secrets remain in SecretStorage) (001-current-branch-workflows)
+
+- TypeScript targeting a Node.js LTS runtime (as used by VS Code-compatible extensions) + VS Code extension APIs and supporting TypeScript/Node tooling managed via npm (002-remove-yarn-use-npm)
+
+## Project Structure
+
+```text
+src/
+tests/
+```
+
+## Commands
+
+npm test && npm run lint
+
+## Code Style
+
+TypeScript targeting a Node.js LTS runtime (as used by VS Code-compatible extensions): Follow standard conventions
+
+## Recent Changes
+- 001-current-branch-workflows: Added TypeScript 5.9 targeting the VS Code extension host (Node.js 18+/LTS) + VS Code extension API, `undici` for HTTP, Jest, ESLint, Prettier, esbuild, internal `gitea/*`, `config/*`, and `views/*` modules
+- 002-remove-yarn-use-npm: Added TypeScript (strict), Node.js 24 (source of truth: `.node-version`) + VS Code extension API, undici; tooling: esbuild, Jest, ESLint, Prettier, vsce
+
+- 002-remove-yarn-use-npm: Added TypeScript targeting a Node.js LTS runtime (as used by VS Code-compatible extensions) + VS Code extension APIs and supporting TypeScript/Node tooling managed via npm
+
+<!-- MANUAL ADDITIONS START -->
+<!-- MANUAL ADDITIONS END -->
