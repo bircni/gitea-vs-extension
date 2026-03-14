@@ -10,6 +10,8 @@ tsconfig.build.json
 jest.config.js
 jest.setup.js
 *.map
+**/*.map
+dist/**/*.map
 *.tsbuildinfo
 
 # Documentation (not needed in extension)
@@ -21,6 +23,10 @@ README.md
 AGENTS.md
 TEST_VALIDATION_REPORT.md
 docs/**
+examples/**
+specs/**
+.specify/**
+
 
 # Demo assets (only needed for GitHub README, not in extension)
 assets/demo.gif
@@ -35,10 +41,21 @@ coverage/**
 test-report/**
 *.log
 
+# Source maps (exclude from package)
+*.map
+**/*.map
+dist/**/*.map
+extension/dist/**/*.map
+
+# TypeScript declaration files (not needed at runtime)
+dist/**/*.d.ts
+**/*.d.ts
+
 # Test files
 test-*.md
 *.test.ts
 **/__tests__/**
+dist/test-report/**
 
 # CI/CD
 .github/**
@@ -46,8 +63,12 @@ test-*.md
 # Cursor files
 .cursor/**
 
-*.config.ts
+# Dev tooling (not needed at runtime)
+Makefile
+eslint.config.*
+jest.config.*
+scripts/**
+cliff.toml
 .depcheckrc
 .tmp/**
-cliff.toml
-scripts/**
+.node-version
