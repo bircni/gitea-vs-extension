@@ -131,6 +131,11 @@ export class ArtifactNode extends vscode.TreeItem {
     this.contextValue = "giteaArtifact";
     this.description = formatBytes(artifact.sizeInBytes);
     this.iconPath = new vscode.ThemeIcon("package");
+    this.command = {
+      command: "gitea-vs-extension.openOrRevealArtifact",
+      title: "Open",
+      arguments: [this],
+    };
     if (artifact.downloadUrl) {
       this.tooltip = artifact.downloadUrl;
     }

@@ -106,6 +106,8 @@ export class GiteaApi {
   /**
    * Downloads an artifact to a file at the given base directory.
    * Uses artifact.downloadUrl (GET); saves as zip/single file. No partial file on failure.
+   * If the server returns 200 with an HTML page containing a redirect link (e.g. Gitea's "Found" page),
+   * follows that link to get the actual binary.
    * @returns The full path of the saved file.
    */
   async downloadArtifactToFile(
@@ -121,6 +123,10 @@ export class GiteaApi {
     let buffer: Uint8Array;
     try {
       buffer = await this.client.getBinary(artifact.downloadUrl.trim());
+      const redirectUrl = extractRedirectUrlFromHtml(buffer);
+      if (redirectUrl) {
+        buffer = await this.client.getBinary(redirectUrl);
+      }
     } catch (error) {
       if (error instanceof HttpError) {
         throw new EndpointError(
@@ -442,4 +448,30 @@ function asString(value: unknown): string | undefined {
     return value;
   }
   return undefined;
+}
+
+/**
+ * If the response body looks like an HTML redirect page (e.g. Gitea's "Found" link),
+ * extracts the first href URL. Returns null otherwise.
+ */
+function extractRedirectUrlFromHtml(buffer: Uint8Array): string | null {
+  const max = Math.min(buffer.length, 4096);
+  if (max < 10) {
+    return null;
+  }
+  let text: string;
+  try {
+    text = new TextDecoder("utf-8", { fatal: false }).decode(buffer.subarray(0, max));
+  } catch {
+    return null;
+  }
+  const trimmed = text.trimStart();
+  if (!trimmed.startsWith("<")) {
+    return null;
+  }
+  const hrefMatch = text.match(/href\s*=\s*["']([^"']+)["']/i);
+  if (!hrefMatch?.[1]) {
+    return null;
+  }
+  return hrefMatch[1].replace(/&amp;/gi, "&");
 }

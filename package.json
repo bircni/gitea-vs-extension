@@ -256,6 +256,10 @@
         "command": "gitea-vs-extension.revealArtifactInExplorer",
         "title": "Reveal in File Explorer",
         "icon": "$(file-directory)"
+      },
+      {
+        "command": "gitea-vs-extension.openOrRevealArtifact",
+        "title": "Open"
       }
     ],
     "menus": {
@@ -314,7 +318,7 @@
         },
         {
           "command": "gitea-vs-extension.copyUrl",
-          "when": "viewItem == giteaRepo || viewItem == giteaRun || viewItem == giteaJob || viewItem == giteaStep || viewItem == giteaPullRequest || viewItem == giteaArtifact",
+          "when": "viewItem == giteaRepo || viewItem == giteaRun || viewItem == giteaJob || viewItem == giteaStep || viewItem == giteaPullRequest",
           "group": "inline@2"
         },
         {
@@ -326,11 +330,6 @@
           "command": "gitea-vs-extension.downloadArtifact",
           "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem == giteaArtifact",
           "group": "inline@1"
-        },
-        {
-          "command": "gitea-vs-extension.revealArtifactInExplorer",
-          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem == giteaArtifact",
-          "group": "inline@2"
         },
         {
           "command": "gitea-vs-extension.refreshSecrets",

@@ -96,6 +96,9 @@ export class CommandsController {
       vscode.commands.registerCommand("gitea-vs-extension.revealArtifactInExplorer", (arg) =>
         this.handleRevealArtifactInExplorer(arg),
       ),
+      vscode.commands.registerCommand("gitea-vs-extension.openOrRevealArtifact", (arg) =>
+        this.handleOpenOrRevealArtifact(arg),
+      ),
     ];
   }
 
@@ -140,6 +143,24 @@ export class CommandsController {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       void vscode.window.showErrorMessage(`Reveal failed: ${message}`);
+    }
+  }
+
+  private async handleOpenOrRevealArtifact(arg: unknown): Promise<void> {
+    if (!(arg instanceof ArtifactNode)) {
+      return;
+    }
+    const baseDir = getArtifactDownloadBaseDir();
+    const savePath = computeArtifactSavePath(baseDir, arg.repo, arg.runId, arg.artifact);
+    if (!fs.existsSync(savePath)) {
+      void vscode.window.showInformationMessage("Download the artifact first.");
+      return;
+    }
+    try {
+      await vscode.commands.executeCommand("vscode.open", vscode.Uri.file(savePath));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      void vscode.window.showErrorMessage(`Open failed: ${message}`);
     }
   }
 
