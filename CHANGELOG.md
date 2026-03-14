@@ -5,11 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.0.2](https://github.com/bircni/gitea-vs-extension/compare/v0.0.1..v0.0.2) - 2026-02-19
+## [0.1.0](https://github.com/bircni/gitea-vs-extension/compare/v0.0.2..v0.1.0) - 2026-03-14
 
-### Ci
+### Added
 
-- add GitHub Actions workflow for publishing extension - ([ec72027](https://github.com/bircni/gitea-vs-extension/commit/ec720276d23944b40b8b31c5884d9c96d3609c9e))
+- auto-save job logs to repo at .tmp/gitea-logs/run-<id>-job-<id>.log - ([08f5d31](https://github.com/bircni/gitea-vs-extension/commit/08f5d314295471c8346080c36b451c86a1e8a5e0))
+- current branch workflows view and branch filter - ([84b6f51](https://github.com/bircni/gitea-vs-extension/commit/84b6f515d8bd145a91d5be2fdb527f7172fb649d))
+
+### Changed
+
+- update .vscodeignore for packaging - ([ccbbe83](https://github.com/bircni/gitea-vs-extension/commit/ccbbe8318cd014f50593b8404b13288370a64479))
+- Add speckit - ([997e7cf](https://github.com/bircni/gitea-vs-extension/commit/997e7cf7622b73b5b451fb58d9d78ee68c6b6f17))
+- fix npm audit by overriding vulnerable yauzl - ([5738edd](https://github.com/bircni/gitea-vs-extension/commit/5738edd754702007b9283dc1d8531b2134025863))
+- Update release log generation - ([4295577](https://github.com/bircni/gitea-vs-extension/commit/42955775f00a18f18f2f239c666797261846ad69))
 
 ## [0.0.1] - 2026-02-19
 
