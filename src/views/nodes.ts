@@ -124,6 +124,7 @@ export class StepNode extends vscode.TreeItem {
 export class ArtifactNode extends vscode.TreeItem {
   constructor(
     public readonly repo: RepoRef,
+    public readonly runId: number | string,
     public readonly artifact: Artifact,
   ) {
     super(artifact.name, vscode.TreeItemCollapsibleState.None);

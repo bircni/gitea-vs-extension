@@ -109,6 +109,11 @@
           "type": "boolean",
           "default": true,
           "description": "When opening job logs locally, save the log file to the repo at .tmp/gitea-logs/<run>-<job>.log so it opens as a saved file. When disabled, logs open in an unsaved editor tab."
+        },
+        "gitea-vs-extension.artifacts.downloadPath": {
+          "type": "string",
+          "default": ".tmp/gitea-artifacts/",
+          "description": "Base directory for downloaded workflow artifacts. Relative to the first workspace folder, or use an absolute path. Requires Gitea token with Actions scope (read workflow runs and artifacts)."
         }
       }
     },
@@ -241,6 +246,16 @@
         "command": "gitea-vs-extension.switchBranchFilter",
         "title": "gitea-vs-extension: Change Branch Filter",
         "icon": "$(git-branch)"
+      },
+      {
+        "command": "gitea-vs-extension.downloadArtifact",
+        "title": "Download",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "gitea-vs-extension.revealArtifactInExplorer",
+        "title": "Reveal in File Explorer",
+        "icon": "$(file-directory)"
       }
     ],
     "menus": {
@@ -306,6 +321,16 @@
           "command": "gitea-vs-extension.openInBrowser",
           "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem == giteaArtifact",
           "group": "inline"
+        },
+        {
+          "command": "gitea-vs-extension.downloadArtifact",
+          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem == giteaArtifact",
+          "group": "inline@1"
+        },
+        {
+          "command": "gitea-vs-extension.revealArtifactInExplorer",
+          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem == giteaArtifact",
+          "group": "inline@2"
         },
         {
           "command": "gitea-vs-extension.refreshSecrets",

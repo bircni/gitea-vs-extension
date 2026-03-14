@@ -285,7 +285,7 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     if (!artifacts.length) {
       return [new MessageNode("No artifacts found.")];
     }
-    return artifacts.map((artifact) => new ArtifactNode(repo, artifact));
+    return artifacts.map((artifact) => new ArtifactNode(repo, runId, artifact));
   }
 
   private getErrorChildren(repo: RepoRef): TreeNode[] {
