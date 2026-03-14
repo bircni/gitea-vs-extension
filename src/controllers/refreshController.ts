@@ -1,11 +1,14 @@
 import { getSettings } from "../config/settings";
 import type { RepoStateStore } from "../util/cache";
+import type { BranchContext } from "../util/branchContext";
+import { getCurrentBranchInFolder } from "../util/git";
 import { createLimiter } from "../util/limiter";
 import type { Logger } from "../util/logging";
 import { EndpointError, type GiteaApi } from "../gitea/api";
 import { HttpError } from "../gitea/client";
 import type { RepoDiscovery } from "../gitea/discovery";
 import type { Artifact, Job, PullRequest, RepoRef } from "../gitea/models";
+import { resolveWorkspaceRepos } from "../util/repoResolution";
 
 export type RefreshSummary = {
   runningCount: number;
@@ -55,6 +58,22 @@ export class RefreshController {
       }
 
       this.store.setRepos(repos);
+
+      if (settings.discoveryMode === "workspace") {
+        try {
+          const workspaceRepos = await resolveWorkspaceRepos(settings.baseUrl);
+          const repoToFolder = new Map<string, string>();
+          for (const { repo, folder } of workspaceRepos) {
+            const key = repoKey(repo);
+            repoToFolder.set(key, folder.uri.fsPath);
+          }
+          this.store.setWorkspaceFolders(repoToFolder);
+        } catch (error) {
+          this.logger.debug(`Workspace repo resolution failed: ${formatError(error)}`);
+        }
+      }
+
+      await this.updateBranchContextsForRepos(repos);
       this.store.setReposLoading(false);
       if (!hadRepos) {
         this.onDidUpdate();
@@ -70,6 +89,25 @@ export class RefreshController {
   }
 
   async refreshRepo(repo: RepoRef, limit: number): Promise<void> {
+    const folderPath = this.store.getWorkspaceFolderPath(repo);
+    if (folderPath) {
+      const result = await getCurrentBranchInFolder(folderPath);
+      const context: BranchContext = {
+        repo,
+        branchName: result.branchName,
+        status: result.status,
+        reason: result.reason,
+      };
+      this.store.setBranchContext(context);
+      if (this.store.getBranchFilter(repo) === undefined) {
+        this.store.setBranchFilter(
+          context.status === "resolved"
+            ? { repo, mode: "currentBranch" }
+            : { repo, mode: "allBranches" },
+        );
+      }
+    }
+
     const existing = this.store.getEntry(repo);
     const hasData =
       existing !== undefined && (existing.runs.length > 0 || existing.pullRequests.length > 0);
@@ -201,6 +239,44 @@ export class RefreshController {
     this.onDidUpdate();
   }
 
+  private async updateBranchContextsForRepos(repos: RepoRef[]): Promise<void> {
+    for (const repo of repos) {
+      const folderPath = this.store.getWorkspaceFolderPath(repo);
+      let context: BranchContext;
+      if (folderPath) {
+        const result = await getCurrentBranchInFolder(folderPath);
+        context = {
+          repo,
+          branchName: result.branchName,
+          status: result.status,
+          reason: result.reason,
+        };
+        this.logger.debug(
+          `Branch context for ${repo.owner}/${repo.name}: ${result.status}${result.branchName ? ` (${result.branchName})` : ""}${result.reason ? ` - ${result.reason}` : ""}`,
+        );
+      } else {
+        context = {
+          repo,
+          branchName: null,
+          status: "noRepo",
+          reason: "No workspace folder for this repository",
+        };
+        this.logger.debug(
+          `Branch context for ${repo.owner}/${repo.name}: noRepo - no workspace folder`,
+        );
+      }
+      this.store.setBranchContext(context);
+
+      if (this.store.getBranchFilter(repo) === undefined) {
+        if (context.status === "resolved") {
+          this.store.setBranchFilter({ repo, mode: "currentBranch" });
+        } else {
+          this.store.setBranchFilter({ repo, mode: "allBranches" });
+        }
+      }
+    }
+  }
+
   scheduleNext(): void {
     const settings = getSettings();
     const intervalMs = this.isAnythingRunning()
@@ -252,6 +328,10 @@ export class RefreshController {
       entry.errors = next;
     });
   }
+}
+
+function repoKey(repo: RepoRef): string {
+  return `${repo.host}/${repo.owner}/${repo.name}`;
 }
 
 function formatError(error: unknown): string {

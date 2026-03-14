@@ -1,7 +1,8 @@
 import * as vscode from "vscode";
 import { getSettings } from "../config/settings";
 import { getToken } from "../config/secrets";
-import type { RepoStateStore } from "../util/cache";
+import type { RepoCacheEntry, RepoStateStore } from "../util/cache";
+import { filterRunsByBranch } from "../util/branchContext";
 import { expandedRepoKey, expandedRunKey, expandedWorkflowKey } from "../util/expandedState";
 import {
   ArtifactNode,
@@ -130,7 +131,9 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
         );
       }
       const entry = this.store.getEntry(repo);
-      const description = entry?.repoStatus ? `status: ${entry.repoStatus.state}` : undefined;
+      const filterDesc = this.getBranchFilterDescription(repo);
+      const statusDesc = entry?.repoStatus ? `status: ${entry.repoStatus.state}` : undefined;
+      const description = [filterDesc, statusDesc].filter(Boolean).join(" · ") || undefined;
       return new RepoNode(repo, autoExpand || this.isExpanded(expandedRepoKey(repo)), description);
     });
   }
@@ -160,16 +163,61 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       return nodes;
     }
 
-    const nodes: TreeNode[] = entry.runs.map(
-      (run) => new RunNode(repo, run, this.isExpanded(expandedRunKey(repo, run.id))),
+    const filteredRuns = this.getFilteredRuns(entry);
+    const context = this.store.getBranchContext(repo);
+    const filter = this.store.getBranchFilter(repo);
+
+    const nodes: TreeNode[] = [];
+
+    if (
+      context &&
+      context.status !== "resolved" &&
+      (filter?.mode === "currentBranch" || !filter) &&
+      entry.runs.length > 0
+    ) {
+      const reason = context.reason ?? "Automatic current-branch filtering is unavailable.";
+      nodes.push(
+        new MessageNode(
+          `${reason} Showing all branches. Use the branch filter to choose a specific branch.`,
+          "info",
+          "switchBranchFilter",
+        ),
+      );
+    }
+
+    if (
+      filteredRuns.length === 0 &&
+      entry.runs.length > 0 &&
+      context?.status === "resolved" &&
+      filter?.mode === "currentBranch"
+    ) {
+      return [
+        new MessageNode(
+          "No workflow runs for this branch. Use the branch filter to view other branches or all branches.",
+          "info",
+          "switchBranchFilter",
+        ),
+      ];
+    }
+
+    if (filteredRuns.length === 0 && entry.runs.length === 0) {
+      return [
+        new MessageNode(
+          "No workflow runs found for this branch. Switch to another branch or all branches to see existing runs.",
+          "info",
+          "switchBranchFilter",
+        ),
+      ];
+    }
+
+    nodes.push(
+      ...filteredRuns.map(
+        (run) => new RunNode(repo, run, this.isExpanded(expandedRunKey(repo, run.id))),
+      ),
     );
 
     if (entry.errors.length) {
       nodes.push(new SectionNode("errors", "Errors", repo));
-    }
-
-    if (!nodes.length) {
-      nodes.push(new MessageNode("No workflow runs found."));
     }
 
     return nodes;
@@ -259,6 +307,7 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       if (entry.error) {
         continue;
       }
+      // Workflows view shows all runs in the repo grouped by branch (no branch filter).
       for (const run of entry.runs) {
         const branchName = run.branch ?? "unknown";
         const existing = groups.get(branchName);
@@ -303,5 +352,56 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
 
   private isExpanded(key: string): boolean {
     return this.expanded.has(key);
+  }
+
+  private getFilteredRuns(entry: RepoCacheEntry): WorkflowRun[] {
+    const context = this.store.getBranchContext(entry.repo);
+    const filter = this.store.getBranchFilter(entry.repo);
+    if (!context || !filter) {
+      return entry.runs;
+    }
+    let runs = filterRunsByBranch(entry.runs, filter, context);
+
+    // When showing current branch, also include runs that are labeled by PR number
+    // (e.g. "PR #1") if the current branch is the head of that PR.
+    if (filter.mode === "currentBranch" && context.status === "resolved" && context.branchName) {
+      const prNumbersForCurrentBranch = entry.pullRequests
+        .filter((pr) => pr.headRef === context.branchName)
+        .map((pr) => pr.number);
+      const seenIds = new Set(runs.map((r) => String(r.id)));
+      for (const run of entry.runs) {
+        const branch = run.branch ?? "unknown";
+        const prMatch = /^PR #(\d+)$/.exec(branch);
+        if (prMatch && prNumbersForCurrentBranch.includes(Number(prMatch[1]))) {
+          if (!seenIds.has(String(run.id))) {
+            seenIds.add(String(run.id));
+            runs = [...runs, run];
+          }
+        }
+      }
+    }
+
+    return runs;
+  }
+
+  private getBranchFilterDescription(repo: RepoRef): string | undefined {
+    if (this.mode !== "runs" && this.mode !== "workflows") {
+      return undefined;
+    }
+    const context = this.store.getBranchContext(repo);
+    const filter = this.store.getBranchFilter(repo);
+    if (!context || !filter) {
+      return undefined;
+    }
+    if (filter.mode === "allBranches") {
+      return "all branches";
+    }
+    if (filter.mode === "specificBranch" && filter.branchName !== undefined) {
+      return `branch: ${filter.branchName}`;
+    }
+    if (filter.mode === "currentBranch" && context.status === "resolved" && context.branchName) {
+      return `current: ${context.branchName}`;
+    }
+    return undefined;
   }
 }

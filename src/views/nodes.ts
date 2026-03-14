@@ -199,7 +199,7 @@ export class MessageNode extends vscode.TreeItem {
   constructor(
     message: string,
     severity: "info" | "error" = "info",
-    action?: "configureBaseUrl" | "setToken",
+    action?: "configureBaseUrl" | "setToken" | "switchBranchFilter",
   ) {
     super(message, vscode.TreeItemCollapsibleState.None);
     this.contextValue = "giteaMessage";
@@ -214,6 +214,12 @@ export class MessageNode extends vscode.TreeItem {
       this.command = {
         command: "gitea-vs-extension.setToken",
         title: "Set token",
+      };
+    }
+    if (action === "switchBranchFilter") {
+      this.command = {
+        command: "gitea-vs-extension.switchBranchFilter",
+        title: "Change branch filter",
       };
     }
   }

@@ -118,6 +118,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     store,
     runsProvider,
     settingsProvider,
+    () => {
+      runsProvider.refresh();
+      workflowsProvider.refresh();
+      pullRequestsProvider.refresh();
+    },
   );
 
   context.subscriptions.push(

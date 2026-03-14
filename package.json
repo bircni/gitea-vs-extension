@@ -33,7 +33,7 @@
     "install:debug": "npm run build && code --install-extension dist/extension.vsix --force",
     "uninstall:debug": "code --uninstall-extension bircni.gitea-vs-extension",
     "lint": "eslint .",
-    "package": "vsce package --out dist/extension.vsix --no-yarn",
+    "package": "vsce package --out dist/extension.vsix",
     "test": "jest --passWithNoTests",
     "test:report": "jest && echo 'HTML report generated at: dist/test-report/report.html'",
     "test:watch": "jest --watch",
@@ -93,6 +93,11 @@
           "type": "boolean",
           "default": true,
           "description": "Show Gitea pull request review comments inline in the editor for the current branch."
+        },
+        "gitea-vs-extension.jobLogs.saveToRepo": {
+          "type": "boolean",
+          "default": true,
+          "description": "When opening job logs locally, save the log file to the repo at .tmp/gitea-logs/<run>-<job>.log so it opens as a saved file. When disabled, logs open in an unsaved editor tab."
         }
       }
     },
@@ -119,13 +124,14 @@
         },
         {
           "type": "tree",
-          "id": "gitea-vs-extension.runs",
-          "name": "Workflow Runs"
+          "id": "gitea-vs-extension.runsPinned",
+          "name": "Workflows"
         },
         {
           "type": "tree",
           "id": "gitea-vs-extension.settings",
-          "name": "Settings"
+          "name": "Settings",
+          "visibility": "collapsed"
         }
       ]
     },
@@ -219,6 +225,11 @@
         "command": "gitea-vs-extension.openBaseUrlSettings",
         "title": "gitea-vs-extension: Open Base URL Settings",
         "icon": "$(settings-gear)"
+      },
+      {
+        "command": "gitea-vs-extension.switchBranchFilter",
+        "title": "gitea-vs-extension: Change Branch Filter",
+        "icon": "$(git-branch)"
       }
     ],
     "menus": {
@@ -227,6 +238,11 @@
           "command": "gitea-vs-extension.refresh",
           "when": "view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned || view == gitea-vs-extension.pullRequests",
           "group": "navigation"
+        },
+        {
+          "command": "gitea-vs-extension.switchBranchFilter",
+          "when": "view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned",
+          "group": "navigation@1"
         }
       ],
       "view/item/context": [
@@ -239,6 +255,11 @@
           "command": "gitea-vs-extension.refreshRepo",
           "when": "viewItem == giteaRepo",
           "group": "inline@1"
+        },
+        {
+          "command": "gitea-vs-extension.switchBranchFilter",
+          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem == giteaRepo",
+          "group": "inline@2"
         },
         {
           "command": "gitea-vs-extension.openInBrowser",

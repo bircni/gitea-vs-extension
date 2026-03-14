@@ -31,6 +31,7 @@ export class CommandsController {
     private readonly store: RepoStateStore,
     private readonly treeProvider: ActionsTreeProvider,
     private readonly settingsProvider: SettingsTreeProvider,
+    private readonly refreshViews?: () => void,
   ) {}
 
   register(): vscode.Disposable[] {
@@ -85,7 +86,76 @@ export class CommandsController {
       vscode.commands.registerCommand("gitea-vs-extension.openBaseUrlSettings", () =>
         this.handleOpenBaseUrlSettings(),
       ),
+      vscode.commands.registerCommand("gitea-vs-extension.switchBranchFilter", () =>
+        this.handleSwitchBranchFilter(),
+      ),
     ];
+  }
+
+  private async handleSwitchBranchFilter(arg?: RepoRef | RepoNode): Promise<void> {
+    const repo =
+      (arg instanceof RepoNode ? arg.repo : isRepoRef(arg) ? arg : undefined) ??
+      this.settingsProvider.getCurrentRepo();
+    if (!repo) {
+      void vscode.window.showInformationMessage(
+        "Select a repository in the Workflows or Workflow Runs view first, then run the command again.",
+      );
+      return;
+    }
+
+    const context = this.store.getBranchContext(repo);
+    const entry = this.store.getEntry(repo);
+    const branchNames = entry
+      ? [...new Set(entry.runs.map((r) => r.branch).filter(Boolean) as string[])].sort()
+      : [];
+
+    const currentBranchLabel =
+      context?.status === "resolved" && context.branchName
+        ? `Current branch (${context.branchName})`
+        : "Current branch (unavailable)";
+
+    const currentBranchItemLabel = `$(git-branch) ${currentBranchLabel}`;
+
+    type BranchFilterItem = vscode.QuickPickItem & { id: string };
+    const items: BranchFilterItem[] = [
+      {
+        label: currentBranchItemLabel,
+        detail: "Show only runs for your current branch",
+        id: "currentBranch",
+      },
+      {
+        label: "$(list-unordered) All branches",
+        detail: "Show runs for all branches",
+        id: "allBranches",
+      },
+      ...branchNames.map((b) => ({
+        label: `$(branch) ${b}`,
+        detail: `Show only runs for branch ${b}`,
+        id: b,
+      })),
+    ];
+
+    const picked = await vscode.window.showQuickPick(items, {
+      title: "Branch filter",
+      placeHolder: "Choose which branch's workflow runs to show",
+      matchOnDetail: true,
+    });
+
+    if (!picked) {
+      return;
+    }
+
+    const id = picked.id;
+    if (id === "currentBranch") {
+      this.store.setBranchFilter({ repo, mode: "currentBranch" });
+    } else if (id === "allBranches") {
+      this.store.setBranchFilter({ repo, mode: "allBranches" });
+    } else {
+      this.store.setBranchFilter({ repo, mode: "specificBranch", branchName: id });
+    }
+
+    this.treeProvider.refresh();
+    this.refreshViews?.();
   }
 
   private async handleSetToken(): Promise<void> {
@@ -162,8 +232,7 @@ export class CommandsController {
       if (settings.jobLogsSaveToRepo) {
         const folderPath = this.store.getWorkspaceFolderPath(payload.repo);
         if (folderPath) {
-          const safe = (id: number | string) =>
-            String(id).replace(/[^a-zA-Z0-9.-]/g, "-");
+          const safe = (id: number | string) => String(id).replace(/[^a-zA-Z0-9.-]/g, "-");
           const fileName = `run-${safe(payload.run.id)}-job-${safe(payload.job.id)}.log`;
           const logDir = path.join(folderPath, ".tmp", "gitea-logs");
           const filePath = path.join(logDir, fileName);
@@ -407,6 +476,12 @@ export class CommandsController {
     }
     await this.refreshController.loadRunDetails(repo, run.id);
   }
+}
+
+function isRepoRef(obj: unknown): obj is RepoRef {
+  return (
+    typeof obj === "object" && obj !== null && "host" in obj && "owner" in obj && "name" in obj
+  );
 }
 
 type LogArg = { repo: RepoRef; run: WorkflowRun; job: Job; step?: unknown };
