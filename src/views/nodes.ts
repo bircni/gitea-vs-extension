@@ -124,12 +124,18 @@ export class StepNode extends vscode.TreeItem {
 export class ArtifactNode extends vscode.TreeItem {
   constructor(
     public readonly repo: RepoRef,
+    public readonly runId: number | string,
     public readonly artifact: Artifact,
   ) {
     super(artifact.name, vscode.TreeItemCollapsibleState.None);
     this.contextValue = "giteaArtifact";
     this.description = formatBytes(artifact.sizeInBytes);
     this.iconPath = new vscode.ThemeIcon("package");
+    this.command = {
+      command: "gitea-vs-extension.openOrRevealArtifact",
+      title: "Open",
+      arguments: [this],
+    };
     if (artifact.downloadUrl) {
       this.tooltip = artifact.downloadUrl;
     }

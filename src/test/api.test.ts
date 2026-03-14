@@ -213,6 +213,97 @@ describe("GiteaApi core endpoints", () => {
     expect(client.getJson).toHaveBeenCalledWith("/api/v1/repos/owner/repo/actions/artifacts");
   });
 
+  test("downloadArtifactToFile throws when artifact has no downloadUrl", async () => {
+    const artifact = { id: 1, name: "dist" };
+    await expect(
+      api.downloadArtifactToFile(repo, 10, artifact as any, "/tmp/artifacts"),
+    ).rejects.toThrow(EndpointError);
+  });
+
+  test("downloadArtifactToFile downloads and writes file when downloadUrl present", async () => {
+    const clientWithBinary = {
+      getJson: jest.fn(),
+      getText: jest.fn(),
+      requestText: jest.fn(),
+      getBinary: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+    };
+    const apiWithBinary = new GiteaApi(clientWithBinary as any, () => "http://example.com");
+    const fs = require("fs");
+    const mkdirSpy = jest.spyOn(fs, "mkdirSync").mockImplementation(() => undefined);
+    const writeSpy = jest.spyOn(fs, "writeFileSync").mockImplementation(() => undefined);
+
+    const artifact = {
+      id: 1,
+      name: "dist",
+      downloadUrl: "http://example.com/api/v1/repos/owner/repo/actions/artifacts/1/zip",
+    };
+    const savePath = await apiWithBinary.downloadArtifactToFile(
+      repo,
+      10,
+      artifact as any,
+      "/tmp/artifacts",
+    );
+
+    expect(clientWithBinary.getBinary).toHaveBeenCalledWith(artifact.downloadUrl);
+    expect(mkdirSpy).toHaveBeenCalledWith(expect.stringContaining("/tmp/artifacts"), {
+      recursive: true,
+    });
+    expect(writeSpy).toHaveBeenCalledWith(
+      expect.stringMatching(/[/\\]tmp[/\\]artifacts[/\\][^/\\]+[/\\]10[/\\]dist\.zip$/),
+      new Uint8Array([1, 2, 3]),
+    );
+    expect(savePath).toMatch(/[/\\]tmp[/\\]artifacts[/\\][^/\\]+[/\\]10[/\\]dist\.zip$/);
+
+    mkdirSpy.mockRestore();
+    writeSpy.mockRestore();
+  });
+
+  test("downloadArtifactToFile follows HTML redirect when server returns link page", async () => {
+    const htmlRedirect =
+      '<a href="http://192.168.240.51:3000/api/v1/repos/admin/repo/actions/artifacts/1/zip/raw?sig=abc&amp;expires=123">Found</a>.';
+    const zipPayload = new Uint8Array([0x50, 0x4b, 0x03, 0x04]); // PK.. (zip header)
+    const clientWithBinary = {
+      getJson: jest.fn(),
+      getText: jest.fn(),
+      requestText: jest.fn(),
+      getBinary: jest
+        .fn()
+        .mockResolvedValueOnce(new TextEncoder().encode(htmlRedirect))
+        .mockResolvedValueOnce(zipPayload),
+    };
+    const apiWithBinary = new GiteaApi(clientWithBinary as any, () => "http://example.com");
+    const fs = require("fs");
+    const mkdirSpy = jest.spyOn(fs, "mkdirSync").mockImplementation(() => undefined);
+    const writeSpy = jest.spyOn(fs, "writeFileSync").mockImplementation(() => undefined);
+
+    const artifact = {
+      id: 1,
+      name: "dist",
+      downloadUrl: "http://example.com/api/v1/repos/owner/repo/actions/artifacts/1/zip",
+    };
+    const savePath = await apiWithBinary.downloadArtifactToFile(
+      repo,
+      10,
+      artifact as any,
+      "/tmp/artifacts",
+    );
+
+    expect(clientWithBinary.getBinary).toHaveBeenCalledTimes(2);
+    expect(clientWithBinary.getBinary).toHaveBeenNthCalledWith(1, artifact.downloadUrl);
+    expect(clientWithBinary.getBinary).toHaveBeenNthCalledWith(
+      2,
+      "http://192.168.240.51:3000/api/v1/repos/admin/repo/actions/artifacts/1/zip/raw?sig=abc&expires=123",
+    );
+    expect(writeSpy).toHaveBeenCalledWith(
+      expect.stringMatching(/[/\\]tmp[/\\]artifacts[/\\][^/\\]+[/\\]10[/\\]dist\.zip$/),
+      zipPayload,
+    );
+    expect(savePath).toMatch(/[/\\]tmp[/\\]artifacts[/\\][^/\\]+[/\\]10[/\\]dist\.zip$/);
+
+    mkdirSpy.mockRestore();
+    writeSpy.mockRestore();
+  });
+
   test("listRuns throws when endpoint missing", async () => {
     (api as any).ensureEndpoints = jest.fn(async () => ({}));
 

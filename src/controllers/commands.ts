@@ -1,10 +1,11 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
-import { getSettings } from "../config/settings";
+import { getArtifactDownloadBaseDir, getSettings } from "../config/settings";
 import { clearToken, getToken, setToken } from "../config/secrets";
 import type { GiteaApi } from "../gitea/api";
 import type { Job, PullRequest, RepoRef, WorkflowRun } from "../gitea/models";
+import { computeArtifactSavePath } from "../util/artifactDownload";
 import type { RepoStateStore } from "../util/cache";
 import type { ActionsTreeProvider } from "../views/actionsTreeProvider";
 import {
@@ -89,7 +90,78 @@ export class CommandsController {
       vscode.commands.registerCommand("gitea-vs-extension.switchBranchFilter", () =>
         this.handleSwitchBranchFilter(),
       ),
+      vscode.commands.registerCommand("gitea-vs-extension.downloadArtifact", (arg) =>
+        this.handleDownloadArtifact(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.revealArtifactInExplorer", (arg) =>
+        this.handleRevealArtifactInExplorer(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.openOrRevealArtifact", (arg) =>
+        this.handleOpenOrRevealArtifact(arg),
+      ),
     ];
+  }
+
+  private async handleDownloadArtifact(arg: unknown): Promise<void> {
+    if (!(arg instanceof ArtifactNode)) {
+      void vscode.window.showInformationMessage("Select an artifact from the tree to download.");
+      return;
+    }
+    const baseDir = getArtifactDownloadBaseDir();
+    try {
+      const savePath = await this.api.downloadArtifactToFile(
+        arg.repo,
+        arg.runId,
+        arg.artifact,
+        baseDir,
+      );
+      void vscode.window.showInformationMessage(`Artifact saved to ${savePath}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      void vscode.window.showErrorMessage(`Download failed: ${message}`);
+      if (getSettings().debugLogging) {
+        console.error("gitea-vs-extension.downloadArtifact", err);
+      }
+    }
+  }
+
+  private async handleRevealArtifactInExplorer(arg: unknown): Promise<void> {
+    if (!(arg instanceof ArtifactNode)) {
+      void vscode.window.showInformationMessage(
+        "Select an artifact from the tree to reveal in file explorer.",
+      );
+      return;
+    }
+    const baseDir = getArtifactDownloadBaseDir();
+    const savePath = computeArtifactSavePath(baseDir, arg.repo, arg.runId, arg.artifact);
+    if (!fs.existsSync(savePath)) {
+      void vscode.window.showInformationMessage("Download the artifact first.");
+      return;
+    }
+    try {
+      await vscode.commands.executeCommand("revealFileInOS", vscode.Uri.file(savePath));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      void vscode.window.showErrorMessage(`Reveal failed: ${message}`);
+    }
+  }
+
+  private async handleOpenOrRevealArtifact(arg: unknown): Promise<void> {
+    if (!(arg instanceof ArtifactNode)) {
+      return;
+    }
+    const baseDir = getArtifactDownloadBaseDir();
+    const savePath = computeArtifactSavePath(baseDir, arg.repo, arg.runId, arg.artifact);
+    if (!fs.existsSync(savePath)) {
+      void vscode.window.showInformationMessage("Download the artifact first.");
+      return;
+    }
+    try {
+      await vscode.commands.executeCommand("vscode.open", vscode.Uri.file(savePath));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      void vscode.window.showErrorMessage(`Open failed: ${message}`);
+    }
   }
 
   private async handleSwitchBranchFilter(arg?: RepoRef | RepoNode): Promise<void> {

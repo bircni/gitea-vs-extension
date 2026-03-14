@@ -1,5 +1,8 @@
+import * as fs from "fs";
+import * as path from "path";
 import { HttpError, type GiteaHttpClient } from "./client";
 import { discoverEndpoints, fallbackEndpoints, fetchSwagger, type EndpointMap } from "./swagger";
+import { computeArtifactSavePath } from "../util/artifactDownload";
 import {
   normalizeArtifact,
   normalizeJob,
@@ -98,6 +101,57 @@ export class GiteaApi {
     const response = await this.client.getJson<Record<string, unknown>>(base);
     const list = extractArray(response, ["artifacts", "entries"]);
     return list.map((item) => normalizeArtifact(item as Record<string, unknown>));
+  }
+
+  /**
+   * Downloads an artifact to a file at the given base directory.
+   * Uses artifact.downloadUrl (GET); saves as zip/single file. No partial file on failure.
+   * If the server returns 200 with an HTML page containing a redirect link (e.g. Gitea's "Found" page),
+   * follows that link to get the actual binary.
+   * @returns The full path of the saved file.
+   */
+  async downloadArtifactToFile(
+    repo: RepoRef,
+    runId: number | string,
+    artifact: Artifact,
+    baseDir: string,
+  ): Promise<string> {
+    if (!artifact.downloadUrl?.trim()) {
+      throw new EndpointError("Artifact has no download URL");
+    }
+    const savePath = computeArtifactSavePath(baseDir, repo, runId, artifact);
+    let buffer: Uint8Array;
+    try {
+      buffer = await this.client.getBinary(artifact.downloadUrl.trim());
+      const redirectUrl = extractRedirectUrlFromHtml(buffer);
+      if (redirectUrl) {
+        buffer = await this.client.getBinary(redirectUrl);
+      }
+    } catch (error) {
+      if (error instanceof HttpError) {
+        throw new EndpointError(
+          `Failed to download artifact: ${error.status} ${error.message}`.trim(),
+        );
+      }
+      throw error;
+    }
+    const dir = path.dirname(savePath);
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+    } catch (err) {
+      throw new EndpointError(`Cannot create directory for artifact: ${String(err)}`);
+    }
+    try {
+      fs.writeFileSync(savePath, buffer);
+    } catch (err) {
+      try {
+        fs.unlinkSync(savePath);
+      } catch {
+        /* ignore */
+      }
+      throw new EndpointError(`Failed to write artifact file: ${String(err)}`);
+    }
+    return savePath;
   }
 
   async listPullRequests(repo: RepoRef): Promise<PullRequest[]> {
@@ -394,4 +448,30 @@ function asString(value: unknown): string | undefined {
     return value;
   }
   return undefined;
+}
+
+/**
+ * If the response body looks like an HTML redirect page (e.g. Gitea's "Found" link),
+ * extracts the first href URL. Returns null otherwise.
+ */
+function extractRedirectUrlFromHtml(buffer: Uint8Array): string | null {
+  const max = Math.min(buffer.length, 4096);
+  if (max < 10) {
+    return null;
+  }
+  let text: string;
+  try {
+    text = new TextDecoder("utf-8", { fatal: false }).decode(buffer.subarray(0, max));
+  } catch {
+    return null;
+  }
+  const trimmed = text.trimStart();
+  if (!trimmed.startsWith("<")) {
+    return null;
+  }
+  const hrefMatch = /href\s*=\s*["']([^"']+)["']/i.exec(text);
+  if (!hrefMatch?.[1]) {
+    return null;
+  }
+  return hrefMatch[1].replace(/&amp;/gi, "&");
 }

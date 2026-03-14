@@ -13,6 +13,7 @@ export type ExtensionSettings = {
   debugLogging: boolean;
   reviewCommentsEnabled: boolean;
   jobLogsSaveToRepo: boolean;
+  artifactsDownloadPath: string;
 };
 
 export function getSettings(): ExtensionSettings {
@@ -50,7 +51,43 @@ export function getSettings(): ExtensionSettings {
       config.get<boolean>("jobLogs.saveToRepo") ??
       legacyConfig.get<boolean>("jobLogs.saveToRepo") ??
       true,
+    artifactsDownloadPath: (
+      config.get<string>("artifacts.downloadPath") ??
+      legacyConfig.get<string>("artifacts.downloadPath") ??
+      ".tmp/gitea-artifacts/"
+    ).trim(),
   };
+}
+
+/**
+ * Resolves the base directory for downloading artifacts.
+ * Default: `.tmp/gitea-artifacts/` relative to the first workspace folder.
+ * If no workspace folder, falls back to a temp-like path (user home + .tmp/gitea-artifacts).
+ * Absolute paths are returned as-is (normalized).
+ */
+export function getArtifactDownloadBaseDir(): string {
+  const settings = getSettings();
+  const raw = settings.artifactsDownloadPath;
+  const workspaceFolders = vscode.workspace.workspaceFolders;
+  const firstFolder = workspaceFolders?.[0]?.uri.fsPath;
+
+  if (!raw) {
+    return firstFolder
+      ? `${firstFolder.replace(/\\/g, "/")}/.tmp/gitea-artifacts`
+      : `${process.env.HOME ?? process.env.USERPROFILE ?? "/tmp"}/.tmp/gitea-artifacts`;
+  }
+
+  const normalized = raw.replace(/\\/g, "/").trim();
+  const isAbsolute =
+    normalized.startsWith("/") || (normalized.length >= 2 && normalized[1] === ":"); // Windows drive
+
+  if (isAbsolute) {
+    return normalized;
+  }
+  const base = firstFolder
+    ? firstFolder.replace(/\\/g, "/")
+    : (process.env.HOME ?? process.env.USERPROFILE ?? "/tmp");
+  return normalized.startsWith("/") ? `${base}${normalized}` : `${base}/${normalized}`;
 }
 
 export function onSettingsChange(handler: () => void): vscode.Disposable {
