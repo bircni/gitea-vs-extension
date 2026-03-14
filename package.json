@@ -10,6 +10,16 @@
     "type": "git",
     "url": "https://github.com/bircni/gitea-vs-extension"
   },
+  "homepage": "https://github.com/bircni/gitea-vs-extension",
+  "bugs": {
+    "url": "https://github.com/bircni/gitea-vs-extension/issues"
+  },
+  "keywords": [
+    "gitea",
+    "actions",
+    "workflows",
+    "logs"
+  ],
   "engines": {
     "vscode": "^1.105.0"
   },
@@ -21,7 +31,7 @@
   ],
   "main": "./dist/extension.js",
   "scripts": {
-    "audit": "npm audit --severity high",
+    "audit": "npm audit --audit-level high",
     "build": "npm run compile && npm run bundle && npm run package",
     "bundle": "esbuild src/extension.ts --bundle --platform=node --format=cjs --target=node18 --external:vscode --outfile=dist/extension.js --sourcemap",
     "check-unused": "depcheck .",
@@ -348,6 +358,9 @@
         }
       ]
     }
+  },
+  "overrides": {
+    "yauzl": ">=3.2.1"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
