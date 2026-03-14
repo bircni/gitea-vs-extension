@@ -47,6 +47,7 @@
     "test:coverage": "jest --coverage",
     "test:report": "jest && echo 'HTML report generated at: dist/test-report/report.html'",
     "test:watch": "jest --watch",
+    "validate": "npm run check-unused && npm run lint && npm run format && npm run test && npm run build",
     "watch": "tsc  --project tsconfig.build.json --watch",
     "release": "node scripts/release.js"
   },
