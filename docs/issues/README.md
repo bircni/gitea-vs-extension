@@ -12,3 +12,4 @@ These markdown files are ready-to-use issue descriptions for GitHub or Gitea. Th
 | `006-status-bar-run-status.md`         | Status bar: run status for current branch | §3 #7 | `enhancement`, `actions`, `medium priority`     |
 | `007-inline-pr-comment-creation.md`    | Inline PR comment creation     | §3 #10      | `enhancement`, `pull requests`, `review`, `lower priority` |
 | `008-structural-codebase-improvements.md` | Structural and codebase improvements | §4   | `documentation`, `testing`, `maintenance`, `medium priority` |
+| `009-refactor-core-orchestration-and-test-coverage.md` | Refactor core orchestration and test coverage | §4 | `maintenance`, `testing`, `refactor`, `high priority` |
