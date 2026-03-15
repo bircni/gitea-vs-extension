@@ -1,19 +1,25 @@
 import { getSettings } from "../config/settings";
 import type { RepoStateStore } from "../util/cache";
-import type { BranchContext } from "../util/branchContext";
 import { getCurrentBranchInFolder } from "../util/git";
 import { createLimiter } from "../util/limiter";
 import type { Logger } from "../util/logging";
-import { EndpointError, type GiteaApi } from "../gitea/api";
-import { HttpError } from "../gitea/client";
+import {
+  buildBranchContext,
+  buildRunDetailMapsForRuns,
+  computeRefreshSummary,
+  formatRefreshError,
+  getInitialBranchFilterMode,
+  nextEntryErrorState,
+  nextEntryLoadingState,
+  nextEntrySuccessState,
+  type RefreshSummary,
+} from "../util/refreshHelpers";
+import type { GiteaApi } from "../gitea/api";
 import type { RepoDiscovery } from "../gitea/discovery";
-import type { Artifact, Job, PullRequest, RepoRef } from "../gitea/models";
+import type { PullRequest, RepoRef } from "../gitea/models";
 import { resolveWorkspaceRepos } from "../util/repoResolution";
 
-export type RefreshSummary = {
-  runningCount: number;
-  failedCount: number;
-};
+export type { RefreshSummary } from "../util/refreshHelpers";
 
 export class RefreshController {
   private timer?: NodeJS.Timeout;
@@ -54,7 +60,7 @@ export class RefreshController {
       try {
         repos = await this.discovery.discoverRepos(settings.discoveryMode, settings.baseUrl);
       } catch (error) {
-        this.logger.warn(`Repository discovery failed: ${formatError(error)}`);
+        this.logger.warn(`Repository discovery failed: ${formatRefreshError(error)}`);
       }
 
       this.store.setRepos(repos);
@@ -69,7 +75,7 @@ export class RefreshController {
           }
           this.store.setWorkspaceFolders(repoToFolder);
         } catch (error) {
-          this.logger.debug(`Workspace repo resolution failed: ${formatError(error)}`);
+          this.logger.debug(`Workspace repo resolution failed: ${formatRefreshError(error)}`);
         }
       }
 
@@ -90,33 +96,20 @@ export class RefreshController {
 
   async refreshRepo(repo: RepoRef, limit: number): Promise<void> {
     const folderPath = this.store.getWorkspaceFolderPath(repo);
-    if (folderPath) {
-      const result = await getCurrentBranchInFolder(folderPath);
-      const context: BranchContext = {
-        repo,
-        branchName: result.branchName,
-        status: result.status,
-        reason: result.reason,
-      };
-      this.store.setBranchContext(context);
-      if (this.store.getBranchFilter(repo) === undefined) {
-        this.store.setBranchFilter(
-          context.status === "resolved"
-            ? { repo, mode: "currentBranch" }
-            : { repo, mode: "allBranches" },
-        );
-      }
+    const branchResult = folderPath ? await getCurrentBranchInFolder(folderPath) : null;
+    const context = buildBranchContext(repo, folderPath ?? undefined, branchResult);
+    this.store.setBranchContext(context);
+    if (this.store.getBranchFilter(repo) === undefined) {
+      this.store.setBranchFilter({ repo, mode: getInitialBranchFilterMode(context) });
     }
 
     const existing = this.store.getEntry(repo);
     const hasData =
       existing !== undefined && (existing.runs.length > 0 || existing.pullRequests.length > 0);
+    const loadingState = nextEntryLoadingState(hasData);
     this.store.updateEntry(repo, (entry) => {
-      entry.loading = true;
-      entry.error = undefined;
-      if (hasData) {
-        entry.loading = false;
-      }
+      entry.loading = loadingState.loading;
+      entry.error = loadingState.error;
     });
     if (!hasData) {
       this.onDidUpdate();
@@ -139,7 +132,7 @@ export class RefreshController {
             });
           } catch (error) {
             this.logger.debug(
-              `Failed to load repo status for ${repo.owner}/${repo.name}: ${formatError(error)}`,
+              `Failed to load repo status for ${repo.owner}/${repo.name}: ${formatRefreshError(error)}`,
             );
           }
         }
@@ -149,50 +142,34 @@ export class RefreshController {
       try {
         pullRequests = await this.limiter(() => this.api.listPullRequests(repo));
       } catch (error) {
-        this.recordError(repo, `Pull requests: ${formatError(error)}`);
+        const prError = formatRefreshError(error);
+        this.recordError(repo, `Pull requests: ${prError}`);
         this.logger.debug(
-          `Failed to load pull requests for ${repo.owner}/${repo.name}: ${formatError(error)}`,
+          `Failed to load pull requests for ${repo.owner}/${repo.name}: ${prError}`,
         );
       }
 
       this.store.updateEntry(repo, (entry) => {
-        const nextJobsByRun = new Map<string, Job[]>();
-        const nextJobsStateByRun = new Map<string, "unloaded" | "loading" | "idle" | "error">();
-        const nextJobsErrorByRun = new Map<string, string | undefined>();
-        const nextArtifactsByRun = new Map<string, Artifact[]>();
-        const nextArtifactsStateByRun = new Map<
-          string,
-          "unloaded" | "loading" | "idle" | "error"
-        >();
-        const nextArtifactsErrorByRun = new Map<string, string | undefined>();
-
-        for (const run of runs) {
-          const runKey = String(run.id);
-          nextJobsByRun.set(runKey, entry.jobsByRun.get(runKey) ?? []);
-          nextJobsStateByRun.set(runKey, entry.jobsStateByRun.get(runKey) ?? "unloaded");
-          nextJobsErrorByRun.set(runKey, entry.jobsErrorByRun.get(runKey));
-
-          nextArtifactsByRun.set(runKey, entry.artifactsByRun.get(runKey) ?? []);
-          nextArtifactsStateByRun.set(runKey, entry.artifactsStateByRun.get(runKey) ?? "unloaded");
-          nextArtifactsErrorByRun.set(runKey, entry.artifactsErrorByRun.get(runKey));
-        }
-
-        entry.jobsByRun = nextJobsByRun;
-        entry.jobsStateByRun = nextJobsStateByRun;
-        entry.jobsErrorByRun = nextJobsErrorByRun;
-        entry.artifactsByRun = nextArtifactsByRun;
-        entry.artifactsStateByRun = nextArtifactsStateByRun;
-        entry.artifactsErrorByRun = nextArtifactsErrorByRun;
+        const maps = buildRunDetailMapsForRuns(runs, entry);
+        entry.jobsByRun = maps.jobsByRun;
+        entry.jobsStateByRun = maps.jobsStateByRun;
+        entry.jobsErrorByRun = maps.jobsErrorByRun;
+        entry.artifactsByRun = maps.artifactsByRun;
+        entry.artifactsStateByRun = maps.artifactsStateByRun;
+        entry.artifactsErrorByRun = maps.artifactsErrorByRun;
         entry.pullRequests = pullRequests;
         entry.lastUpdated = Date.now();
-        entry.loading = false;
+        const success = nextEntrySuccessState();
+        entry.loading = success.loading;
+        entry.error = success.error;
       });
     } catch (error) {
-      const message = formatError(error);
+      const message = formatRefreshError(error);
       this.logger.warn(`Failed to refresh ${repo.owner}/${repo.name}: ${message}`);
+      const errState = nextEntryErrorState(message);
       this.store.updateEntry(repo, (entry) => {
-        entry.error = message;
-        entry.loading = false;
+        entry.error = errState.error;
+        entry.loading = errState.loading;
       });
       this.recordError(repo, message);
     }
@@ -224,7 +201,7 @@ export class RefreshController {
         entry.artifactsErrorByRun.set(runKey, undefined);
       });
     } catch (error) {
-      const message = formatError(error);
+      const message = formatRefreshError(error);
       this.logger.debug(
         `Failed to load run details for ${repo.owner}/${repo.name} run ${runId}: ${message}`,
       );
@@ -242,37 +219,14 @@ export class RefreshController {
   private async updateBranchContextsForRepos(repos: RepoRef[]): Promise<void> {
     for (const repo of repos) {
       const folderPath = this.store.getWorkspaceFolderPath(repo);
-      let context: BranchContext;
-      if (folderPath) {
-        const result = await getCurrentBranchInFolder(folderPath);
-        context = {
-          repo,
-          branchName: result.branchName,
-          status: result.status,
-          reason: result.reason,
-        };
-        this.logger.debug(
-          `Branch context for ${repo.owner}/${repo.name}: ${result.status}${result.branchName ? ` (${result.branchName})` : ""}${result.reason ? ` - ${result.reason}` : ""}`,
-        );
-      } else {
-        context = {
-          repo,
-          branchName: null,
-          status: "noRepo",
-          reason: "No workspace folder for this repository",
-        };
-        this.logger.debug(
-          `Branch context for ${repo.owner}/${repo.name}: noRepo - no workspace folder`,
-        );
-      }
+      const branchResult = folderPath ? await getCurrentBranchInFolder(folderPath) : null;
+      const context = buildBranchContext(repo, folderPath ?? undefined, branchResult);
+      this.logger.debug(
+        `Branch context for ${repo.owner}/${repo.name}: ${context.status}${context.branchName ? ` (${context.branchName})` : ""}${context.reason ? ` - ${context.reason}` : ""}`,
+      );
       this.store.setBranchContext(context);
-
       if (this.store.getBranchFilter(repo) === undefined) {
-        if (context.status === "resolved") {
-          this.store.setBranchFilter({ repo, mode: "currentBranch" });
-        } else {
-          this.store.setBranchFilter({ repo, mode: "allBranches" });
-        }
+        this.store.setBranchFilter({ repo, mode: getInitialBranchFilterMode(context) });
       }
     }
   }
@@ -300,26 +254,7 @@ export class RefreshController {
   }
 
   private updateSummary(): void {
-    const summary = this.computeSummary();
-    this.onSummary(summary);
-  }
-
-  private computeSummary(): RefreshSummary {
-    let runningCount = 0;
-    let failedCount = 0;
-
-    for (const entry of this.store.getEntries()) {
-      for (const run of entry.runs) {
-        if (run.status === "running" || run.status === "queued") {
-          runningCount += 1;
-        }
-        if (run.conclusion === "failure") {
-          failedCount += 1;
-        }
-      }
-    }
-
-    return { runningCount, failedCount };
+    this.onSummary(computeRefreshSummary(this.store.getEntries()));
   }
 
   private recordError(repo: RepoRef, message: string): void {
@@ -332,29 +267,4 @@ export class RefreshController {
 
 function repoKey(repo: RepoRef): string {
   return `${repo.host}/${repo.owner}/${repo.name}`;
-}
-
-function formatError(error: unknown): string {
-  if (error instanceof EndpointError) {
-    return error.message;
-  }
-
-  if (error instanceof HttpError) {
-    if (error.status === 401) {
-      return "Unauthorized. Set a valid token.";
-    }
-    if (error.status === 403) {
-      return "Insufficient permission to access Actions.";
-    }
-    if (error.status === 404) {
-      return "Actions endpoint not supported by this Gitea version.";
-    }
-    return `HTTP ${error.status}`;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Unknown error";
 }

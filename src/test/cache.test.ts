@@ -1,3 +1,4 @@
+import type { BranchContext, BranchFilterState } from "../util/branchContext";
 import type { RepoRef, WorkflowRun } from "../gitea/models";
 import { RepoStateStore } from "../util/cache";
 
@@ -47,5 +48,59 @@ describe("RepoStateStore", () => {
     });
 
     expect(store.getEntry(repoB)).toBeUndefined();
+  });
+
+  test("setWorkspaceFolders and getWorkspaceFolderPath", () => {
+    const store = new RepoStateStore();
+    store.setRepos([repoA, repoB]);
+    const map = new Map<string, string>();
+    map.set("example.com/octo/alpha", "/path/a");
+    map.set("example.com/octo/beta", "/path/b");
+    store.setWorkspaceFolders(map);
+
+    expect(store.getWorkspaceFolderPath(repoA)).toBe("/path/a");
+    expect(store.getWorkspaceFolderPath(repoB)).toBe("/path/b");
+    expect(store.getWorkspaceFolderPath({ host: "x", owner: "y", name: "z" })).toBeUndefined();
+  });
+
+  test("setBranchContext and getBranchContext", () => {
+    const store = new RepoStateStore();
+    store.setRepos([repoA]);
+    const ctx: BranchContext = {
+      repo: repoA,
+      branchName: "main",
+      status: "resolved",
+    };
+    store.setBranchContext(ctx);
+
+    expect(store.getBranchContext(repoA)).toEqual(ctx);
+    expect(store.getBranchContext(repoB)).toBeUndefined();
+  });
+
+  test("setBranchFilter and getBranchFilter", () => {
+    const store = new RepoStateStore();
+    store.setRepos([repoA]);
+    const filter: BranchFilterState = { repo: repoA, mode: "allBranches" };
+    store.setBranchFilter(filter);
+
+    expect(store.getBranchFilter(repoA)).toEqual(filter);
+    expect(store.getBranchFilter(repoB)).toBeUndefined();
+  });
+
+  test("setReposLoading and isReposLoading", () => {
+    const store = new RepoStateStore();
+    expect(store.isReposLoading()).toBe(false);
+    store.setReposLoading(true);
+    expect(store.isReposLoading()).toBe(true);
+    store.setReposLoading(false);
+    expect(store.isReposLoading()).toBe(false);
+  });
+
+  test("getEntries returns all entries", () => {
+    const store = new RepoStateStore();
+    store.setRepos([repoA, repoB]);
+    const entries = store.getEntries();
+    expect(entries).toHaveLength(2);
+    expect(entries.map((e) => e.repo)).toEqual(expect.arrayContaining([repoA, repoB]));
   });
 });

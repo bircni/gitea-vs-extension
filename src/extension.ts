@@ -7,20 +7,18 @@ import { RepoDiscovery } from "./gitea/discovery";
 import { ActionsTreeProvider } from "./views/actionsTreeProvider";
 import { RepoStateStore } from "./util/cache";
 import { Logger } from "./util/logging";
-import { expandedRepoKey, expandedRunKey, expandedWorkflowKey } from "./util/expandedState";
+import {
+  loadExpandedState,
+  registerTreeViews,
+  updateStatusBar,
+  wireExpandCollapsePersistence,
+  wireRefreshAndStatusBar,
+  wireSelectionToRepoSync,
+} from "./util/bootstrap";
 import { RefreshController, type RefreshSummary } from "./controllers/refreshController";
 import { CommandsController } from "./controllers/commands";
 import { SettingsTreeProvider } from "./views/settingsTreeProvider";
 import { ReviewCommentsController } from "./controllers/reviewCommentsController";
-import {
-  RepoNode,
-  RunNode,
-  JobNode,
-  StepNode,
-  WorkflowGroupNode,
-  PullRequestNode,
-} from "./views/nodes";
-import type { RepoRef } from "./gitea/models";
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const logger = new Logger("gitea-vs-extension", () => getSettings().debugLogging);
@@ -61,21 +59,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     expanded,
   );
 
-  const workflowsTree = vscode.window.createTreeView("gitea-vs-extension.runsPinned", {
-    treeDataProvider: workflowsProvider,
-    showCollapseAll: true,
-  });
-  const pullRequestsTree = vscode.window.createTreeView("gitea-vs-extension.pullRequests", {
-    treeDataProvider: pullRequestsProvider,
-    showCollapseAll: true,
-  });
-  const runsTree = vscode.window.createTreeView("gitea-vs-extension.runs", {
-    treeDataProvider: runsProvider,
-    showCollapseAll: true,
-  });
-  const settingsTree = vscode.window.createTreeView("gitea-vs-extension.settings", {
-    treeDataProvider: settingsProvider,
-    showCollapseAll: true,
+  const trees = registerTreeViews({
+    runs: { viewId: "gitea-vs-extension.runs", provider: runsProvider },
+    workflows: { viewId: "gitea-vs-extension.runsPinned", provider: workflowsProvider },
+    pullRequests: { viewId: "gitea-vs-extension.pullRequests", provider: pullRequestsProvider },
+    settings: { viewId: "gitea-vs-extension.settings", provider: settingsProvider },
   });
 
   const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
@@ -105,7 +93,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         settingsProvider.setRepository(firstRepo);
       }
     },
-    (summary) => {
+    (summary: RefreshSummary) => {
       updateStatusBar(statusBar, summary);
       reviewCommentsController.scheduleRefresh();
     },
@@ -126,90 +114,36 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   );
 
   context.subscriptions.push(
-    runsTree,
-    workflowsTree,
-    pullRequestsTree,
-    settingsTree,
+    trees.runsTree,
+    trees.workflowsTree,
+    trees.pullRequestsTree,
+    trees.settingsTree,
     statusBar,
     reviewCommentsController,
     logger,
     { dispose: () => refreshController.dispose() },
     ...commands.register(),
-    onSettingsChange(() => {
-      logger.debug("Settings changed, refreshing.");
-      refreshController.scheduleNext();
-      void refreshController.refreshAll();
-      reviewCommentsController.scheduleRefresh();
+    ...wireExpandCollapsePersistence({
+      trees,
+      expanded,
+      globalState: context.globalState,
+      loadRunDetails: (repo, runId) => void refreshController.loadRunDetails(repo, runId),
     }),
-    vscode.workspace.onDidChangeWorkspaceFolders(() => {
-      void refreshController.refreshAll();
-      reviewCommentsController.scheduleRefresh();
+    ...wireSelectionToRepoSync({
+      trees,
+      setRepository: (repo) => settingsProvider.setRepository(repo),
     }),
-    runsTree.onDidChangeVisibility((event) => {
-      if (event.visible) {
-        void refreshController.refreshAll();
-      }
-    }),
-    workflowsTree.onDidChangeVisibility((event) => {
-      if (event.visible) {
-        void refreshController.refreshAll();
-      }
-    }),
-    pullRequestsTree.onDidChangeVisibility((event) => {
-      if (event.visible) {
-        void refreshController.refreshAll();
-      }
-    }),
-    settingsTree.onDidChangeVisibility((event) => {
-      if (event.visible) {
-        const repo = settingsProvider.getCurrentRepo();
-        if (repo) {
-          void vscode.commands.executeCommand("gitea-vs-extension.refreshSecrets", repo);
-          void vscode.commands.executeCommand("gitea-vs-extension.refreshVariables", repo);
-        }
-      }
-    }),
-    runsTree.onDidExpandElement((event) => {
-      if (event.element instanceof RunNode) {
-        void refreshController.loadRunDetails(event.element.repo, event.element.run.id);
-      }
-      updateExpandedState(expanded, context.globalState, event.element, true);
-    }),
-    workflowsTree.onDidExpandElement((event) => {
-      if (event.element instanceof RunNode) {
-        void refreshController.loadRunDetails(event.element.repo, event.element.run.id);
-      }
-      updateExpandedState(expanded, context.globalState, event.element, true);
-    }),
-    pullRequestsTree.onDidExpandElement((event) => {
-      updateExpandedState(expanded, context.globalState, event.element, true);
-    }),
-    runsTree.onDidCollapseElement((event) => {
-      updateExpandedState(expanded, context.globalState, event.element, false);
-    }),
-    workflowsTree.onDidCollapseElement((event) => {
-      updateExpandedState(expanded, context.globalState, event.element, false);
-    }),
-    pullRequestsTree.onDidCollapseElement((event) => {
-      updateExpandedState(expanded, context.globalState, event.element, false);
-    }),
-    runsTree.onDidChangeSelection((event) => {
-      const repo = extractRepoFromSelection(event.selection);
-      if (repo) {
-        settingsProvider.setRepository(repo);
-      }
-    }),
-    workflowsTree.onDidChangeSelection((event) => {
-      const repo = extractRepoFromSelection(event.selection);
-      if (repo) {
-        settingsProvider.setRepository(repo);
-      }
-    }),
-    pullRequestsTree.onDidChangeSelection((event) => {
-      const repo = extractRepoFromSelection(event.selection);
-      if (repo) {
-        settingsProvider.setRepository(repo);
-      }
+    ...wireRefreshAndStatusBar({
+      refreshController,
+      settingsProvider,
+      onSettingsChange: (listener) =>
+        onSettingsChange(() => {
+          logger.debug("Settings changed, refreshing.");
+          listener();
+        }),
+      workspaceFoldersChange: vscode.workspace.onDidChangeWorkspaceFolders,
+      trees,
+      onAfterRefreshTrigger: () => reviewCommentsController.scheduleRefresh(),
     }),
   );
 
@@ -218,71 +152,3 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export function deactivate(): void {}
-
-function updateStatusBar(item: vscode.StatusBarItem, summary: RefreshSummary): void {
-  const running = summary.runningCount;
-  const failed = summary.failedCount;
-  item.text = `Gitea: ${running} running, ${failed} failed`;
-}
-
-function extractRepoFromSelection(selection: readonly unknown[]): RepoRef | undefined {
-  for (const element of selection) {
-    if (element instanceof RepoNode) {
-      return element.repo;
-    }
-    if (element instanceof RunNode) {
-      return element.repo;
-    }
-    if (element instanceof JobNode) {
-      return element.repo;
-    }
-    if (element instanceof StepNode) {
-      return element.repo;
-    }
-    if (element instanceof WorkflowGroupNode) {
-      return element.runs[0]?.repo;
-    }
-    if (element instanceof PullRequestNode) {
-      return element.repo;
-    }
-  }
-  return undefined;
-}
-
-const EXPANDED_STATE_KEY = "gitea-vs-extension.expandedNodes";
-
-function loadExpandedState(storage: vscode.Memento): Set<string> {
-  const stored = storage.get<string[]>(EXPANDED_STATE_KEY) ?? [];
-  return new Set(stored);
-}
-
-function updateExpandedState(
-  expanded: Set<string>,
-  storage: vscode.Memento,
-  element: unknown,
-  isExpanded: boolean,
-): void {
-  const key = getExpandedKey(element);
-  if (!key) {
-    return;
-  }
-  if (isExpanded) {
-    expanded.add(key);
-  } else {
-    expanded.delete(key);
-  }
-  void storage.update(EXPANDED_STATE_KEY, Array.from(expanded));
-}
-
-function getExpandedKey(element: unknown): string | undefined {
-  if (element instanceof RepoNode) {
-    return expandedRepoKey(element.repo);
-  }
-  if (element instanceof RunNode) {
-    return expandedRunKey(element.repo, element.run.id);
-  }
-  if (element instanceof WorkflowGroupNode) {
-    return expandedWorkflowKey(element.name);
-  }
-  return undefined;
-}
