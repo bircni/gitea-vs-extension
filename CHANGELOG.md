@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0](https://github.com/bircni/gitea-vs-extension/compare/v0.1.0..v0.2.0) - 2026-03-15
+
+### Added
+
+- **(artifacts)** add download for workflow artifacts ([#12](https://github.com/bircni/gitea-vs-extension/issues/12)) - ([bc045b9](https://github.com/bircni/gitea-vs-extension/commit/bc045b98a5b99f03fd62f19db05411ea5adcef47))
+
+### Changed
+
+- **(issues)** add issue drafts for §3 #7, #10 and §4 structural improvements - ([e0897e0](https://github.com/bircni/gitea-vs-extension/commit/e0897e0f679277195098768d0a47603424978604))
+- add roadmap analysis and issue drafts for high-priority features - ([813b3e5](https://github.com/bircni/gitea-vs-extension/commit/813b3e5ca83a1508815b9dfb3a7d45f58831d1a8))
+- refactor orchestration and raise test coverage ([#21](https://github.com/bircni/gitea-vs-extension/issues/21)) - ([14969b7](https://github.com/bircni/gitea-vs-extension/commit/14969b75593dfa3e5fcdc235d1d38842f21720aa))
+
 ## [0.1.0](https://github.com/bircni/gitea-vs-extension/compare/v0.0.2..v0.1.0) - 2026-03-14
 
 ### Added
