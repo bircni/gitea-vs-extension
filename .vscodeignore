@@ -7,6 +7,8 @@ src/**
 .npmignore
 tsconfig.json
 tsconfig.build.json
+tsconfig.e2e.json
+out/**
 jest.config.js
 jest.setup.js
 *.map

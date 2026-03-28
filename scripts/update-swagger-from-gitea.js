@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 /**
  * Download OpenAPI/Swagger v1 JSON from gitea.com (or GITEA_SWAGGER_BASE) into docs/swagger.v1.json.
- * Path order matches src/gitea/swagger.ts (SWAGGER_PATHS).
+ * Path order matches src/gitea/swagger.ts (SWAGGER_FETCH_PATHS).
  */
 
 const fs = require("fs");
 const path = require("path");
 
 const DEFAULT_BASE = "https://gitea.com";
-const SWAGGER_PATHS = [
+const SWAGGER_FETCH_PATHS = [
   "/swagger.v1.json",
   "/api/swagger.v1.json",
   "/api/swagger.json",
@@ -31,7 +31,7 @@ async function main() {
   const base = (process.env.GITEA_SWAGGER_BASE ?? DEFAULT_BASE).replace(/\/$/, "");
 
   let lastError = null;
-  for (const p of SWAGGER_PATHS) {
+  for (const p of SWAGGER_FETCH_PATHS) {
     const url = `${base}${p}`;
     try {
       const res = await fetch(url, {
@@ -62,7 +62,7 @@ async function main() {
     }
   }
 
-  console.error("Failed to fetch swagger from any path:", SWAGGER_PATHS.join(", "));
+  console.error("Failed to fetch swagger from any path:", SWAGGER_FETCH_PATHS.join(", "));
   if (lastError) {
     console.error(lastError.message);
   }

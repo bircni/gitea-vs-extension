@@ -19,19 +19,21 @@ import { RefreshController, type RefreshSummary } from "./controllers/refreshCon
 import { CommandsController } from "./controllers/commands";
 import { SettingsTreeProvider } from "./views/settingsTreeProvider";
 import { ReviewCommentsController } from "./controllers/reviewCommentsController";
+import { registerExtensionTestCommands } from "./util/extensionTestCommands";
+import { resolveExtensionTestPat } from "./util/extensionTestMode";
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const logger = new Logger("gitea-vs-extension", () => getSettings().debugLogging);
   let cachedToken = await getToken(context.secrets);
 
   const settingsProvider = new SettingsTreeProvider();
-  settingsProvider.setTokenStatus(Boolean(cachedToken));
+  settingsProvider.setTokenStatus(Boolean(resolveExtensionTestPat() ?? cachedToken));
 
   context.secrets.onDidChange((event) => {
     if (event.key === TOKEN_KEY) {
       void getToken(context.secrets).then((token) => {
         cachedToken = token;
-        settingsProvider.setTokenStatus(Boolean(token));
+        settingsProvider.setTokenStatus(Boolean(resolveExtensionTestPat() ?? token));
       });
     }
   });
@@ -40,7 +42,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     const settings = getSettings();
     return {
       baseUrl: settings.baseUrl,
-      token: cachedToken,
+      token: resolveExtensionTestPat() ?? cachedToken,
       insecureSkipVerify: settings.tlsInsecureSkipVerify,
     };
   });
@@ -123,6 +125,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     logger,
     { dispose: () => refreshController.dispose() },
     ...commands.register(),
+    ...registerExtensionTestCommands(context, store, refreshController),
     ...wireExpandCollapsePersistence({
       trees,
       expanded,

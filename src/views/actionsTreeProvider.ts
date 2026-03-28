@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { getSettings } from "../config/settings";
-import { getToken } from "../config/secrets";
+import { getEffectiveToken } from "../config/secrets";
 import type { RepoStateStore } from "../util/cache";
 import { expandedRepoKey, expandedRunKey, expandedWorkflowKey } from "../util/expandedState";
 import {
@@ -92,7 +92,7 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   private async getRootNodes(): Promise<TreeNode[]> {
     const settings = getSettings();
     const hasBaseUrl = Boolean(settings.baseUrl);
-    const token = await getToken(this.secrets);
+    const token = await getEffectiveToken(this.secrets);
     const reposLoading = this.store.isReposLoading();
     const repos = this.store.getRepos();
     const workflowDescriptors =

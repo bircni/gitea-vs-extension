@@ -101,7 +101,10 @@ npm run clean     # Remove dist/
 **Testing:**
 
 ```bash
-npm test              # Run all tests
+npm test              # Run all tests (unit + hermetic mock integration)
+npm run test:integration   # Only `gitea-api-mock.integration.test.ts`
+npm run test:live     # Optional real Gitea smoke (needs GITEA_BASE_URL; skips if unset unless REQUIRE_LIVE_GITEA=1)
+npm run test:e2e      # VS Code extension host vs mock (needs compile + bundle first; see src/test/e2e/README.md)
 npm run test:watch    # Watch mode
 npm run test:coverage # Coverage report
 npm run test:report   # Tests then report path
