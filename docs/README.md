@@ -13,7 +13,15 @@ These files are provided for development reference only. They help developers an
 
 ## Source
 
-Downloaded from a Gitea instance running version 1.25.3. These may not match your specific Gitea server version.
+Refresh the API snapshot from [gitea.com](https://gitea.com) (whatever version it currently serves):
+
+```bash
+npm run update:swagger
+```
+
+Optional: set `GITEA_SWAGGER_BASE` to another origin (no trailing slash) to pull from a different instance.
+
+Older copies were pinned to a specific release; your checkout may differ after an update.
 
 ## Note
 
