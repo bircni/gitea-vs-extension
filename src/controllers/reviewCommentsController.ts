@@ -18,6 +18,12 @@ type RepoContext = {
 
 type ThreadKey = string;
 
+type ThreadPlan = {
+  uri: vscode.Uri;
+  line: number;
+  comments: PullRequestReviewComment[];
+};
+
 export class ReviewCommentsController implements vscode.Disposable {
   private readonly commentController = vscode.comments.createCommentController(
     "gitea-vs-extension.reviewComments",
@@ -28,6 +34,8 @@ export class ReviewCommentsController implements vscode.Disposable {
   private refreshInProgress = false;
   private pendingRefresh = false;
   private activeKey?: string;
+  private lastRenderFingerprint?: string;
+  private lastThreadPlan = new Map<ThreadKey, ThreadPlan>();
 
   constructor(
     private readonly api: GiteaApi,
@@ -37,7 +45,9 @@ export class ReviewCommentsController implements vscode.Disposable {
     this.commentController.commentingRangeProvider = {
       provideCommentingRanges: () => [],
     };
-    this.avatarCache = new AvatarCache(api, logger, storageRoot, () => this.scheduleRefresh());
+    this.avatarCache = new AvatarCache(api, logger, storageRoot, (url) =>
+      this.patchAvatarsForUrl(url),
+    );
   }
 
   dispose(): void {
@@ -103,6 +113,24 @@ export class ReviewCommentsController implements vscode.Disposable {
     }
     this.threads.clear();
     this.activeKey = undefined;
+    this.lastRenderFingerprint = undefined;
+    this.lastThreadPlan = new Map();
+  }
+
+  /** Update comment avatars after a URL finishes downloading — avoids a full refresh/flicker. */
+  private patchAvatarsForUrl(url: string): void {
+    for (const [threadKey, plan] of this.lastThreadPlan) {
+      if (!plan.comments.some((c) => c.avatarUrl === url)) {
+        continue;
+      }
+      const thread = this.threads.get(threadKey);
+      if (!thread) {
+        continue;
+      }
+      thread.comments = plan.comments.map((c) =>
+        toVscodeComment(c, this.avatarCache.getAvatarUri(c.avatarUrl)),
+      );
+    }
   }
 
   private async resolveRepoContext(baseUrl: string): Promise<RepoContext | undefined> {
@@ -208,6 +236,13 @@ export class ReviewCommentsController implements vscode.Disposable {
     comments: PullRequestReviewComment[],
   ): void {
     const key = `${folder.uri.fsPath}:${pullRequestNumber}`;
+    const plan = planReviewCommentThreads(folder, comments);
+    const fp = fingerprintCommentPlan(folder.uri.fsPath, pullRequestNumber, plan);
+
+    if (this.activeKey === key && fp === this.lastRenderFingerprint) {
+      return;
+    }
+
     if (this.activeKey !== key) {
       this.clear();
     } else {
@@ -218,30 +253,88 @@ export class ReviewCommentsController implements vscode.Disposable {
     }
 
     this.activeKey = key;
+    this.lastRenderFingerprint = fp;
+    this.lastThreadPlan = plan;
 
-    for (const comment of comments) {
-      const line = comment.line ?? comment.originalLine;
-      if (!comment.path || !line || line < 1) {
-        continue;
-      }
-
-      const uri = fileUriForComment(folder.uri, comment.path);
-      if (!uri || !fs.existsSync(uri.fsPath)) {
-        continue;
-      }
-
+    for (const [threadKey, { uri, line, comments: threadComments }] of plan) {
       const range = new vscode.Range(line - 1, 0, line - 1, 0);
-      const threadKey = `${uri.fsPath}:${line}`;
-      const thread =
-        this.threads.get(threadKey) ?? this.commentController.createCommentThread(uri, range, []);
+      const thread = this.commentController.createCommentThread(uri, range, []);
       thread.contextValue = "giteaReviewComment";
       thread.canReply = false;
-      const avatarUri = this.avatarCache.getAvatarUri(comment.avatarUrl);
-      const commentEntry = toVscodeComment(comment, avatarUri);
-      thread.comments = [...thread.comments, commentEntry];
+      thread.comments = threadComments.map((c) =>
+        toVscodeComment(c, this.avatarCache.getAvatarUri(c.avatarUrl)),
+      );
       this.threads.set(threadKey, thread);
     }
   }
+}
+
+export function planReviewCommentThreads(
+  folder: vscode.WorkspaceFolder,
+  comments: PullRequestReviewComment[],
+): Map<ThreadKey, ThreadPlan> {
+  const buckets = new Map<ThreadKey, PullRequestReviewComment[]>();
+  for (const comment of comments) {
+    const line = comment.line ?? comment.originalLine;
+    if (!comment.path || !line || line < 1) {
+      continue;
+    }
+    const uri = fileUriForComment(folder.uri, comment.path);
+    if (!uri || !fs.existsSync(uri.fsPath)) {
+      continue;
+    }
+    const threadKey = `${uri.fsPath}:${line}`;
+    const existing = buckets.get(threadKey);
+    if (existing) {
+      existing.push(comment);
+    } else {
+      buckets.set(threadKey, [comment]);
+    }
+  }
+
+  const plan = new Map<ThreadKey, ThreadPlan>();
+  for (const [threadKey, list] of buckets) {
+    list.sort((a, b) => String(a.id).localeCompare(String(b.id)));
+    if (list.length === 0) {
+      continue;
+    }
+    const first = list[0];
+    if (!first.path) {
+      continue;
+    }
+    const line = first.line ?? first.originalLine;
+    if (!line || line < 1) {
+      continue;
+    }
+    const uri = fileUriForComment(folder.uri, first.path);
+    if (!uri) {
+      continue;
+    }
+    plan.set(threadKey, { uri, line, comments: list });
+  }
+  return plan;
+}
+
+export function fingerprintCommentPlan(
+  folderFsPath: string,
+  pullRequestNumber: number,
+  plan: Map<ThreadKey, ThreadPlan>,
+): string {
+  const header = `${folderFsPath}:${pullRequestNumber}`;
+  const keys = [...plan.keys()].sort();
+  const lines: string[] = [header];
+  for (const threadKey of keys) {
+    const entry = plan.get(threadKey);
+    if (!entry) {
+      continue;
+    }
+    for (const c of entry.comments) {
+      lines.push(
+        `${threadKey}\0${String(c.id)}\0${c.body ?? ""}\0${c.author ?? ""}\0${c.updatedAt ?? c.createdAt ?? ""}`,
+      );
+    }
+  }
+  return lines.join("\n");
 }
 
 async function getGitHead(folderPath: string): Promise<{ branch?: string; sha?: string }> {
@@ -405,7 +498,7 @@ class AvatarCache {
     private readonly api: GiteaApi,
     private readonly logger: Logger,
     storageRoot: string,
-    private readonly onReady: () => void,
+    private readonly onAvatarCached: (url: string) => void,
   ) {
     this.avatarDir = path.join(storageRoot, "gitea-avatars");
   }
@@ -426,7 +519,7 @@ class AvatarCache {
 
     this.inflight.add(url);
     void this.download(url, cachedPath)
-      .then(() => this.onReady())
+      .then(() => this.onAvatarCached(url))
       .catch((error) => {
         this.logger.debug(`Failed to cache avatar: ${formatError(error)}`);
       })
