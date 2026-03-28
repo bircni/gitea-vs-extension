@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import {
   buildDiffPositionMap,
+  compareReviewCommentById,
   fingerprintCommentPlan,
   planReviewCommentThreads,
 } from "../controllers/reviewCommentsController";
@@ -118,6 +119,22 @@ describe("review comment render fingerprint", () => {
     expect(fingerprintCommentPlan("/workspace", 5, plan1)).toBe(
       fingerprintCommentPlan("/workspace", 5, plan2),
     );
+  });
+
+  test("sorts same-line thread comments by numeric id, not lexicographically", () => {
+    const comments: PullRequestReviewComment[] = [
+      { id: 10, body: "second", path: "f.ts", line: 1, author: "a" },
+      { id: 2, body: "first", path: "f.ts", line: 1, author: "b" },
+    ];
+    const plan = planReviewCommentThreads(folder, comments);
+    const thread = [...plan.values()][0];
+    expect(thread.comments.map((c) => c.id)).toEqual([2, 10]);
+  });
+
+  test("compareReviewCommentById uses lexicographic order when id is not canonical decimal", () => {
+    const a = { id: "010", path: "f", line: 1, author: "x" } as PullRequestReviewComment;
+    const b = { id: "002", path: "f", line: 1, author: "x" } as PullRequestReviewComment;
+    expect(compareReviewCommentById(a, b)).toBeGreaterThan(0);
   });
 
   test("fingerprint changes when comment body changes", () => {

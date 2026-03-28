@@ -117,6 +117,24 @@ export class ReviewCommentsController implements vscode.Disposable {
     this.lastThreadPlan = new Map();
   }
 
+  /**
+   * When comment data is unchanged we skip rebuilding threads, but transient avatar download
+   * failures should still be retried on later refreshes.
+   */
+  private kickAvatarRetries(): void {
+    const seen = new Set<string>();
+    for (const plan of this.lastThreadPlan.values()) {
+      for (const c of plan.comments) {
+        const url = c.avatarUrl;
+        if (!url || seen.has(url)) {
+          continue;
+        }
+        seen.add(url);
+        this.avatarCache.getAvatarUri(url);
+      }
+    }
+  }
+
   /** Update comment avatars after a URL finishes downloading — avoids a full refresh/flicker. */
   private patchAvatarsForUrl(url: string): void {
     for (const [threadKey, plan] of this.lastThreadPlan) {
@@ -240,6 +258,7 @@ export class ReviewCommentsController implements vscode.Disposable {
     const fp = fingerprintCommentPlan(folder.uri.fsPath, pullRequestNumber, plan);
 
     if (this.activeKey === key && fp === this.lastRenderFingerprint) {
+      this.kickAvatarRetries();
       return;
     }
 
@@ -294,7 +313,7 @@ export function planReviewCommentThreads(
 
   const plan = new Map<ThreadKey, ThreadPlan>();
   for (const [threadKey, list] of buckets) {
-    list.sort((a, b) => String(a.id).localeCompare(String(b.id)));
+    list.sort(compareReviewCommentById);
     if (list.length === 0) {
       continue;
     }
@@ -382,6 +401,28 @@ function normalizeBranchName(branch?: string): string | undefined {
     return branch.slice("refs/heads/".length);
   }
   return branch;
+}
+
+/** Sort by numeric id when both are plain integers; otherwise lexicographic on string form. */
+export function compareReviewCommentById(
+  a: PullRequestReviewComment,
+  b: PullRequestReviewComment,
+): number {
+  const sa = String(a.id);
+  const sb = String(b.id);
+  const na = Number(sa);
+  const nb = Number(sb);
+  if (
+    Number.isFinite(na) &&
+    Number.isFinite(nb) &&
+    Number.isInteger(na) &&
+    Number.isInteger(nb) &&
+    na.toString() === sa &&
+    nb.toString() === sb
+  ) {
+    return na - nb;
+  }
+  return sa.localeCompare(sb);
 }
 
 function normalizeDiffPath(filePath: string): string {
