@@ -349,7 +349,7 @@ export function fingerprintCommentPlan(
     }
     for (const c of entry.comments) {
       lines.push(
-        `${threadKey}\0${String(c.id)}\0${c.body ?? ""}\0${c.author ?? ""}\0${c.updatedAt ?? c.createdAt ?? ""}`,
+        `${threadKey}\0${String(c.id)}\0${c.body ?? ""}\0${c.author ?? ""}\0${c.updatedAt ?? c.createdAt ?? ""}\0${c.avatarUrl ?? ""}`,
       );
     }
   }
