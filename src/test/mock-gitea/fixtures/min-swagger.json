@@ -1,0 +1,22 @@
+{
+  "swagger": "2.0",
+  "basePath": "/api/v1",
+  "info": { "title": "Mock Gitea", "version": "0.0" },
+  "paths": {
+    "/version": { "get": { "responses": { "200": { "description": "ok" } } } },
+    "/user/repos": { "get": { "responses": { "200": { "description": "ok" } } } },
+    "/repos/{owner}/{repo}/actions/runs": { "get": { "responses": { "200": { "description": "ok" } } } },
+    "/repos/{owner}/{repo}/actions/runs/{run}/jobs": { "get": { "responses": { "200": { "description": "ok" } } } },
+    "/repos/{owner}/{repo}/actions/jobs/{job_id}/logs": { "get": { "responses": { "200": { "description": "ok" } } } },
+    "/repos/{owner}/{repo}/actions/runs/{run}/artifacts": { "get": { "responses": { "200": { "description": "ok" } } } },
+    "/repos/{owner}/{repo}/actions/artifacts": { "get": { "responses": { "200": { "description": "ok" } } } },
+    "/repos/{owner}/{repo}/pulls": { "get": { "responses": { "200": { "description": "ok" } } } },
+    "/repos/{owner}/{repo}/pulls/{index}/reviews": {
+      "get": { "responses": { "200": { "description": "ok" } } },
+      "post": { "responses": { "201": { "description": "ok" } } }
+    },
+    "/repos/{owner}/{repo}/pulls/{index}/reviews/{id}/comments": {
+      "get": { "responses": { "200": { "description": "ok" } } }
+    }
+  }
+}

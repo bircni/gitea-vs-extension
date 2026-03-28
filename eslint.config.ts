@@ -102,6 +102,7 @@ export default tseslint.config(
     ignores: [
       "out",
       "dist",
+      ".vscode-test",
       ".tmp",
       "**/*.d.ts",
       "node_modules",

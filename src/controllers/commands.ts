@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 import { getArtifactDownloadBaseDir, getSettings } from "../config/settings";
-import { clearToken, getToken, setToken } from "../config/secrets";
+import { clearToken, getEffectiveToken, setToken } from "../config/secrets";
 import type { ActionVariable, GiteaApi, Secret } from "../gitea/api";
 import type { RepoRef, WorkflowRun } from "../gitea/models";
 import { computeArtifactSavePath } from "../util/artifactDownload";
@@ -233,7 +233,7 @@ export class CommandsController {
       return;
     }
 
-    const token = await getToken(this.context.secrets);
+    const token = await getEffectiveToken(this.context.secrets);
     if (!token) {
       vscode.window.showWarningMessage("Set a token before testing connection.");
       return;

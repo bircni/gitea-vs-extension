@@ -4,7 +4,9 @@ dist
 *.log
 .DS_Store
 out
+.vscode-test
 .tmp
+src/test/e2e/fixture-workspace/.vscode/settings.json
 
 # Additional common exclusions
 .env

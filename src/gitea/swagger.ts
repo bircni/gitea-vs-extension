@@ -18,15 +18,16 @@ export type EndpointMap = {
   version?: string;
 };
 
-const SWAGGER_PATHS = [
+/** Ordered discovery URLs tried by `fetchSwagger` (first 200 + `paths` wins). */
+export const SWAGGER_FETCH_PATHS = [
   "/swagger.v1.json",
   "/api/swagger.v1.json",
   "/api/swagger.json",
   "/api/swagger",
-];
+] as const;
 
 export async function fetchSwagger(client: GiteaHttpClient): Promise<SwaggerDoc | undefined> {
-  for (const path of SWAGGER_PATHS) {
+  for (const path of SWAGGER_FETCH_PATHS) {
     try {
       const doc = await client.getJson<SwaggerDoc>(path, { allowMissingBaseUrl: true });
       if (doc.paths) {

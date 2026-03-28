@@ -10,9 +10,13 @@ jest.mock("../config/settings", () => ({
   getSettings: jest.fn(() => ({ baseUrl: "https://gitea.example", discoveryMode: "all" })),
 }));
 
-jest.mock("../config/secrets", () => ({
-  getToken: jest.fn().mockResolvedValue("mock-token"),
-}));
+jest.mock("../config/secrets", () => {
+  const fn = jest.fn().mockResolvedValue("mock-token");
+  return {
+    getToken: fn,
+    getEffectiveToken: fn,
+  };
+});
 
 const mockRepo: RepoRef = { host: "gitea.example", owner: "o", name: "n" };
 
