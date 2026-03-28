@@ -1,4 +1,15 @@
-import { buildDiffPositionMap } from "../controllers/reviewCommentsController";
+import * as vscode from "vscode";
+import {
+  buildDiffPositionMap,
+  fingerprintCommentPlan,
+  planReviewCommentThreads,
+} from "../controllers/reviewCommentsController";
+import type { PullRequestReviewComment } from "../gitea/models";
+
+jest.mock("fs", () => ({
+  ...jest.requireActual("fs"),
+  existsSync: jest.fn(() => true),
+}));
 
 test("maps hunk positions without counting hunk headers", () => {
   const diff = [
@@ -84,4 +95,43 @@ test("deleted-only lines do not add to file map", () => {
   const fileMap = map.get("f");
   expect(fileMap?.get(3)).toBe(1);
   expect(fileMap?.size).toBe(1);
+});
+
+describe("review comment render fingerprint", () => {
+  const folder = {
+    uri: vscode.Uri.file("/workspace"),
+    name: "w",
+    index: 0,
+  } as vscode.WorkspaceFolder;
+
+  test("fingerprint is stable for identical comments", () => {
+    const c: PullRequestReviewComment = {
+      id: 1,
+      body: "hi",
+      path: "src/a.ts",
+      line: 2,
+      author: "alice",
+      updatedAt: "2020-01-01",
+    };
+    const plan1 = planReviewCommentThreads(folder, [c]);
+    const plan2 = planReviewCommentThreads(folder, [{ ...c }]);
+    expect(fingerprintCommentPlan("/workspace", 5, plan1)).toBe(
+      fingerprintCommentPlan("/workspace", 5, plan2),
+    );
+  });
+
+  test("fingerprint changes when comment body changes", () => {
+    const base = { id: 1, path: "f.ts", line: 1, author: "a" };
+    const fp1 = fingerprintCommentPlan(
+      "/workspace",
+      1,
+      planReviewCommentThreads(folder, [{ ...base, body: "one" }]),
+    );
+    const fp2 = fingerprintCommentPlan(
+      "/workspace",
+      1,
+      planReviewCommentThreads(folder, [{ ...base, body: "two" }]),
+    );
+    expect(fp1).not.toBe(fp2);
+  });
 });
