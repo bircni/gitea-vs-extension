@@ -52,5 +52,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **(lint)** ignore scripts - ([6d00bf1](https://github.com/bircni/gitea-vs-extension/commit/6d00bf1d83ef7d478e5e39deca4d929e0bbcc28c))
-- **(release)** update commands to use yarn instead of npm - ([60bb241](https://github.com/bircni/gitea-vs-extension/commit/60bb2410d6ab687a676ca98629dd5d71ce55beb1))
+- **(release)** align release scripts with npm - ([60bb241](https://github.com/bircni/gitea-vs-extension/commit/60bb2410d6ab687a676ca98629dd5d71ce55beb1))
 - address PR review comments - ([f3204b8](https://github.com/bircni/gitea-vs-extension/commit/f3204b86f158014c0f461535b6102682f2bda023))
