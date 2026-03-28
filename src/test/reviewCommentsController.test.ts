@@ -137,6 +137,28 @@ describe("review comment render fingerprint", () => {
     expect(compareReviewCommentById(a, b)).toBeGreaterThan(0);
   });
 
+  test("fingerprint changes when avatar URL changes", () => {
+    const base = {
+      id: 1,
+      body: "hi",
+      path: "f.ts",
+      line: 1,
+      author: "a",
+      updatedAt: "2020-01-01",
+    };
+    const fp1 = fingerprintCommentPlan(
+      "/workspace",
+      1,
+      planReviewCommentThreads(folder, [{ ...base, avatarUrl: "https://a.example/a.png" }]),
+    );
+    const fp2 = fingerprintCommentPlan(
+      "/workspace",
+      1,
+      planReviewCommentThreads(folder, [{ ...base, avatarUrl: "https://a.example/b.png" }]),
+    );
+    expect(fp1).not.toBe(fp2);
+  });
+
   test("fingerprint changes when comment body changes", () => {
     const base = { id: 1, path: "f.ts", line: 1, author: "a" };
     const fp1 = fingerprintCommentPlan(
