@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1](https://github.com/bircni/gitea-vs-extension/compare/v0.2.0..v0.2.1) - 2026-04-02
+
+### Fixed
+
+- **(review-comments)** avoid flicker on refresh with stable fingerprint - ([c750496](https://github.com/bircni/gitea-vs-extension/commit/c7504962cb91016a74b0cc2f2cc88b0f28dd6b41))
+- enhance avatar handling and sorting logic - ([90e2873](https://github.com/bircni/gitea-vs-extension/commit/90e2873a6a5f418c24b3dcd6419aeb02d3afdceb))
+- include avatar URL in fingerprint generation and add related tests - ([3e6037c](https://github.com/bircni/gitea-vs-extension/commit/3e6037c72abdccf46e578bd1e92956b8efb31b84))
+
+### Internal
+
+- **(audit)** Update dependencies - ([bf85d8b](https://github.com/bircni/gitea-vs-extension/commit/bf85d8b95f5d844845f6f62eea5cb6f27cb09894))
+- **(scripts)** add update:swagger and refresh Gitea OpenAPI snapshot - ([ab068bd](https://github.com/bircni/gitea-vs-extension/commit/ab068bda49b61eafe855b325c9f3a48e61f002ee))
+- Cleanup and update dependencies - ([bd49b8e](https://github.com/bircni/gitea-vs-extension/commit/bd49b8e8d009ec9f91629cb489d0765de284ede0))
+- hermetic Gitea mock, live smoke, and extension E2E - ([56d60e4](https://github.com/bircni/gitea-vs-extension/commit/56d60e47d5e4cabca45cf4068ced867e28c691f5))
+- Enhance Changelog generation - ([4dab1c3](https://github.com/bircni/gitea-vs-extension/commit/4dab1c315a670be78775034cf710b66c970bc542))
+- minor enhancements - ([cd57d0c](https://github.com/bircni/gitea-vs-extension/commit/cd57d0ca65c2df27f397464d4a0e39af6a75812f))
+- Various fixes for Windows - ([c0120f5](https://github.com/bircni/gitea-vs-extension/commit/c0120f5b2796910ab1e89c5f3adffa32f5b1ec83))
+
 ## [0.2.0](https://github.com/bircni/gitea-vs-extension/compare/v0.1.0..v0.2.0) - 2026-03-15
 
 ### Added
@@ -26,8 +44,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- update .vscodeignore for packaging - ([ccbbe83](https://github.com/bircni/gitea-vs-extension/commit/ccbbe8318cd014f50593b8404b13288370a64479))
 - Add speckit - ([997e7cf](https://github.com/bircni/gitea-vs-extension/commit/997e7cf7622b73b5b451fb58d9d78ee68c6b6f17))
+
+### Internal
+
+- update .vscodeignore for packaging - ([ccbbe83](https://github.com/bircni/gitea-vs-extension/commit/ccbbe8318cd014f50593b8404b13288370a64479))
 - fix npm audit by overriding vulnerable yauzl - ([5738edd](https://github.com/bircni/gitea-vs-extension/commit/5738edd754702007b9283dc1d8531b2134025863))
 - Update release log generation - ([4295577](https://github.com/bircni/gitea-vs-extension/commit/42955775f00a18f18f2f239c666797261846ad69))
 
@@ -43,7 +64,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **(coverage)** add comprehensive test coverage for Gitea API and related utilities - ([8005829](https://github.com/bircni/gitea-vs-extension/commit/8005829941dbb599f34ae53aaf25d09378a65950))
 - enhance code quality and consistency across multiple files - ([176ea14](https://github.com/bircni/gitea-vs-extension/commit/176ea1413753f353ca26093a6a74702e80ba1675))
 - remove notification handling from commands and refresh controller - ([d6dba8b](https://github.com/bircni/gitea-vs-extension/commit/d6dba8b9853c0bfd5a3cb160658ed063d8279d2f))
 - update extension namespace from 'bircni.gitea-vs-extension' to 'gitea-vs-extension' across the codebase - ([52981f7](https://github.com/bircni/gitea-vs-extension/commit/52981f719054f8674b1e168f1112c894bcd3f6db))
@@ -52,5 +72,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **(lint)** ignore scripts - ([6d00bf1](https://github.com/bircni/gitea-vs-extension/commit/6d00bf1d83ef7d478e5e39deca4d929e0bbcc28c))
-- **(release)** align release scripts with npm - ([60bb241](https://github.com/bircni/gitea-vs-extension/commit/60bb2410d6ab687a676ca98629dd5d71ce55beb1))
+- **(release)** update commands to use yarn instead of npm - ([60bb241](https://github.com/bircni/gitea-vs-extension/commit/60bb2410d6ab687a676ca98629dd5d71ce55beb1))
 - address PR review comments - ([f3204b8](https://github.com/bircni/gitea-vs-extension/commit/f3204b86f158014c0f461535b6102682f2bda023))
+
+### Internal
+
+- **(coverage)** add comprehensive test coverage for Gitea API and related utilities - ([8005829](https://github.com/bircni/gitea-vs-extension/commit/8005829941dbb599f34ae53aaf25d09378a65950))
