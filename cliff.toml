@@ -79,11 +79,11 @@ commit_parsers = [
     { message = "^docs?", group = "Changed" },
     { message = "^perf", group = "Changed" },
     { message = "^refactor", group = "Changed" },
-    { message = "^style", group = "Changed" },
     { message = "^revert", group = "Changed" },
-    { message = "^test", group = "Changed" },
     { message = "^chore\\(release\\)", skip = true },
-    { message = "^chore", group = "Changed" },
+    { message = "^chore", group = "Internal" },
+    { message = "^style", group = "Internal" },
+    { message = "^test", group = "Internal" },
     # skip all others
     { message = ".*", skip = true },
 ]
