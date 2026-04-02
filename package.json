@@ -26,6 +26,9 @@
   "categories": [
     "Other"
   ],
+  "extensionRecommendations": [
+    "bircni.compress-preview"
+  ],
   "activationEvents": [
     "onStartupFinished"
   ],
