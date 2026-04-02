@@ -245,7 +245,7 @@ describe("GiteaApi core endpoints", () => {
     );
 
     expect(clientWithBinary.getBinary).toHaveBeenCalledWith(artifact.downloadUrl);
-    expect(mkdirSpy).toHaveBeenCalledWith(expect.stringContaining("/tmp/artifacts"), {
+    expect(mkdirSpy).toHaveBeenCalledWith(expect.stringMatching(/[/\\]tmp[/\\]artifacts/), {
       recursive: true,
     });
     expect(writeSpy).toHaveBeenCalledWith(

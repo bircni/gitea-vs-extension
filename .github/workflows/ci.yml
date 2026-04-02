@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     tags:
-      - 'v*'
+      - "v*"
   pull_request:
     branches: [main]
 
@@ -18,13 +18,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
-            lfs: true
+          lfs: true
 
       - name: Use Node.js
         uses: actions/setup-node@v6
         with:
-          node-version-file: '.node-version'
-          cache: 'npm'
+          node-version-file: ".node-version"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -44,6 +44,15 @@ jobs:
       - name: Test
         run: npm run test:coverage
 
+      - name: Start Xvfb
+        run: |
+          /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+          sleep 1
+      - name: E2E tests
+        env:
+          DISPLAY: ":99"
+        run: npm run test:e2e
+
   security:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -53,13 +62,13 @@ jobs:
       - name: Checkout ${{ github.sha }}
         uses: actions/checkout@v6
         with:
-            lfs: true
+          lfs: true
 
       - name: Use Node.js
         uses: actions/setup-node@v6
         with:
-          node-version-file: '.node-version'
-          cache: 'npm'
+          node-version-file: ".node-version"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
