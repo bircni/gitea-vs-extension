@@ -1,3 +1,4 @@
+import * as path from "path";
 import type { Artifact, RepoRef } from "../gitea/models";
 import { computeArtifactSavePath } from "../util/artifactDownload";
 
@@ -6,11 +7,11 @@ const repo: RepoRef = { host: "example.com", owner: "my-owner", name: "my-repo" 
 describe("computeArtifactSavePath", () => {
   test("builds deterministic path with owner, repo, runId, and artifact name", () => {
     const artifact: Artifact = { id: 1, name: "dist" };
-    const path = computeArtifactSavePath("/base", repo, 42, artifact);
-    expect(path).toContain("/base");
-    expect(path).toContain("my-owner-my-repo");
-    expect(path).toContain("42");
-    expect(path).toMatch(/dist\.zip$/);
+    const outPath = computeArtifactSavePath("/base", repo, 42, artifact);
+    expect(outPath).toContain(path.normalize("/base"));
+    expect(outPath).toContain("my-owner-my-repo");
+    expect(outPath).toContain("42");
+    expect(outPath).toMatch(/dist\.zip$/);
   });
 
   test("sanitizes path segments (no path separators or invalid chars)", () => {

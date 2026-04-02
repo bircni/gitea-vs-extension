@@ -255,6 +255,36 @@ describe("RefreshController", () => {
     );
     controller.dispose();
   });
+
+  it("concurrent refreshAll callers await the same run (single discovery)", async () => {
+    const store = createMockStore();
+    let resolveDiscover!: (repos: RepoRef[]) => void;
+    const discoverPromise = new Promise<RepoRef[]>((resolve) => {
+      resolveDiscover = resolve;
+    });
+    const discovery = {
+      discoverRepos: jest.fn(() => discoverPromise),
+    };
+    const api = createMockApi();
+    const controller = new RefreshController(
+      api as never,
+      store as never,
+      discovery as never,
+      { warn: jest.fn(), debug: jest.fn() } as never,
+      jest.fn(),
+      jest.fn(),
+    );
+
+    const first = controller.refreshAll();
+    const second = controller.refreshAll();
+    expect(discovery.discoverRepos).toHaveBeenCalledTimes(1);
+
+    resolveDiscover([mockRepo]);
+    await Promise.all([first, second]);
+
+    expect(store.setRepos).toHaveBeenCalledWith([mockRepo]);
+    controller.dispose();
+  });
 });
 
 describe("RefreshController.refreshRepo", () => {

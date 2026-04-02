@@ -23,7 +23,8 @@ export type { RefreshSummary } from "../util/refreshHelpers";
 
 export class RefreshController {
   private timer?: NodeJS.Timeout;
-  private refreshInProgress = false;
+  /** In-flight full refresh; concurrent callers await the same promise (see `refreshAll`). */
+  private refreshAllInFlight?: Promise<void>;
   private readonly limiter = createLimiter(4);
 
   constructor(
@@ -42,11 +43,18 @@ export class RefreshController {
   }
 
   async refreshAll(): Promise<void> {
-    if (this.refreshInProgress) {
-      return;
+    if (this.refreshAllInFlight) {
+      return this.refreshAllInFlight;
     }
+    this.refreshAllInFlight = this.runRefreshAll();
+    try {
+      await this.refreshAllInFlight;
+    } finally {
+      this.refreshAllInFlight = undefined;
+    }
+  }
 
-    this.refreshInProgress = true;
+  private async runRefreshAll(): Promise<void> {
     const hadRepos = this.store.getRepos().length > 0;
     if (!hadRepos) {
       this.store.setReposLoading(true);
@@ -89,7 +97,6 @@ export class RefreshController {
 
       this.updateSummary();
     } finally {
-      this.refreshInProgress = false;
       this.scheduleNext();
     }
   }
