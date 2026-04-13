@@ -215,9 +215,9 @@ describe("GiteaApi core endpoints", () => {
 
   test("downloadArtifactToFile throws when artifact has no downloadUrl", async () => {
     const artifact = { id: 1, name: "dist" };
-    await expect(
-      api.downloadArtifactToFile(repo, 10, artifact as any, "/tmp/artifacts"),
-    ).rejects.toThrow(EndpointError);
+    await expect(api.downloadArtifactToFile(repo, 10, artifact, "/tmp/artifacts")).rejects.toThrow(
+      EndpointError,
+    );
   });
 
   test("downloadArtifactToFile downloads and writes file when downloadUrl present", async () => {
@@ -240,7 +240,7 @@ describe("GiteaApi core endpoints", () => {
     const savePath = await apiWithBinary.downloadArtifactToFile(
       repo,
       10,
-      artifact as any,
+      artifact,
       "/tmp/artifacts",
     );
 
@@ -284,7 +284,7 @@ describe("GiteaApi core endpoints", () => {
     const savePath = await apiWithBinary.downloadArtifactToFile(
       repo,
       10,
-      artifact as any,
+      artifact,
       "/tmp/artifacts",
     );
 

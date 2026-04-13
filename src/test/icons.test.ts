@@ -43,7 +43,7 @@ describe("iconForStatus", () => {
   });
 
   it("returns question for unknown conclusion value", () => {
-    const icon = iconForStatus("completed", "unknown" as never);
+    const icon = iconForStatus("completed", "unknown");
     expect((icon as ThemeIcon).id).toBe("question");
   });
 });
