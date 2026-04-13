@@ -63,7 +63,7 @@ jobs:
         run: npm run package
 
       - name: Create a release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: Release ${{ github.ref_name == '' && github.sha || github.ref_name }}
           files: dist/extension.vsix

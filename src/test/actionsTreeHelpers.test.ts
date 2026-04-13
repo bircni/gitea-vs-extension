@@ -179,9 +179,7 @@ describe("getFilteredRunsForDisplay", () => {
 
   it("includes PR runs when head matches current branch", () => {
     const e = entry(r, [run(1, "main"), run(2, "PR #42")], {
-      pullRequests: [
-        { id: 1, number: 42, title: "x", state: "open", headRef: "main" } as PullRequest,
-      ],
+      pullRequests: [{ id: 1, number: 42, title: "x", state: "open", headRef: "main" }],
     });
     const out = getFilteredRunsForDisplay(e, ctx, filterCurrent);
     expect(out.map((x) => x.id)).toEqual([1, 2]);

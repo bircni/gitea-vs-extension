@@ -27,7 +27,7 @@ export class SettingsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   private hasToken = false;
 
   getTreeItem(element: TreeNode): vscode.TreeItem {
-    return element as vscode.TreeItem;
+    return element;
   }
 
   getChildren(element?: TreeNode): vscode.ProviderResult<TreeNode[]> {
