@@ -179,12 +179,21 @@ describe("GiteaApi against hermetic mock (008 inventory)", () => {
 
     await expect(
       api.createPullRequestReviewComment(repo, num, {
-        body: "ok",
+        body: "created by integration test",
         path: "README.md",
         line: 1,
         commitId: "abc123",
       }),
     ).resolves.toBeUndefined();
+    const updatedReviews = await api.listPullRequestReviews(repo, num);
+    const createdComments = (
+      await Promise.all(
+        updatedReviews.map((review) => api.listPullRequestReviewComments(repo, num, review.id)),
+      )
+    ).flat();
+    expect(createdComments.some((comment) => comment.body === "created by integration test")).toBe(
+      true,
+    );
 
     const diff = await api.getPullRequestDiff(repo, num);
     expect(diff).toContain("diff --git");

@@ -261,6 +261,11 @@
         "icon": "$(cloud-download)"
       },
       {
+        "command": "gitea-vs-extension.addReviewComment",
+        "title": "gitea-vs-extension: Add Review Comment",
+        "icon": "$(comment-add)"
+      },
+      {
         "command": "gitea-vs-extension.revealArtifactInExplorer",
         "title": "Reveal in File Explorer",
         "icon": "$(file-directory)"
@@ -388,6 +393,13 @@
           "command": "gitea-vs-extension.clearToken",
           "when": "view == gitea-vs-extension.settings && viewItem == giteaToken",
           "group": "inline@1"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "gitea-vs-extension.addReviewComment",
+          "when": "editorTextFocus",
+          "group": "navigation"
         }
       ]
     }
