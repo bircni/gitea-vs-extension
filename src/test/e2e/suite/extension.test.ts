@@ -1,18 +1,21 @@
 import * as assert from "assert";
+import { request } from "undici";
 import * as vscode from "vscode";
 
-suite("gitea-vs-extension E2E (mock)", () => {
+const isRealGitea = process.env.GITEA_EXTENSION_TEST_KIND === "real-gitea";
+
+suite(`gitea-vs-extension E2E (${isRealGitea ? "real Gitea" : "mock"})`, () => {
   test("M1: extension is present and activates", async () => {
     const ext = vscode.extensions.getExtension("bircni.gitea-vs-extension");
     assert.ok(ext, "extension bircni.gitea-vs-extension not found");
     await ext.activate();
   });
 
-  test("M2: Test Connection reaches mock Gitea", async () => {
+  test("M2: Test Connection reaches configured Gitea", async () => {
     await vscode.commands.executeCommand("gitea-vs-extension.testConnection");
   });
 
-  test("M3: refresh discovers mock repo", async () => {
+  test("M3: refresh discovers configured repo", async () => {
     const count = await vscode.commands.executeCommand<number>(
       "gitea-vs-extension.__testRefreshDone",
     );
@@ -21,4 +24,161 @@ suite("gitea-vs-extension E2E (mock)", () => {
       `expected repo count >= 1, got ${String(count)}`,
     );
   });
+
+  test("G1: real Gitea fixture is version 1.26.1", async function () {
+    if (!isRealGitea) {
+      this.skip();
+    }
+    const baseUrl = requireEnv("GITEA_EXTENSION_TEST_BASE_URL");
+    const response = await request(`${baseUrl}/api/v1/version`);
+    assert.strictEqual(response.statusCode, 200);
+    const body = (await response.body.json()) as { version?: string };
+    assert.strictEqual(body.version, "1.26.1");
+  });
+
+  test("G2: refresh discovers fixture repo and pull request", async function () {
+    if (!isRealGitea) {
+      this.skip();
+    }
+    const owner = requireEnv("GITEA_EXTENSION_TEST_OWNER");
+    const repoName = requireEnv("GITEA_EXTENSION_TEST_REPO");
+    const branch = requireEnv("GITEA_EXTENSION_TEST_BRANCH");
+    const snapshot = await vscode.commands.executeCommand<RepoSnapshot>(
+      "gitea-vs-extension.__testRepoSnapshot",
+    );
+    const repo = snapshot.repos.find(
+      (entry) => entry.repo.owner === owner && entry.repo.name === repoName,
+    );
+    assert.ok(repo, `expected fixture repo ${owner}/${repoName}`);
+    assert.ok(repo.pullRequestCount >= 1, `expected at least one PR, got ${repo.pullRequestCount}`);
+    const context = repo.branchContext;
+    assert.ok(context, "expected resolved branch context");
+    assert.strictEqual(context.status, "resolved");
+    assert.strictEqual(context.branchName, branch);
+  });
+
+  test("G3: workspace discovery mode resolves the same fixture repo", async function () {
+    if (!isRealGitea) {
+      this.skip();
+    }
+    const owner = requireEnv("GITEA_EXTENSION_TEST_OWNER");
+    const repoName = requireEnv("GITEA_EXTENSION_TEST_REPO");
+    const branch = requireEnv("GITEA_EXTENSION_TEST_BRANCH");
+    const config = vscode.workspace.getConfiguration();
+
+    try {
+      await config.update(
+        "gitea-vs-extension.discovery.mode",
+        "workspace",
+        vscode.ConfigurationTarget.Workspace,
+      );
+      const snapshot = await vscode.commands.executeCommand<RepoSnapshot>(
+        "gitea-vs-extension.__testRepoSnapshot",
+      );
+      assert.strictEqual(snapshot.repos.length, 1);
+      const repo = snapshot.repos[0];
+      assert.strictEqual(repo.repo.owner, owner);
+      assert.strictEqual(repo.repo.name, repoName);
+      const context = repo.branchContext;
+      assert.ok(context, "expected resolved branch context");
+      assert.strictEqual(context.status, "resolved");
+      assert.strictEqual(context.branchName, branch);
+    } finally {
+      await config.update(
+        "gitea-vs-extension.discovery.mode",
+        "allAccessible",
+        vscode.ConfigurationTarget.Workspace,
+      );
+    }
+  });
+
+  test("G4: seeded review comments render inline", async function () {
+    if (!isRealGitea) {
+      this.skip();
+    }
+    const seededCount = Number(requireEnv("GITEA_EXTENSION_TEST_SEEDED_COMMENT_COUNT"));
+    const comments = await vscode.commands.executeCommand<ReviewCommentSnapshot[]>(
+      "gitea-vs-extension.__testReviewCommentSnapshot",
+    );
+    assert.ok(
+      comments.length >= seededCount,
+      `expected at least ${seededCount} comment(s), got ${comments.length}`,
+    );
+    assert.ok(
+      comments.some(
+        (comment) =>
+          comment.body === "seeded fixture review comment" &&
+          comment.path === "README.md" &&
+          comment.line === 3,
+      ),
+      `expected seeded fixture review comment in ${JSON.stringify(comments)}`,
+    );
+  });
+
+  test("G5: add review comment command creates a real Gitea comment", async function () {
+    if (!isRealGitea) {
+      this.skip();
+    }
+    const expectedBody = requireEnv("GITEA_EXTENSION_TEST_REVIEW_COMMENT_BODY");
+    const before = await vscode.commands.executeCommand<number>(
+      "gitea-vs-extension.__testReviewCommentCount",
+    );
+    await vscode.commands.executeCommand("gitea-vs-extension.__testAddReviewComment");
+    const comments = await vscode.commands.executeCommand<ReviewCommentSnapshot[]>(
+      "gitea-vs-extension.__testReviewCommentSnapshot",
+    );
+    assert.ok(
+      comments.length > before,
+      `expected comment count to increase from ${before}, got ${comments.length}`,
+    );
+    assert.ok(
+      comments.some(
+        (comment) =>
+          comment.body === expectedBody && comment.path === "README.md" && comment.line === 3,
+      ),
+      `expected created review comment in ${JSON.stringify(comments)}`,
+    );
+  });
+
+  test("G6: created review comment persists across a fresh refresh", async function () {
+    if (!isRealGitea) {
+      this.skip();
+    }
+    const expectedBody = requireEnv("GITEA_EXTENSION_TEST_REVIEW_COMMENT_BODY");
+    const count = await vscode.commands.executeCommand<number>(
+      "gitea-vs-extension.__testRefreshDone",
+    );
+    assert.ok(count >= 1);
+    const comments = await vscode.commands.executeCommand<ReviewCommentSnapshot[]>(
+      "gitea-vs-extension.__testReviewCommentSnapshot",
+    );
+    assert.ok(
+      comments.some((comment) => comment.body === expectedBody),
+      `expected created review comment after fresh refresh in ${JSON.stringify(comments)}`,
+    );
+  });
 });
+
+type RepoSnapshot = {
+  repos: {
+    repo: { owner: string; name: string };
+    pullRequestCount: number;
+    runCount: number;
+    branchContext?: { status: string; branchName?: string | null };
+  }[];
+};
+
+type ReviewCommentSnapshot = {
+  body: string;
+  path?: string;
+  line?: number;
+  author?: string;
+};
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} is required`);
+  }
+  return value;
+}

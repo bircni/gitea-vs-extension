@@ -73,18 +73,19 @@ export class RefreshController {
 
       this.store.setRepos(repos);
 
-      if (settings.discoveryMode === "workspace") {
-        try {
-          const workspaceRepos = await resolveWorkspaceRepos(settings.baseUrl);
-          const repoToFolder = new Map<string, string>();
-          for (const { repo, folder } of workspaceRepos) {
-            const key = repoKey(repo);
+      try {
+        const discoveredRepoKeys = new Set(repos.map(repoKey));
+        const workspaceRepos = await resolveWorkspaceRepos(settings.baseUrl);
+        const repoToFolder = new Map<string, string>();
+        for (const { repo, folder } of workspaceRepos) {
+          const key = repoKey(repo);
+          if (discoveredRepoKeys.has(key)) {
             repoToFolder.set(key, folder.uri.fsPath);
           }
-          this.store.setWorkspaceFolders(repoToFolder);
-        } catch (error) {
-          this.logger.debug(`Workspace repo resolution failed: ${formatRefreshError(error)}`);
         }
+        this.store.setWorkspaceFolders(repoToFolder);
+      } catch (error) {
+        this.logger.debug(`Workspace repo resolution failed: ${formatRefreshError(error)}`);
       }
 
       await this.updateBranchContextsForRepos(repos);

@@ -11,7 +11,7 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     env:
       CI: true
     steps:
@@ -52,6 +52,11 @@ jobs:
         env:
           DISPLAY: ":99"
         run: npm run test:e2e
+
+      - name: E2E tests against Gitea fixture
+        env:
+          DISPLAY: ":99"
+        run: npm run test:e2e:gitea
 
   security:
     runs-on: ubuntu-latest

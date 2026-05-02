@@ -3,6 +3,7 @@ import * as path from "path";
 import {
   buildDiffPositionMap,
   compareReviewCommentById,
+  findDiffPositionForLine,
   fingerprintCommentPlan,
   planReviewCommentThreads,
   selectedReviewLine,
@@ -32,6 +33,21 @@ test("maps hunk positions without counting hunk headers", () => {
 
   expect(fileMap?.get(1)).toBe(10);
   expect(fileMap?.get(3)).toBe(11);
+});
+
+test("findDiffPositionForLine returns the diff position for a new-file line", () => {
+  const diff = [
+    "diff --git a/README.md b/README.md",
+    "--- a/README.md",
+    "+++ b/README.md",
+    "@@ -1,4 +1,4 @@",
+    " # Fixture repo",
+    " ",
+    "-main line",
+    "+updated feature line",
+  ].join("\n");
+
+  expect(findDiffPositionForLine(diff, "README.md", 3)).toBe(4);
 });
 
 test("keeps positions continuous across hunks without header offset", () => {

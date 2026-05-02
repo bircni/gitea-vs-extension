@@ -25,6 +25,13 @@ type ThreadPlan = {
   comments: PullRequestReviewComment[];
 };
 
+export type RenderedReviewCommentSnapshot = {
+  body: string;
+  path?: string;
+  line?: number;
+  author?: string;
+};
+
 export class ReviewCommentsController implements vscode.Disposable {
   private readonly commentController = vscode.comments.createCommentController(
     "gitea-vs-extension.reviewComments",
@@ -62,6 +69,29 @@ export class ReviewCommentsController implements vscode.Disposable {
       return;
     }
     void this.refreshForCurrentBranch();
+  }
+
+  getRenderedCommentCount(): number {
+    let count = 0;
+    for (const plan of this.lastThreadPlan.values()) {
+      count += plan.comments.length;
+    }
+    return count;
+  }
+
+  getRenderedCommentSnapshot(): RenderedReviewCommentSnapshot[] {
+    const snapshot: RenderedReviewCommentSnapshot[] = [];
+    for (const plan of this.lastThreadPlan.values()) {
+      for (const comment of plan.comments) {
+        snapshot.push({
+          body: comment.body ?? "",
+          path: comment.path,
+          line: comment.line ?? comment.originalLine,
+          author: comment.author,
+        });
+      }
+    }
+    return snapshot;
   }
 
   async addReviewCommentAtSelection(): Promise<void> {
@@ -116,20 +146,31 @@ export class ReviewCommentsController implements vscode.Disposable {
       }
 
       const line = selectedReviewLine(editor.selection);
-      const body = await vscode.window.showInputBox({
-        title: "Add Gitea Review Comment",
-        prompt: `Comment on ${commentPath}:${line} in PR #${pullRequest.number}`,
-        ignoreFocusOut: true,
-      });
+      const body =
+        process.env.EXTENSION_TEST_MODE === "1" &&
+        process.env.GITEA_EXTENSION_TEST_REVIEW_COMMENT_BODY
+          ? process.env.GITEA_EXTENSION_TEST_REVIEW_COMMENT_BODY
+          : await vscode.window.showInputBox({
+              title: "Add Gitea Review Comment",
+              prompt: `Comment on ${commentPath}:${line} in PR #${pullRequest.number}`,
+              ignoreFocusOut: true,
+            });
       const trimmed = body?.trim();
       if (!trimmed) {
         return;
       }
 
+      const diffPosition = await this.resolveReviewCommentDiffPosition(
+        repo,
+        pullRequest.number,
+        commentPath,
+        line,
+      );
+
       await this.api.createPullRequestReviewComment(repo, pullRequest.number, {
         body: trimmed,
         path: commentPath,
-        line,
+        line: diffPosition,
         commitId: pullRequest.headSha ?? sha,
       });
       void vscode.window.showInformationMessage(
@@ -324,6 +365,23 @@ export class ReviewCommentsController implements vscode.Disposable {
     } catch (error) {
       this.logger.debug(`Failed to load diff for PR #${pullRequestNumber}: ${formatError(error)}`);
       return comments;
+    }
+  }
+
+  private async resolveReviewCommentDiffPosition(
+    repo: RepoRef,
+    pullRequestNumber: number,
+    filePath: string,
+    line: number,
+  ): Promise<number> {
+    try {
+      const diffText = await this.api.getPullRequestDiff(repo, pullRequestNumber);
+      return findDiffPositionForLine(diffText, filePath, line) ?? line;
+    } catch (error) {
+      this.logger.debug(
+        `Failed to resolve diff position for PR #${pullRequestNumber}: ${formatError(error)}`,
+      );
+      return line;
     }
   }
 
@@ -633,6 +691,23 @@ export function buildDiffPositionMap(diffText: string): Map<string, Map<number, 
   }
 
   return map;
+}
+
+export function findDiffPositionForLine(
+  diffText: string,
+  filePath: string,
+  line: number,
+): number | undefined {
+  const fileMap = buildDiffPositionMap(diffText).get(normalizeDiffPath(filePath));
+  if (!fileMap) {
+    return undefined;
+  }
+  for (const [position, mappedLine] of fileMap) {
+    if (mappedLine === line) {
+      return position;
+    }
+  }
+  return undefined;
 }
 
 class AvatarCache {

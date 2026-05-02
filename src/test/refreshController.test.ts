@@ -185,6 +185,45 @@ describe("RefreshController", () => {
     controller.dispose();
   });
 
+  it("refreshAll() maps matching workspace folders for allAccessible discovery", async () => {
+    (getSettings as Mock).mockReturnValueOnce({
+      discoveryMode: "allAccessible" as const,
+      baseUrl: "https://gitea.example",
+      maxRunsPerRepo: 10,
+      runningRefreshSeconds: 30,
+      idleRefreshSeconds: 60,
+      maxJobsPerRun: 100,
+    });
+
+    const store = createMockStore();
+    const discovery = createMockDiscovery();
+    const otherRepo: RepoRef = { host: "gitea.example", owner: "other", name: "repo" };
+    discovery.discoverRepos.mockResolvedValue([mockRepo]);
+    store.getEntries.mockReturnValue([{ repo: mockRepo, runs: [] }]);
+
+    (repoResolution.resolveWorkspaceRepos as Mock).mockResolvedValueOnce([
+      { repo: mockRepo, folder: { uri: { fsPath: "/ws/repo" } } },
+      { repo: otherRepo, folder: { uri: { fsPath: "/ws/other" } } },
+    ]);
+
+    const controller = new RefreshController(
+      createMockApi() as never,
+      store as never,
+      discovery as never,
+      { warn: vi.fn(), debug: vi.fn() } as never,
+      vi.fn(),
+      vi.fn(),
+    );
+
+    await controller.refreshAll();
+
+    expect(store.setWorkspaceFolders).toHaveBeenCalledWith(expect.any(Map));
+    const map = store.setWorkspaceFolders.mock.calls[0][0] as Map<string, string>;
+    expect(map.get("gitea.example/o/n")).toBe("/ws/repo");
+    expect(map.has("gitea.example/other/repo")).toBe(false);
+    controller.dispose();
+  });
+
   it("refreshAll() when discoveryMode is workspace calls setWorkspaceFolders", async () => {
     (getSettings as Mock).mockReturnValueOnce({
       discoveryMode: "workspace" as const,
