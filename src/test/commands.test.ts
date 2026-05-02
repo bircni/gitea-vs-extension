@@ -4,6 +4,7 @@
 import * as vscode from "vscode";
 import { CommandsController } from "../controllers/commands";
 import type { RepoRef } from "../gitea/models";
+import type { Mock } from "vitest";
 
 const mockRepo: RepoRef = { host: "gitea.example", owner: "o", name: "n" };
 
@@ -28,19 +29,19 @@ function createMockContext(): vscode.ExtensionContext {
 
 describe("CommandsController", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("register() returns an array of disposables", () => {
-    const refreshAll = jest.fn();
+    const refreshAll = vi.fn();
     const store = {
       getRepos: () => [] as RepoRef[],
       getEntry: () => undefined,
       getBranchContext: () => undefined,
       getBranchFilter: () => undefined,
     };
-    const treeProvider = { refresh: jest.fn() };
-    const settingsProvider = { getCurrentRepo: () => undefined, setTokenStatus: jest.fn() };
+    const treeProvider = { refresh: vi.fn() };
+    const settingsProvider = { getCurrentRepo: () => undefined, setTokenStatus: vi.fn() };
     const controller = new CommandsController(
       createMockContext(),
       {} as never,
@@ -56,15 +57,15 @@ describe("CommandsController", () => {
   });
 
   it("refresh command calls refreshController.refreshAll()", async () => {
-    const refreshAll = jest.fn();
+    const refreshAll = vi.fn();
     const store = {
       getRepos: () => [] as RepoRef[],
       getEntry: () => undefined,
       getBranchContext: () => undefined,
       getBranchFilter: () => undefined,
     };
-    const treeProvider = { refresh: jest.fn() };
-    const settingsProvider = { getCurrentRepo: () => undefined, setTokenStatus: jest.fn() };
+    const treeProvider = { refresh: vi.fn() };
+    const settingsProvider = { getCurrentRepo: () => undefined, setTokenStatus: vi.fn() };
     const controller = new CommandsController(
       createMockContext(),
       {} as never,
@@ -74,7 +75,7 @@ describe("CommandsController", () => {
       settingsProvider as never,
     );
     controller.register();
-    const call = (vscode.commands.registerCommand as jest.Mock).mock.calls.find(
+    const call = (vscode.commands.registerCommand as Mock).mock.calls.find(
       (c: [string]) => c[0] === "gitea-vs-extension.refresh",
     );
     expect(call).toBeDefined();
@@ -84,15 +85,15 @@ describe("CommandsController", () => {
   });
 
   it("registers all expected command ids", () => {
-    const refreshAll = jest.fn();
+    const refreshAll = vi.fn();
     const store = {
       getRepos: () => [] as RepoRef[],
       getEntry: () => undefined,
       getBranchContext: () => undefined,
       getBranchFilter: () => undefined,
     };
-    const treeProvider = { refresh: jest.fn() };
-    const settingsProvider = { getCurrentRepo: () => undefined, setTokenStatus: jest.fn() };
+    const treeProvider = { refresh: vi.fn() };
+    const settingsProvider = { getCurrentRepo: () => undefined, setTokenStatus: vi.fn() };
     const controller = new CommandsController(
       createMockContext(),
       {} as never,
@@ -102,7 +103,7 @@ describe("CommandsController", () => {
       settingsProvider as never,
     );
     controller.register();
-    const registeredIds = (vscode.commands.registerCommand as jest.Mock).mock.calls.map(
+    const registeredIds = (vscode.commands.registerCommand as Mock).mock.calls.map(
       (c: [string]) => c[0],
     );
     expect(registeredIds).toContain("gitea-vs-extension.refresh");

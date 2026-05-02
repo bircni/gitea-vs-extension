@@ -5,9 +5,10 @@ import { getSettings } from "../config/settings";
 import { RefreshController } from "../controllers/refreshController";
 import type { RepoRef } from "../gitea/models";
 import * as repoResolution from "../util/repoResolution";
+import type { Mock } from "vitest";
 
-jest.mock("../config/settings", () => ({
-  getSettings: jest.fn(() => ({
+vi.mock("../config/settings", () => ({
+  getSettings: vi.fn(() => ({
     discoveryMode: "all" as const,
     baseUrl: "https://gitea.example",
     maxRunsPerRepo: 10,
@@ -17,16 +18,16 @@ jest.mock("../config/settings", () => ({
   })),
 }));
 
-jest.mock("../util/git", () => ({
-  getCurrentBranchInFolder: jest.fn().mockResolvedValue({
+vi.mock("../util/git", () => ({
+  getCurrentBranchInFolder: vi.fn().mockResolvedValue({
     branchName: "main",
     status: "resolved" as const,
     reason: undefined,
   }),
 }));
 
-jest.mock("../util/repoResolution", () => ({
-  resolveWorkspaceRepos: jest.fn().mockResolvedValue([]),
+vi.mock("../util/repoResolution", () => ({
+  resolveWorkspaceRepos: vi.fn().mockResolvedValue([]),
 }));
 
 const mockRepo: RepoRef = { host: "gitea.example", owner: "o", name: "n" };
@@ -34,8 +35,8 @@ const mockRepo: RepoRef = { host: "gitea.example", owner: "o", name: "n" };
 function createMockStore() {
   const entries = new Map<string, { repo: RepoRef; runs: unknown[]; errors: string[] }>();
   return {
-    getRepos: jest.fn(() => [] as RepoRef[]),
-    setRepos: jest.fn((repos: RepoRef[]) => {
+    getRepos: vi.fn(() => [] as RepoRef[]),
+    setRepos: vi.fn((repos: RepoRef[]) => {
       for (const r of repos) {
         const key = `${r.host}/${r.owner}/${r.name}`;
         if (!entries.has(key)) {
@@ -43,10 +44,10 @@ function createMockStore() {
         }
       }
     }),
-    setReposLoading: jest.fn(),
-    isReposLoading: jest.fn(() => false),
-    getWorkspaceFolderPath: jest.fn(() => undefined as string | undefined),
-    getEntry: jest.fn((repo: RepoRef) => {
+    setReposLoading: vi.fn(),
+    isReposLoading: vi.fn(() => false),
+    getWorkspaceFolderPath: vi.fn(() => undefined as string | undefined),
+    getEntry: vi.fn((repo: RepoRef) => {
       const key = `${repo.host}/${repo.owner}/${repo.name}`;
       const e = entries.get(key);
       if (!e) {
@@ -66,31 +67,31 @@ function createMockStore() {
         artifactsErrorByRun: new Map(),
       };
     }),
-    updateEntry: jest.fn(),
-    getEntries: jest.fn(() =>
+    updateEntry: vi.fn(),
+    getEntries: vi.fn(() =>
       Array.from(entries.values()).map((e) => ({ repo: e.repo, runs: e.runs })),
     ),
-    getBranchContext: jest.fn(() => undefined),
-    setBranchContext: jest.fn(),
-    getBranchFilter: jest.fn(() => undefined),
-    setBranchFilter: jest.fn(),
-    setWorkspaceFolders: jest.fn(),
+    getBranchContext: vi.fn(() => undefined),
+    setBranchContext: vi.fn(),
+    getBranchFilter: vi.fn(() => undefined),
+    setBranchFilter: vi.fn(),
+    setWorkspaceFolders: vi.fn(),
   };
 }
 
 function createMockApi() {
   return {
-    listRuns: jest.fn().mockResolvedValue([]),
-    listJobs: jest.fn().mockResolvedValue([]),
-    listArtifacts: jest.fn().mockResolvedValue([]),
-    listPullRequests: jest.fn().mockResolvedValue([]),
-    getCombinedStatus: jest.fn().mockResolvedValue({ state: "success" }),
+    listRuns: vi.fn().mockResolvedValue([]),
+    listJobs: vi.fn().mockResolvedValue([]),
+    listArtifacts: vi.fn().mockResolvedValue([]),
+    listPullRequests: vi.fn().mockResolvedValue([]),
+    getCombinedStatus: vi.fn().mockResolvedValue({ state: "success" }),
   };
 }
 
 function createMockDiscovery() {
   return {
-    discoverRepos: jest.fn().mockResolvedValue([mockRepo]),
+    discoverRepos: vi.fn().mockResolvedValue([mockRepo]),
   };
 }
 
@@ -101,9 +102,9 @@ describe("RefreshController", () => {
       createMockApi() as never,
       store as never,
       createMockDiscovery() as never,
-      { warn: jest.fn(), debug: jest.fn() } as never,
-      jest.fn(),
-      jest.fn(),
+      { warn: vi.fn(), debug: vi.fn() } as never,
+      vi.fn(),
+      vi.fn(),
     );
     controller.dispose();
     expect(store.setRepos).not.toHaveBeenCalled();
@@ -111,7 +112,7 @@ describe("RefreshController", () => {
 
   it("refreshAll() discovers repos and calls onSummary", async () => {
     const store = createMockStore();
-    const onSummary = jest.fn();
+    const onSummary = vi.fn();
     const api = createMockApi();
     const discovery = createMockDiscovery();
     discovery.discoverRepos.mockResolvedValue([mockRepo]);
@@ -121,8 +122,8 @@ describe("RefreshController", () => {
       api as never,
       store as never,
       discovery as never,
-      { warn: jest.fn(), debug: jest.fn() } as never,
-      jest.fn(),
+      { warn: vi.fn(), debug: vi.fn() } as never,
+      vi.fn(),
       onSummary,
     );
 
@@ -139,7 +140,7 @@ describe("RefreshController", () => {
     const store = createMockStore();
     store.getRepos.mockReturnValue([]);
     store.getEntries.mockReturnValue([]);
-    const onDidUpdate = jest.fn();
+    const onDidUpdate = vi.fn();
     const discovery = createMockDiscovery();
     discovery.discoverRepos.mockResolvedValue([]);
 
@@ -147,9 +148,9 @@ describe("RefreshController", () => {
       createMockApi() as never,
       store as never,
       discovery as never,
-      { warn: jest.fn(), debug: jest.fn() } as never,
+      { warn: vi.fn(), debug: vi.fn() } as never,
       onDidUpdate,
-      jest.fn(),
+      vi.fn(),
     );
 
     await controller.refreshAll();
@@ -162,7 +163,7 @@ describe("RefreshController", () => {
   it("refreshAll() when discovery throws still sets repos and continues", async () => {
     const store = createMockStore();
     store.getRepos.mockReturnValue([]);
-    const logger = { warn: jest.fn(), debug: jest.fn() };
+    const logger = { warn: vi.fn(), debug: vi.fn() };
     const discovery = createMockDiscovery();
     discovery.discoverRepos.mockRejectedValue(new Error("Discovery failed"));
 
@@ -171,8 +172,8 @@ describe("RefreshController", () => {
       store as never,
       discovery as never,
       logger as never,
-      jest.fn(),
-      jest.fn(),
+      vi.fn(),
+      vi.fn(),
     );
 
     await controller.refreshAll();
@@ -185,7 +186,7 @@ describe("RefreshController", () => {
   });
 
   it("refreshAll() when discoveryMode is workspace calls setWorkspaceFolders", async () => {
-    (getSettings as jest.Mock).mockReturnValueOnce({
+    (getSettings as Mock).mockReturnValueOnce({
       discoveryMode: "workspace" as const,
       baseUrl: "https://gitea.example",
       maxRunsPerRepo: 10,
@@ -199,7 +200,7 @@ describe("RefreshController", () => {
     discovery.discoverRepos.mockResolvedValue([mockRepo]);
     store.getEntries.mockReturnValue([{ repo: mockRepo, runs: [] }]);
 
-    (repoResolution.resolveWorkspaceRepos as jest.Mock).mockResolvedValueOnce([
+    (repoResolution.resolveWorkspaceRepos as Mock).mockResolvedValueOnce([
       { repo: mockRepo, folder: { uri: { fsPath: "/ws/repo" } } },
     ]);
 
@@ -207,9 +208,9 @@ describe("RefreshController", () => {
       createMockApi() as never,
       store as never,
       discovery as never,
-      { warn: jest.fn(), debug: jest.fn() } as never,
-      jest.fn(),
-      jest.fn(),
+      { warn: vi.fn(), debug: vi.fn() } as never,
+      vi.fn(),
+      vi.fn(),
     );
 
     await controller.refreshAll();
@@ -221,7 +222,7 @@ describe("RefreshController", () => {
   });
 
   it("refreshAll() when workspace resolution throws logs and continues", async () => {
-    (getSettings as jest.Mock).mockReturnValueOnce({
+    (getSettings as Mock).mockReturnValueOnce({
       discoveryMode: "workspace" as const,
       baseUrl: "https://gitea.example",
       maxRunsPerRepo: 10,
@@ -234,18 +235,18 @@ describe("RefreshController", () => {
     const discovery = createMockDiscovery();
     discovery.discoverRepos.mockResolvedValue([mockRepo]);
     store.getEntries.mockReturnValue([{ repo: mockRepo, runs: [] }]);
-    (repoResolution.resolveWorkspaceRepos as jest.Mock).mockRejectedValueOnce(
+    (repoResolution.resolveWorkspaceRepos as Mock).mockRejectedValueOnce(
       new Error("resolution failed"),
     );
-    const logger = { warn: jest.fn(), debug: jest.fn() };
+    const logger = { warn: vi.fn(), debug: vi.fn() };
 
     const controller = new RefreshController(
       createMockApi() as never,
       store as never,
       discovery as never,
       logger as never,
-      jest.fn(),
-      jest.fn(),
+      vi.fn(),
+      vi.fn(),
     );
 
     await controller.refreshAll();
@@ -263,16 +264,16 @@ describe("RefreshController", () => {
       resolveDiscover = resolve;
     });
     const discovery = {
-      discoverRepos: jest.fn(() => discoverPromise),
+      discoverRepos: vi.fn(() => discoverPromise),
     };
     const api = createMockApi();
     const controller = new RefreshController(
       api as never,
       store as never,
       discovery as never,
-      { warn: jest.fn(), debug: jest.fn() } as never,
-      jest.fn(),
-      jest.fn(),
+      { warn: vi.fn(), debug: vi.fn() } as never,
+      vi.fn(),
+      vi.fn(),
     );
 
     const first = controller.refreshAll();
@@ -311,14 +312,14 @@ describe("RefreshController.refreshRepo", () => {
     const discovery = createMockDiscovery();
     discovery.discoverRepos.mockResolvedValue([mockRepo]);
 
-    const onDidUpdate = jest.fn();
+    const onDidUpdate = vi.fn();
     const controller = new RefreshController(
       api as never,
       store as never,
       discovery as never,
-      { warn: jest.fn(), debug: jest.fn() } as never,
+      { warn: vi.fn(), debug: vi.fn() } as never,
       onDidUpdate,
-      jest.fn(),
+      vi.fn(),
     );
 
     await controller.refreshAll();
@@ -359,14 +360,14 @@ describe("RefreshController.loadRunDetails", () => {
     api.listJobs.mockResolvedValue([{ id: 1, name: "job", status: "completed" }]);
     api.listArtifacts.mockResolvedValue([]);
 
-    const onDidUpdate = jest.fn();
+    const onDidUpdate = vi.fn();
     const controller = new RefreshController(
       api as never,
       store as never,
       createMockDiscovery() as never,
-      { warn: jest.fn(), debug: jest.fn() } as never,
+      { warn: vi.fn(), debug: vi.fn() } as never,
       onDidUpdate,
-      jest.fn(),
+      vi.fn(),
     );
 
     await controller.loadRunDetails(mockRepo, 42);
@@ -401,9 +402,9 @@ describe("RefreshController.loadRunDetails", () => {
       api as never,
       store as never,
       createMockDiscovery() as never,
-      { warn: jest.fn(), debug: jest.fn() } as never,
-      jest.fn(),
-      jest.fn(),
+      { warn: vi.fn(), debug: vi.fn() } as never,
+      vi.fn(),
+      vi.fn(),
     );
 
     await controller.loadRunDetails(mockRepo, 42);

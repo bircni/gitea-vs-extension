@@ -3,6 +3,7 @@
   "compilerOptions": {
     "lib": ["esnext"],
     "target": "esnext",
+    "types": ["node", "vitest/globals"],
     "isolatedModules": true,
     "skipLibCheck": true
   },

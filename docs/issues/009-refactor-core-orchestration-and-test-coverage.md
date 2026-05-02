@@ -9,7 +9,7 @@ Refactor the extension's **command, refresh, and tree orchestration layers** to 
 ## Background
 
 - `npm run validate` currently passes.
-- `npm run test:coverage` currently reports strong overall coverage, but `jest.config.ts` excludes `src/extension.ts`, `src/controllers/**`, `src/views/**`, and `src/config/**` from coverage collection.
+- `npm run test:coverage` currently reports strong overall coverage, but `vitest.config.ts` excludes `src/extension.ts`, `src/controllers/**`, `src/views/**`, and `src/config/**` from coverage collection.
 - The main maintainability hotspots by size and responsibility are:
   - `src/controllers/commands.ts`
   - `src/controllers/refreshController.ts`
@@ -46,7 +46,7 @@ Refactor the extension's **command, refresh, and tree orchestration layers** to 
   - expand/collapse persistence
   - selection-to-repo synchronization
   - refresh/status bar wiring
-- [ ] **Coverage includes orchestration code**: Update `jest.config.ts` so controllers and views are included in coverage once the new seams are testable.
+- [ ] **Coverage includes orchestration code**: Update `vitest.config.ts` so controllers and views are included in coverage once the new seams are testable.
 - [ ] **New tests added**: Add or expand tests for:
   - command handlers and argument normalization
   - refresh state transitions and error handling
@@ -62,7 +62,7 @@ Refactor the extension's **command, refresh, and tree orchestration layers** to 
 - Refactor `src/controllers/refreshController.ts` next so state transitions and summary logic are easy to verify without full integration tests.
 - Split `src/controllers/commands.ts` after those seams exist; this should reduce the amount of command-specific mocking required.
 - Keep the refactor incremental. Multiple PRs are fine if each one leaves the repo in a passing state.
-- Once controller/view tests exist, remove or narrow the current coverage exclusions in `jest.config.ts`.
+- Once controller/view tests exist, remove or narrow the current coverage exclusions in `vitest.config.ts`.
 
 ## Suggested PR breakdown
 

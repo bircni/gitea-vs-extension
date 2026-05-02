@@ -6,10 +6,11 @@ import {
   planReviewCommentThreads,
 } from "../controllers/reviewCommentsController";
 import type { PullRequestReviewComment } from "../gitea/models";
+import type * as fsModule from "fs";
 
-jest.mock("fs", () => ({
-  ...jest.requireActual("fs"),
-  existsSync: jest.fn(() => true),
+vi.mock("fs", async () => ({
+  ...(await vi.importActual<typeof fsModule>("fs")),
+  existsSync: vi.fn(() => true),
 }));
 
 test("maps hunk positions without counting hunk headers", () => {

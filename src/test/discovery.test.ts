@@ -2,9 +2,10 @@ import * as vscode from "vscode";
 import { RepoDiscovery } from "../gitea/discovery";
 import type { RepoRef } from "../gitea/models";
 import { resolveRepoFromFolder } from "../util/repoResolution";
+import type { Mock } from "vitest";
 
-jest.mock("../util/repoResolution", () => ({
-  resolveRepoFromFolder: jest.fn(),
+vi.mock("../util/repoResolution", () => ({
+  resolveRepoFromFolder: vi.fn(),
 }));
 
 describe("RepoDiscovery", () => {
@@ -12,7 +13,7 @@ describe("RepoDiscovery", () => {
 
   test("filters accessible repos by host", async () => {
     const api = {
-      listAccessibleRepos: jest.fn(async () => [
+      listAccessibleRepos: vi.fn(async () => [
         { host: "gitea.example.com:3000", owner: "octo", name: "one" },
         { host: "other.example.com", owner: "octo", name: "two" },
       ]),
@@ -27,13 +28,13 @@ describe("RepoDiscovery", () => {
 
   test("uses workspace repos when discovery mode is workspace", async () => {
     (vscode.workspace.workspaceFolders as any) = [{ uri: { fsPath: "/repo" } }];
-    (resolveRepoFromFolder as jest.Mock).mockResolvedValueOnce({
+    (resolveRepoFromFolder as Mock).mockResolvedValueOnce({
       host: "gitea.example.com:3000",
       owner: "octo",
       name: "demo",
     } satisfies RepoRef);
 
-    const api = { listAccessibleRepos: jest.fn() };
+    const api = { listAccessibleRepos: vi.fn() };
     const discovery = new RepoDiscovery(api as any);
 
     const repos = await discovery.discoverRepos("workspace", baseUrl);
@@ -43,7 +44,7 @@ describe("RepoDiscovery", () => {
   });
 
   test("returns empty when baseUrl is invalid", async () => {
-    const api = { listAccessibleRepos: jest.fn() };
+    const api = { listAccessibleRepos: vi.fn() };
     const discovery = new RepoDiscovery(api as any);
 
     const repos = await discovery.discoverRepos("workspace", "not-a-url");

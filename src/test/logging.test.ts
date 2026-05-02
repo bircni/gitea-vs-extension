@@ -1,14 +1,15 @@
 import * as vscode from "vscode";
 import { Logger } from "../util/logging";
+import type { Mock } from "vitest";
 
 describe("Logger", () => {
   beforeEach(() => {
-    (vscode.window.createOutputChannel as jest.Mock).mockClear();
+    (vscode.window.createOutputChannel as Mock).mockClear();
   });
 
   test("writes messages to output channel", () => {
     const logger = new Logger("gitea", () => true);
-    const channel = (vscode.window.createOutputChannel as jest.Mock).mock.results[0].value;
+    const channel = (vscode.window.createOutputChannel as Mock).mock.results[0].value;
 
     logger.info("hello");
     logger.warn("warn");
@@ -26,7 +27,7 @@ describe("Logger", () => {
 
   test("skips debug when disabled", () => {
     const logger = new Logger("gitea", () => false);
-    const channel = (vscode.window.createOutputChannel as jest.Mock).mock.results[0].value;
+    const channel = (vscode.window.createOutputChannel as Mock).mock.results[0].value;
 
     logger.debug("dbg");
     expect(channel.appendLine).not.toHaveBeenCalledWith("[debug] dbg");

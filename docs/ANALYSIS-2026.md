@@ -26,7 +26,7 @@ This document summarizes what the extension does, how it compares to GitHub/GitL
 - **Language**: TypeScript (strict), Node (see `.node-version`).
 - **Runtime**: VS Code extension host (Node 18+).
 - **HTTP**: undici.
-- **Build**: esbuild, vsce; tests: Jest; quality: ESLint, Prettier.
+- **Build**: esbuild, vsce; tests: Vitest; quality: ESLint, Prettier.
 - **Layout**: `src/` — `extension.ts`, `config/`, `gitea/`, `controllers/`, `views/`, `util/`; tests in `src/test/`.
 
 ---

@@ -1,13 +1,22 @@
+import * as fs from "fs";
 import { EndpointError, GiteaApi } from "../gitea/api";
 import type { RepoRef } from "../gitea/models";
 import { HttpError } from "../gitea/client";
 import { fetchSwagger } from "../gitea/swagger";
+import type * as swaggerModule from "../gitea/swagger";
+import type { Mock } from "vitest";
 
-jest.mock("../gitea/swagger", () => {
-  const actual = jest.requireActual("../gitea/swagger");
+vi.mock("fs", async () => ({
+  ...(await vi.importActual<typeof fs>("fs")),
+  mkdirSync: vi.fn(),
+  writeFileSync: vi.fn(),
+}));
+
+vi.mock("../gitea/swagger", async () => {
+  const actual = await vi.importActual<typeof swaggerModule>("../gitea/swagger");
   return {
     ...actual,
-    fetchSwagger: jest.fn(async () => undefined),
+    fetchSwagger: vi.fn(async () => undefined),
   };
 });
 
@@ -15,9 +24,9 @@ const repo: RepoRef = { host: "example.com", owner: "owner", name: "repo" };
 
 describe("GiteaApi review comment endpoints", () => {
   const client = {
-    getJson: jest.fn(),
-    getText: jest.fn(),
-    requestText: jest.fn(),
+    getJson: vi.fn(),
+    getText: vi.fn(),
+    requestText: vi.fn(),
   };
   const api = new GiteaApi(client as any, () => "http://example.com");
 
@@ -25,7 +34,7 @@ describe("GiteaApi review comment endpoints", () => {
     client.getJson.mockReset();
     client.getText.mockReset();
     client.requestText.mockReset();
-    (fetchSwagger as jest.Mock).mockReset().mockResolvedValue(undefined);
+    (fetchSwagger as Mock).mockReset().mockResolvedValue(undefined);
   });
 
   test("requests pull request reviews with state=all", async () => {
@@ -91,9 +100,9 @@ describe("GiteaApi review comment endpoints", () => {
 
 describe("GiteaApi core endpoints", () => {
   const client = {
-    getJson: jest.fn(),
-    getText: jest.fn(),
-    requestText: jest.fn(),
+    getJson: vi.fn(),
+    getText: vi.fn(),
+    requestText: vi.fn(),
   };
   let api: GiteaApi;
 
@@ -101,7 +110,7 @@ describe("GiteaApi core endpoints", () => {
     client.getJson.mockReset();
     client.getText.mockReset();
     client.requestText.mockReset();
-    (fetchSwagger as jest.Mock).mockReset().mockResolvedValue(undefined);
+    (fetchSwagger as Mock).mockReset().mockResolvedValue(undefined);
     api = new GiteaApi(client as any, () => "http://example.com");
   });
 
@@ -142,7 +151,7 @@ describe("GiteaApi core endpoints", () => {
   });
 
   test("uses run artifacts endpoint when available", async () => {
-    (fetchSwagger as jest.Mock).mockResolvedValueOnce({
+    (fetchSwagger as Mock).mockResolvedValueOnce({
       basePath: "/api/v1",
       paths: {
         "/repos/{owner}/{repo}/actions/runs/{run}/artifacts": {},
@@ -176,7 +185,7 @@ describe("GiteaApi core endpoints", () => {
   });
 
   test("returns empty when pull request reviews endpoint missing", async () => {
-    (api as any).ensureEndpoints = jest.fn(async () => ({}));
+    (api as any).ensureEndpoints = vi.fn(async () => ({}));
 
     const reviews = await api.listPullRequestReviews(repo, 1);
 
@@ -184,7 +193,7 @@ describe("GiteaApi core endpoints", () => {
   });
 
   test("returns empty when review comments endpoint missing", async () => {
-    (api as any).ensureEndpoints = jest.fn(async () => ({}));
+    (api as any).ensureEndpoints = vi.fn(async () => ({}));
 
     const comments = await api.listPullRequestReviewComments(repo, 1, 2);
 
@@ -192,7 +201,7 @@ describe("GiteaApi core endpoints", () => {
   });
 
   test("returns empty when artifacts endpoint missing", async () => {
-    (api as any).ensureEndpoints = jest.fn(async () => ({}));
+    (api as any).ensureEndpoints = vi.fn(async () => ({}));
 
     const artifacts = await api.listArtifacts(repo, 1);
 
@@ -200,7 +209,7 @@ describe("GiteaApi core endpoints", () => {
   });
 
   test("uses repo artifacts fallback when run artifacts missing", async () => {
-    (fetchSwagger as jest.Mock).mockResolvedValueOnce({
+    (fetchSwagger as Mock).mockResolvedValueOnce({
       basePath: "/api/v1",
       paths: {
         "/repos/{owner}/{repo}/actions/artifacts": {},
@@ -222,15 +231,16 @@ describe("GiteaApi core endpoints", () => {
 
   test("downloadArtifactToFile downloads and writes file when downloadUrl present", async () => {
     const clientWithBinary = {
-      getJson: jest.fn(),
-      getText: jest.fn(),
-      requestText: jest.fn(),
-      getBinary: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+      getJson: vi.fn(),
+      getText: vi.fn(),
+      requestText: vi.fn(),
+      getBinary: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
     };
     const apiWithBinary = new GiteaApi(clientWithBinary as any, () => "http://example.com");
-    const fs = require("fs");
-    const mkdirSpy = jest.spyOn(fs, "mkdirSync").mockImplementation(() => undefined);
-    const writeSpy = jest.spyOn(fs, "writeFileSync").mockImplementation(() => undefined);
+    const mkdirSpy = fs.mkdirSync as unknown as Mock;
+    const writeSpy = fs.writeFileSync as unknown as Mock;
+    mkdirSpy.mockImplementation(() => undefined);
+    writeSpy.mockImplementation(() => undefined);
 
     const artifact = {
       id: 1,
@@ -254,8 +264,8 @@ describe("GiteaApi core endpoints", () => {
     );
     expect(savePath).toMatch(/[/\\]tmp[/\\]artifacts[/\\][^/\\]+[/\\]10[/\\]dist\.zip$/);
 
-    mkdirSpy.mockRestore();
-    writeSpy.mockRestore();
+    mkdirSpy.mockReset();
+    writeSpy.mockReset();
   });
 
   test("downloadArtifactToFile follows HTML redirect when server returns link page", async () => {
@@ -263,18 +273,19 @@ describe("GiteaApi core endpoints", () => {
       '<a href="http://192.168.240.51:3000/api/v1/repos/admin/repo/actions/artifacts/1/zip/raw?sig=abc&amp;expires=123">Found</a>.';
     const zipPayload = new Uint8Array([0x50, 0x4b, 0x03, 0x04]); // PK.. (zip header)
     const clientWithBinary = {
-      getJson: jest.fn(),
-      getText: jest.fn(),
-      requestText: jest.fn(),
-      getBinary: jest
+      getJson: vi.fn(),
+      getText: vi.fn(),
+      requestText: vi.fn(),
+      getBinary: vi
         .fn()
         .mockResolvedValueOnce(new TextEncoder().encode(htmlRedirect))
         .mockResolvedValueOnce(zipPayload),
     };
     const apiWithBinary = new GiteaApi(clientWithBinary as any, () => "http://example.com");
-    const fs = require("fs");
-    const mkdirSpy = jest.spyOn(fs, "mkdirSync").mockImplementation(() => undefined);
-    const writeSpy = jest.spyOn(fs, "writeFileSync").mockImplementation(() => undefined);
+    const mkdirSpy = fs.mkdirSync as unknown as Mock;
+    const writeSpy = fs.writeFileSync as unknown as Mock;
+    mkdirSpy.mockImplementation(() => undefined);
+    writeSpy.mockImplementation(() => undefined);
 
     const artifact = {
       id: 1,
@@ -300,18 +311,18 @@ describe("GiteaApi core endpoints", () => {
     );
     expect(savePath).toMatch(/[/\\]tmp[/\\]artifacts[/\\][^/\\]+[/\\]10[/\\]dist\.zip$/);
 
-    mkdirSpy.mockRestore();
-    writeSpy.mockRestore();
+    mkdirSpy.mockReset();
+    writeSpy.mockReset();
   });
 
   test("listRuns throws when endpoint missing", async () => {
-    (api as any).ensureEndpoints = jest.fn(async () => ({}));
+    (api as any).ensureEndpoints = vi.fn(async () => ({}));
 
     await expect(api.listRuns(repo, 1)).rejects.toBeInstanceOf(EndpointError);
   });
 
   test("testConnection uses version endpoint", async () => {
-    (fetchSwagger as jest.Mock).mockResolvedValueOnce({
+    (fetchSwagger as Mock).mockResolvedValueOnce({
       basePath: "/api/v1",
       paths: {
         "/version": {},
@@ -326,7 +337,7 @@ describe("GiteaApi core endpoints", () => {
   });
 
   test("testConnection throws when version endpoint missing", async () => {
-    (fetchSwagger as jest.Mock).mockResolvedValueOnce({
+    (fetchSwagger as Mock).mockResolvedValueOnce({
       basePath: "/api/v1",
       paths: {},
     });
@@ -417,7 +428,7 @@ describe("GiteaApi core endpoints", () => {
   });
 
   test("ensureEndpoints falls back on HttpError", async () => {
-    (fetchSwagger as jest.Mock).mockRejectedValueOnce(new HttpError(404, "/swagger", "not found"));
+    (fetchSwagger as Mock).mockRejectedValueOnce(new HttpError(404, "/swagger", "not found"));
     client.getJson.mockResolvedValueOnce({ version: "fallback" });
 
     const version = await api.testConnection();
@@ -426,7 +437,7 @@ describe("GiteaApi core endpoints", () => {
   });
 
   test("ensureEndpoints falls back on non-HttpError", async () => {
-    (fetchSwagger as jest.Mock).mockRejectedValueOnce(new Error("boom"));
+    (fetchSwagger as Mock).mockRejectedValueOnce(new Error("boom"));
     client.getJson.mockResolvedValueOnce({ version: "fallback2" });
 
     const version = await api.testConnection();
