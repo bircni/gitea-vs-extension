@@ -34,19 +34,19 @@ npm run watch
 
 ## Scripts
 
-| Script                 | Description                   |
-| ---------------------- | ----------------------------- |
-| `npm run compile`      | Build TypeScript to `dist/`   |
-| `npm run watch`        | Build and watch for changes   |
-| `npm run lint`         | Run ESLint                    |
-| `npm run format`       | Check formatting              |
-| `npm run format:write` | Auto format files             |
-| `npm test`             | Run unit tests                |
-| `npm run test:watch`   | Run tests in watch mode       |
-| `npm run coverage`     | Run tests with coverage       |
-| `npm run bundle`       | Bundle extension with esbuild |
-| `npm run package`      | Create a VSIX package         |
-| `npm run build`        | Compile, bundle, and package  |
+| Script                  | Description                   |
+| ----------------------- | ----------------------------- |
+| `npm run compile`       | Build TypeScript to `dist/`   |
+| `npm run watch`         | Build and watch for changes   |
+| `npm run lint`          | Run ESLint                    |
+| `npm run format`        | Check formatting              |
+| `npm run format:write`  | Auto format files             |
+| `npm test`              | Run unit tests                |
+| `npm run test:watch`    | Run tests in watch mode       |
+| `npm run test:coverage` | Run tests with coverage       |
+| `npm run bundle`        | Bundle extension with esbuild |
+| `npm run package`       | Create a VSIX package         |
+| `npm run build`         | Compile, bundle, and package  |
 
 ## Project Structure
 
@@ -55,7 +55,7 @@ src/
   config/        Settings and token storage
   controllers/   Command wiring and refresh controller
   gitea/         API client, models, discovery
-  test/          Jest tests
+  test/          Vitest tests
   util/          Logging, time helpers, caching
   views/         Tree providers and nodes
   extension.ts   Extension entry point
@@ -63,12 +63,12 @@ src/
 
 ## Testing
 
-Tests use Jest and live in `src/test`.
+Tests use Vitest and live in `src/test`.
 
 ```bash
 npm test
 npm run test:watch
-npm run coverage
+npm run test:coverage
 ```
 
 ## Code Style

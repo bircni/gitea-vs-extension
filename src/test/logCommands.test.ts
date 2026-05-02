@@ -23,45 +23,45 @@ const mockJob: Job = {
 };
 
 const baseLogDeps: LogCommandsDeps = {
-  getJobLogs: jest.fn().mockResolvedValue("log content"),
-  getWorkspaceFolderPath: jest.fn().mockReturnValue(undefined),
-  getSettings: jest.fn().mockReturnValue({}),
+  getJobLogs: vi.fn().mockResolvedValue("log content"),
+  getWorkspaceFolderPath: vi.fn().mockReturnValue(undefined),
+  getSettings: vi.fn().mockReturnValue({}),
   pathJoin: (...segments: string[]) => segments.join("/"),
-  mkdirSync: jest.fn(),
-  writeFileSync: jest.fn(),
-  uriFile: jest.fn((p: string) => ({ fsPath: p })),
-  openTextDocument: jest.fn().mockResolvedValue({}),
-  showTextDocument: jest.fn().mockResolvedValue(undefined),
-  showWarningMessage: jest.fn(),
-  showInformationMessage: jest.fn(),
-  getEntry: jest.fn().mockReturnValue(undefined),
-  loadRunDetails: jest.fn().mockResolvedValue(undefined),
+  mkdirSync: vi.fn(),
+  writeFileSync: vi.fn(),
+  uriFile: vi.fn((p: string) => ({ fsPath: p })),
+  openTextDocument: vi.fn().mockResolvedValue({}),
+  showTextDocument: vi.fn().mockResolvedValue(undefined),
+  showWarningMessage: vi.fn(),
+  showInformationMessage: vi.fn(),
+  getEntry: vi.fn().mockReturnValue(undefined),
+  loadRunDetails: vi.fn().mockResolvedValue(undefined),
 };
 
 describe("viewJobLogs", () => {
   it("shows warning when arg does not normalize to LogArg", async () => {
-    const showWarningMessage = jest.fn();
+    const showWarningMessage = vi.fn();
     await viewJobLogs({ ...baseLogDeps, showWarningMessage }, undefined);
     expect(showWarningMessage).toHaveBeenCalledWith("Job not found.");
     expect(baseLogDeps.getJobLogs).not.toHaveBeenCalled();
   });
 
   it("calls getJobLogs with repo and job.id when payload is valid", async () => {
-    const getJobLogs = jest.fn().mockResolvedValue("log content");
+    const getJobLogs = vi.fn().mockResolvedValue("log content");
     const payload = { repo: mockRepo, run: mockRun, job: mockJob };
     await viewJobLogs({ ...baseLogDeps, getJobLogs }, payload);
     expect(getJobLogs).toHaveBeenCalledWith(mockRepo, 10);
   });
 
   it("saves to file and opens when jobLogsSaveToRepo is true and folder path exists", async () => {
-    const getJobLogs = jest.fn().mockResolvedValue("log content");
-    const getWorkspaceFolderPath = jest.fn().mockReturnValue("/workspace/repo");
-    const getSettings = jest.fn().mockReturnValue({ jobLogsSaveToRepo: true });
-    const mkdirSync = jest.fn();
-    const writeFileSync = jest.fn();
-    const uriFile = jest.fn((p: string) => ({ fsPath: p }));
-    const openTextDocument = jest.fn().mockResolvedValue({});
-    const showTextDocument = jest.fn().mockResolvedValue(undefined);
+    const getJobLogs = vi.fn().mockResolvedValue("log content");
+    const getWorkspaceFolderPath = vi.fn().mockReturnValue("/workspace/repo");
+    const getSettings = vi.fn().mockReturnValue({ jobLogsSaveToRepo: true });
+    const mkdirSync = vi.fn();
+    const writeFileSync = vi.fn();
+    const uriFile = vi.fn((p: string) => ({ fsPath: p }));
+    const openTextDocument = vi.fn().mockResolvedValue({});
+    const showTextDocument = vi.fn().mockResolvedValue(undefined);
     const payload = { repo: mockRepo, run: mockRun, job: mockJob };
     await viewJobLogs(
       {
@@ -93,9 +93,9 @@ describe("viewJobLogs", () => {
   });
 
   it("opens in-memory doc when jobLogsSaveToRepo is false", async () => {
-    const getJobLogs = jest.fn().mockResolvedValue("log content");
-    const openTextDocument = jest.fn().mockResolvedValue({});
-    const showTextDocument = jest.fn().mockResolvedValue(undefined);
+    const getJobLogs = vi.fn().mockResolvedValue("log content");
+    const openTextDocument = vi.fn().mockResolvedValue({});
+    const showTextDocument = vi.fn().mockResolvedValue(undefined);
     const payload = { repo: mockRepo, run: mockRun, job: mockJob };
     await viewJobLogs({ ...baseLogDeps, getJobLogs, openTextDocument, showTextDocument }, payload);
     expect(openTextDocument).toHaveBeenCalledWith({
@@ -106,16 +106,16 @@ describe("viewJobLogs", () => {
   });
 
   it("shows warning when getJobLogs throws", async () => {
-    const getJobLogs = jest.fn().mockRejectedValue(new Error("API error"));
-    const showWarningMessage = jest.fn();
+    const getJobLogs = vi.fn().mockRejectedValue(new Error("API error"));
+    const showWarningMessage = vi.fn();
     const payload = { repo: mockRepo, run: mockRun, job: mockJob };
     await viewJobLogs({ ...baseLogDeps, getJobLogs, showWarningMessage }, payload);
     expect(showWarningMessage).toHaveBeenCalledWith("API error");
   });
 
   it("shows generic message when getJobLogs throws non-Error", async () => {
-    const getJobLogs = jest.fn().mockRejectedValue("string");
-    const showWarningMessage = jest.fn();
+    const getJobLogs = vi.fn().mockRejectedValue("string");
+    const showWarningMessage = vi.fn();
     const payload = { repo: mockRepo, run: mockRun, job: mockJob };
     await viewJobLogs({ ...baseLogDeps, getJobLogs, showWarningMessage }, payload);
     expect(showWarningMessage).toHaveBeenCalledWith("Failed to load logs.");
@@ -124,14 +124,14 @@ describe("viewJobLogs", () => {
 
 describe("openLatestFailedJobLogs", () => {
   it("shows warning when arg does not normalize to run payload", async () => {
-    const showWarningMessage = jest.fn();
+    const showWarningMessage = vi.fn();
     await openLatestFailedJobLogs({ ...baseLogDeps, showWarningMessage }, undefined);
     expect(showWarningMessage).toHaveBeenCalledWith("Run not found.");
   });
 
   it("shows info when no failed job in run", async () => {
-    const showInformationMessage = jest.fn();
-    const getEntry = jest.fn().mockReturnValue({
+    const showInformationMessage = vi.fn();
+    const getEntry = vi.fn().mockReturnValue({
       jobsByRun: new Map([["1", [mockJob]]]),
     });
     await openLatestFailedJobLogs(
@@ -139,7 +139,7 @@ describe("openLatestFailedJobLogs", () => {
         ...baseLogDeps,
         showInformationMessage,
         getEntry,
-        loadRunDetails: jest.fn().mockResolvedValue(undefined),
+        loadRunDetails: vi.fn().mockResolvedValue(undefined),
       },
       { repo: mockRepo, run: mockRun },
     );
@@ -153,13 +153,13 @@ describe("openLatestFailedJobLogs", () => {
       status: "completed",
       conclusion: "failure",
     };
-    const getEntry = jest.fn().mockReturnValue({
+    const getEntry = vi.fn().mockReturnValue({
       jobsByRun: new Map([["1", [mockJob, failedJob]]]),
     });
-    const loadRunDetails = jest.fn().mockResolvedValue(undefined);
-    const getJobLogs = jest.fn().mockResolvedValue("failed job log");
-    const openTextDocument = jest.fn().mockResolvedValue({});
-    const showTextDocument = jest.fn().mockResolvedValue(undefined);
+    const loadRunDetails = vi.fn().mockResolvedValue(undefined);
+    const getJobLogs = vi.fn().mockResolvedValue("failed job log");
+    const openTextDocument = vi.fn().mockResolvedValue({});
+    const showTextDocument = vi.fn().mockResolvedValue(undefined);
     await openLatestFailedJobLogs(
       {
         ...baseLogDeps,

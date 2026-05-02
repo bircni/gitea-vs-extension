@@ -11,24 +11,24 @@ import type { RepoRef } from "../gitea/models";
 const mockRepo: RepoRef = { host: "gitea.example.com", owner: "o", name: "n" };
 
 const baseDeps: SecretsVariablesCommandsDeps = {
-  getCurrentRepo: jest.fn().mockReturnValue(undefined),
-  setSecretsLoading: jest.fn(),
-  setSecrets: jest.fn(),
-  setSecretsError: jest.fn(),
-  setVariablesLoading: jest.fn(),
-  setVariables: jest.fn(),
-  setVariablesError: jest.fn(),
-  listSecrets: jest.fn().mockResolvedValue([]),
-  listVariables: jest.fn().mockResolvedValue([]),
-  createOrUpdateSecret: jest.fn().mockResolvedValue(undefined),
-  deleteSecret: jest.fn().mockResolvedValue(undefined),
-  createVariable: jest.fn().mockResolvedValue(undefined),
-  updateVariable: jest.fn().mockResolvedValue(undefined),
-  deleteVariable: jest.fn().mockResolvedValue(undefined),
-  showInputBox: jest.fn().mockResolvedValue(undefined),
-  showWarningMessage: jest.fn().mockResolvedValue(undefined),
-  refreshSecrets: jest.fn().mockResolvedValue(undefined),
-  refreshVariables: jest.fn().mockResolvedValue(undefined),
+  getCurrentRepo: vi.fn().mockReturnValue(undefined),
+  setSecretsLoading: vi.fn(),
+  setSecrets: vi.fn(),
+  setSecretsError: vi.fn(),
+  setVariablesLoading: vi.fn(),
+  setVariables: vi.fn(),
+  setVariablesError: vi.fn(),
+  listSecrets: vi.fn().mockResolvedValue([]),
+  listVariables: vi.fn().mockResolvedValue([]),
+  createOrUpdateSecret: vi.fn().mockResolvedValue(undefined),
+  deleteSecret: vi.fn().mockResolvedValue(undefined),
+  createVariable: vi.fn().mockResolvedValue(undefined),
+  updateVariable: vi.fn().mockResolvedValue(undefined),
+  deleteVariable: vi.fn().mockResolvedValue(undefined),
+  showInputBox: vi.fn().mockResolvedValue(undefined),
+  showWarningMessage: vi.fn().mockResolvedValue(undefined),
+  refreshSecrets: vi.fn().mockResolvedValue(undefined),
+  refreshVariables: vi.fn().mockResolvedValue(undefined),
 };
 
 describe("refreshSecrets", () => {
@@ -38,8 +38,8 @@ describe("refreshSecrets", () => {
   });
 
   it("calls listSecrets and setSecrets when repo is provided via getCurrentRepo", async () => {
-    const setSecrets = jest.fn();
-    const listSecrets = jest.fn().mockResolvedValue([{ name: "x" }]);
+    const setSecrets = vi.fn();
+    const listSecrets = vi.fn().mockResolvedValue([{ name: "x" }]);
     await refreshSecrets(
       {
         ...baseDeps,
@@ -61,8 +61,8 @@ describe("refreshVariables", () => {
   });
 
   it("calls listVariables and setVariables when repo is provided", async () => {
-    const setVariables = jest.fn();
-    const listVariables = jest.fn().mockResolvedValue([{ name: "y" }]);
+    const setVariables = vi.fn();
+    const listVariables = vi.fn().mockResolvedValue([{ name: "y" }]);
     await refreshVariables(
       {
         ...baseDeps,

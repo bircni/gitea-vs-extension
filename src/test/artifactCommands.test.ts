@@ -41,16 +41,16 @@ describe("normalizeArtifactArg", () => {
 
 describe("downloadArtifact", () => {
   it("shows message when arg is not ArtifactNode", async () => {
-    const showInformationMessage = jest.fn();
+    const showInformationMessage = vi.fn();
     const deps: ArtifactCommandsDeps = {
-      downloadArtifactToFile: jest.fn(),
+      downloadArtifactToFile: vi.fn(),
       getArtifactDownloadBaseDir: () => "/tmp",
       getSettings: () => ({}),
       computeArtifactSavePath: () => "/tmp/path",
       existsSync: () => false,
       showInformationMessage,
-      showErrorMessage: jest.fn(),
-      executeCommand: jest.fn(),
+      showErrorMessage: vi.fn(),
+      executeCommand: vi.fn(),
       uriFile: (p) => ({ fsPath: p }),
     };
     await downloadArtifact(deps, undefined);
@@ -61,8 +61,8 @@ describe("downloadArtifact", () => {
   });
 
   it("calls downloadArtifactToFile with correct args when arg is ArtifactNode", async () => {
-    const downloadArtifactToFile = jest.fn().mockResolvedValue("/tmp/o/n/42/out");
-    const showInformationMessage = jest.fn();
+    const downloadArtifactToFile = vi.fn().mockResolvedValue("/tmp/o/n/42/out");
+    const showInformationMessage = vi.fn();
     const deps: ArtifactCommandsDeps = {
       downloadArtifactToFile,
       getArtifactDownloadBaseDir: () => "/tmp",
@@ -70,8 +70,8 @@ describe("downloadArtifact", () => {
       computeArtifactSavePath: () => "/tmp/path",
       existsSync: () => false,
       showInformationMessage,
-      showErrorMessage: jest.fn(),
-      executeCommand: jest.fn(),
+      showErrorMessage: vi.fn(),
+      executeCommand: vi.fn(),
       uriFile: (p) => ({ fsPath: p }),
     };
     const node = makeArtifactNode();
@@ -81,17 +81,17 @@ describe("downloadArtifact", () => {
   });
 
   it("shows error and does not log when download fails and debugLogging is false", async () => {
-    const showErrorMessage = jest.fn();
-    const logError = jest.fn();
+    const showErrorMessage = vi.fn();
+    const logError = vi.fn();
     const deps: ArtifactCommandsDeps = {
-      downloadArtifactToFile: jest.fn().mockRejectedValue(new Error("Network error")),
+      downloadArtifactToFile: vi.fn().mockRejectedValue(new Error("Network error")),
       getArtifactDownloadBaseDir: () => "/tmp",
       getSettings: () => ({ debugLogging: false }),
       computeArtifactSavePath: () => "/tmp/path",
       existsSync: () => false,
-      showInformationMessage: jest.fn(),
+      showInformationMessage: vi.fn(),
       showErrorMessage,
-      executeCommand: jest.fn(),
+      executeCommand: vi.fn(),
       uriFile: (p) => ({ fsPath: p }),
       logError,
     };
@@ -101,18 +101,18 @@ describe("downloadArtifact", () => {
   });
 
   it("shows error and calls logError when download fails and debugLogging is true", async () => {
-    const showErrorMessage = jest.fn();
-    const logError = jest.fn();
+    const showErrorMessage = vi.fn();
+    const logError = vi.fn();
     const err = new Error("Network error");
     const deps: ArtifactCommandsDeps = {
-      downloadArtifactToFile: jest.fn().mockRejectedValue(err),
+      downloadArtifactToFile: vi.fn().mockRejectedValue(err),
       getArtifactDownloadBaseDir: () => "/tmp",
       getSettings: () => ({ debugLogging: true }),
       computeArtifactSavePath: () => "/tmp/path",
       existsSync: () => false,
-      showInformationMessage: jest.fn(),
+      showInformationMessage: vi.fn(),
       showErrorMessage,
-      executeCommand: jest.fn(),
+      executeCommand: vi.fn(),
       uriFile: (p) => ({ fsPath: p }),
       logError,
     };
@@ -122,16 +122,16 @@ describe("downloadArtifact", () => {
   });
 
   it("shows error with string when download throws non-Error", async () => {
-    const showErrorMessage = jest.fn();
+    const showErrorMessage = vi.fn();
     const deps: ArtifactCommandsDeps = {
-      downloadArtifactToFile: jest.fn().mockRejectedValue("string error"),
+      downloadArtifactToFile: vi.fn().mockRejectedValue("string error"),
       getArtifactDownloadBaseDir: () => "/tmp",
       getSettings: () => ({}),
       computeArtifactSavePath: () => "/tmp/path",
       existsSync: () => false,
-      showInformationMessage: jest.fn(),
+      showInformationMessage: vi.fn(),
       showErrorMessage,
-      executeCommand: jest.fn(),
+      executeCommand: vi.fn(),
       uriFile: (p) => ({ fsPath: p }),
     };
     await downloadArtifact(deps, makeArtifactNode());
@@ -141,16 +141,16 @@ describe("downloadArtifact", () => {
 
 describe("revealArtifactInExplorer", () => {
   it("shows message when arg is not ArtifactNode", async () => {
-    const showInformationMessage = jest.fn();
+    const showInformationMessage = vi.fn();
     const deps: ArtifactCommandsDeps = {
-      downloadArtifactToFile: jest.fn(),
+      downloadArtifactToFile: vi.fn(),
       getArtifactDownloadBaseDir: () => "/tmp",
       getSettings: () => ({}),
       computeArtifactSavePath: () => "/tmp/path",
       existsSync: () => false,
       showInformationMessage,
-      showErrorMessage: jest.fn(),
-      executeCommand: jest.fn(),
+      showErrorMessage: vi.fn(),
+      executeCommand: vi.fn(),
       uriFile: (p) => ({ fsPath: p }),
     };
     await revealArtifactInExplorer(deps, undefined);
@@ -160,17 +160,17 @@ describe("revealArtifactInExplorer", () => {
   });
 
   it("shows message when artifact file does not exist", async () => {
-    const showInformationMessage = jest.fn();
-    const computeArtifactSavePath = jest.fn().mockReturnValue("/tmp/o/n/42/out");
+    const showInformationMessage = vi.fn();
+    const computeArtifactSavePath = vi.fn().mockReturnValue("/tmp/o/n/42/out");
     const deps: ArtifactCommandsDeps = {
-      downloadArtifactToFile: jest.fn(),
+      downloadArtifactToFile: vi.fn(),
       getArtifactDownloadBaseDir: () => "/tmp",
       getSettings: () => ({}),
       computeArtifactSavePath,
       existsSync: () => false,
       showInformationMessage,
-      showErrorMessage: jest.fn(),
-      executeCommand: jest.fn(),
+      showErrorMessage: vi.fn(),
+      executeCommand: vi.fn(),
       uriFile: (p) => ({ fsPath: p }),
     };
     await revealArtifactInExplorer(deps, makeArtifactNode());
@@ -179,16 +179,16 @@ describe("revealArtifactInExplorer", () => {
   });
 
   it("calls revealFileInOS when artifact file exists", async () => {
-    const executeCommand = jest.fn().mockResolvedValue(undefined);
-    const uriFile = jest.fn((p: string) => ({ fsPath: p }));
+    const executeCommand = vi.fn().mockResolvedValue(undefined);
+    const uriFile = vi.fn((p: string) => ({ fsPath: p }));
     const deps: ArtifactCommandsDeps = {
-      downloadArtifactToFile: jest.fn(),
+      downloadArtifactToFile: vi.fn(),
       getArtifactDownloadBaseDir: () => "/tmp",
       getSettings: () => ({}),
       computeArtifactSavePath: (_base, _repo, _runId, _art) => "/tmp/o/n/42/out",
       existsSync: () => true,
-      showInformationMessage: jest.fn(),
-      showErrorMessage: jest.fn(),
+      showInformationMessage: vi.fn(),
+      showErrorMessage: vi.fn(),
       executeCommand,
       uriFile,
     };
@@ -198,16 +198,16 @@ describe("revealArtifactInExplorer", () => {
   });
 
   it("shows error when revealFileInOS throws", async () => {
-    const showErrorMessage = jest.fn();
+    const showErrorMessage = vi.fn();
     const deps: ArtifactCommandsDeps = {
-      downloadArtifactToFile: jest.fn(),
+      downloadArtifactToFile: vi.fn(),
       getArtifactDownloadBaseDir: () => "/tmp",
       getSettings: () => ({}),
       computeArtifactSavePath: () => "/tmp/o/n/42/out",
       existsSync: () => true,
-      showInformationMessage: jest.fn(),
+      showInformationMessage: vi.fn(),
       showErrorMessage,
-      executeCommand: jest.fn().mockRejectedValue(new Error("Reveal failed")),
+      executeCommand: vi.fn().mockRejectedValue(new Error("Reveal failed")),
       uriFile: (p) => ({ fsPath: p }),
     };
     await revealArtifactInExplorer(deps, makeArtifactNode());
@@ -217,16 +217,16 @@ describe("revealArtifactInExplorer", () => {
 
 describe("openOrRevealArtifact", () => {
   it("returns without message when arg is not ArtifactNode", async () => {
-    const showInformationMessage = jest.fn();
+    const showInformationMessage = vi.fn();
     const deps: ArtifactCommandsDeps = {
-      downloadArtifactToFile: jest.fn(),
+      downloadArtifactToFile: vi.fn(),
       getArtifactDownloadBaseDir: () => "/tmp",
       getSettings: () => ({}),
       computeArtifactSavePath: () => "/tmp/path",
       existsSync: () => false,
       showInformationMessage,
-      showErrorMessage: jest.fn(),
-      executeCommand: jest.fn(),
+      showErrorMessage: vi.fn(),
+      executeCommand: vi.fn(),
       uriFile: (p) => ({ fsPath: p }),
     };
     await openOrRevealArtifact(deps, undefined);
@@ -234,16 +234,16 @@ describe("openOrRevealArtifact", () => {
   });
 
   it("shows message when artifact file does not exist", async () => {
-    const showInformationMessage = jest.fn();
+    const showInformationMessage = vi.fn();
     const deps: ArtifactCommandsDeps = {
-      downloadArtifactToFile: jest.fn(),
+      downloadArtifactToFile: vi.fn(),
       getArtifactDownloadBaseDir: () => "/tmp",
       getSettings: () => ({}),
       computeArtifactSavePath: () => "/tmp/o/n/42/out",
       existsSync: () => false,
       showInformationMessage,
-      showErrorMessage: jest.fn(),
-      executeCommand: jest.fn(),
+      showErrorMessage: vi.fn(),
+      executeCommand: vi.fn(),
       uriFile: (p) => ({ fsPath: p }),
     };
     await openOrRevealArtifact(deps, makeArtifactNode());
@@ -251,16 +251,16 @@ describe("openOrRevealArtifact", () => {
   });
 
   it("calls vscode.open when artifact file exists", async () => {
-    const executeCommand = jest.fn().mockResolvedValue(undefined);
-    const uriFile = jest.fn((p: string) => ({ fsPath: p }));
+    const executeCommand = vi.fn().mockResolvedValue(undefined);
+    const uriFile = vi.fn((p: string) => ({ fsPath: p }));
     const deps: ArtifactCommandsDeps = {
-      downloadArtifactToFile: jest.fn(),
+      downloadArtifactToFile: vi.fn(),
       getArtifactDownloadBaseDir: () => "/tmp",
       getSettings: () => ({}),
       computeArtifactSavePath: () => "/tmp/o/n/42/out",
       existsSync: () => true,
-      showInformationMessage: jest.fn(),
-      showErrorMessage: jest.fn(),
+      showInformationMessage: vi.fn(),
+      showErrorMessage: vi.fn(),
       executeCommand,
       uriFile,
     };
@@ -269,16 +269,16 @@ describe("openOrRevealArtifact", () => {
   });
 
   it("shows error when vscode.open throws", async () => {
-    const showErrorMessage = jest.fn();
+    const showErrorMessage = vi.fn();
     const deps: ArtifactCommandsDeps = {
-      downloadArtifactToFile: jest.fn(),
+      downloadArtifactToFile: vi.fn(),
       getArtifactDownloadBaseDir: () => "/tmp",
       getSettings: () => ({}),
       computeArtifactSavePath: () => "/tmp/o/n/42/out",
       existsSync: () => true,
-      showInformationMessage: jest.fn(),
+      showInformationMessage: vi.fn(),
       showErrorMessage,
-      executeCommand: jest.fn().mockRejectedValue(new Error("Open failed")),
+      executeCommand: vi.fn().mockRejectedValue(new Error("Open failed")),
       uriFile: (p) => ({ fsPath: p }),
     };
     await openOrRevealArtifact(deps, makeArtifactNode());

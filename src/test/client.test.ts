@@ -1,14 +1,19 @@
 import { GiteaHttpClient } from "../gitea/client";
 import { Agent, request } from "undici";
+import type { Mock, MockedFunction } from "vitest";
 
-jest.mock("undici", () => {
-  const request = jest.fn();
-  const Agent = jest.fn().mockImplementation((options) => ({ options }));
+vi.mock("undici", () => {
+  const request = vi.fn();
+  const Agent = vi.fn(
+    class MockAgent {
+      constructor(public options: unknown) {}
+    },
+  );
   return { request, Agent };
 });
 
-const requestMock = request as jest.MockedFunction<typeof request>;
-const AgentMock = Agent as unknown as jest.Mock;
+const requestMock = request as MockedFunction<typeof request>;
+const AgentMock = Agent as unknown as Mock;
 
 type MockBody = {
   text?: string;
@@ -19,9 +24,9 @@ type MockBody = {
 const mockResponse = (statusCode: number, body: MockBody) => ({
   statusCode,
   body: {
-    text: jest.fn(async () => body.text ?? ""),
-    json: jest.fn(async () => body.json),
-    arrayBuffer: jest.fn(async () => (body.arrayBuffer ?? new Uint8Array()).buffer),
+    text: vi.fn(async () => body.text ?? ""),
+    json: vi.fn(async () => body.json),
+    arrayBuffer: vi.fn(async () => (body.arrayBuffer ?? new Uint8Array()).buffer),
   },
 });
 

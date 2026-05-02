@@ -111,12 +111,12 @@ describe("bootstrap helpers", () => {
 
   describe("loadExpandedState", () => {
     it("returns empty set when no stored state", () => {
-      const storage = { get: jest.fn().mockReturnValue(undefined) };
+      const storage = { get: vi.fn().mockReturnValue(undefined) };
       expect(loadExpandedState(storage as never)).toEqual(new Set());
     });
 
     it("returns set from stored array", () => {
-      const storage = { get: jest.fn().mockReturnValue(["a", "b"]) };
+      const storage = { get: vi.fn().mockReturnValue(["a", "b"]) };
       expect(loadExpandedState(storage as never)).toEqual(new Set(["a", "b"]));
     });
   });
@@ -126,7 +126,7 @@ describe("bootstrap helpers", () => {
       const expanded = new Set<string>();
       const updates: [string, unknown][] = [];
       const storage = {
-        update: jest.fn((key: string, value: unknown) => {
+        update: vi.fn((key: string, value: unknown) => {
           updates.push([key, value]);
         }),
       };
@@ -143,7 +143,7 @@ describe("bootstrap helpers", () => {
 
     it("removes key when collapsing", () => {
       const expanded = new Set(["repo:gitea.example/o/n"]);
-      const storage = { update: jest.fn() };
+      const storage = { update: vi.fn() };
       const node = new RepoNode(repo("o", "n"), false);
 
       updateExpandedState(expanded, storage as never, node, false);
@@ -154,7 +154,7 @@ describe("bootstrap helpers", () => {
 
     it("does nothing for element without expanded key", () => {
       const expanded = new Set<string>();
-      const storage = { update: jest.fn() };
+      const storage = { update: vi.fn() };
       updateExpandedState(expanded, storage as never, { label: "other" }, true);
       expect(expanded.size).toBe(0);
       expect(storage.update).not.toHaveBeenCalled();
@@ -163,7 +163,7 @@ describe("bootstrap helpers", () => {
 
   describe("updateStatusBar", () => {
     it("sets text with running and failed counts", () => {
-      const item = { text: "", show: jest.fn() };
+      const item = { text: "", show: vi.fn() };
       updateStatusBar(item as never, { runningCount: 2, failedCount: 1 });
       expect(item.text).toBe("Gitea: 2 running, 1 failed");
     });

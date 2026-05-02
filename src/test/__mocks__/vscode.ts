@@ -3,15 +3,15 @@ export const workspace = {
 };
 
 export const window = {
-  createOutputChannel: jest.fn(() => ({
-    appendLine: jest.fn(),
-    dispose: jest.fn(),
+  createOutputChannel: vi.fn(() => ({
+    appendLine: vi.fn(),
+    dispose: vi.fn(),
   })),
-  showInformationMessage: jest.fn(),
-  showWarningMessage: jest.fn(),
-  showErrorMessage: jest.fn(),
-  showInputBox: jest.fn(),
-  showQuickPick: jest.fn(),
+  showInformationMessage: vi.fn(),
+  showWarningMessage: vi.fn(),
+  showErrorMessage: vi.fn(),
+  showInputBox: vi.fn(),
+  showQuickPick: vi.fn(),
 };
 
 export const Uri = {
@@ -35,9 +35,9 @@ export enum TreeItemCollapsibleState {
 /* eslint-enable @typescript-eslint/naming-convention */
 
 export const commands = {
-  executeCommand: jest.fn().mockResolvedValue(undefined),
-  registerCommand: jest.fn((_id: string, handler: (...args: unknown[]) => unknown) => ({
-    dispose: jest.fn(),
+  executeCommand: vi.fn().mockResolvedValue(undefined),
+  registerCommand: vi.fn((_id: string, handler: (...args: unknown[]) => unknown) => ({
+    dispose: vi.fn(),
     _handler: handler,
   })),
 };
@@ -60,8 +60,8 @@ export class EventEmitter<T> {
 }
 
 export const env = {
-  openExternal: jest.fn().mockResolvedValue(undefined),
-  clipboard: { writeText: jest.fn().mockResolvedValue(undefined) },
+  openExternal: vi.fn().mockResolvedValue(undefined),
+  clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
 };
 
 export class ThemeColor {

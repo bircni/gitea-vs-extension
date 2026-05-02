@@ -27,7 +27,7 @@ Before making changes:
 - TypeScript (strict), Node.js (see `.node-version`)
 - VS Code Extension API
 - [undici](https://github.com/nodejs/undici) for HTTP
-- Jest for tests
+- Vitest for tests
 - esbuild for bundling, vsce for packaging
 - ESLint, Prettier
 

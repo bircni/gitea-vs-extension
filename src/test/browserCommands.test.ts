@@ -13,22 +13,22 @@ import type { RepoRef } from "../gitea/models";
 describe("openInBrowser", () => {
   const baseDeps: BrowserCommandsDeps = {
     getBaseUrl: () => "https://gitea.example.com",
-    showWarningMessage: jest.fn(),
-    showInformationMessage: jest.fn(),
-    openExternal: jest.fn().mockResolvedValue(undefined),
-    clipboardWriteText: jest.fn().mockResolvedValue(undefined),
-    executeCommand: jest.fn().mockResolvedValue(undefined),
+    showWarningMessage: vi.fn(),
+    showInformationMessage: vi.fn(),
+    openExternal: vi.fn().mockResolvedValue(undefined),
+    clipboardWriteText: vi.fn().mockResolvedValue(undefined),
+    executeCommand: vi.fn().mockResolvedValue(undefined),
   };
 
   it("shows warning when resolveOpenUrl returns undefined", async () => {
-    const showWarningMessage = jest.fn();
+    const showWarningMessage = vi.fn();
     await openInBrowser({ ...baseDeps, getBaseUrl: () => "", showWarningMessage }, undefined);
     expect(showWarningMessage).toHaveBeenCalledWith("No URL available for this item.");
     expect(baseDeps.openExternal).not.toHaveBeenCalled();
   });
 
   it("calls openExternal with url when arg is RepoNode with htmlUrl", async () => {
-    const openExternal = jest.fn().mockResolvedValue(undefined);
+    const openExternal = vi.fn().mockResolvedValue(undefined);
     const repo: RepoRef = {
       host: "gitea.example.com",
       owner: "o",
@@ -47,23 +47,23 @@ describe("openInBrowser", () => {
 describe("copyUrl", () => {
   const baseDeps: BrowserCommandsDeps = {
     getBaseUrl: () => "https://gitea.example.com",
-    showWarningMessage: jest.fn(),
-    showInformationMessage: jest.fn(),
-    openExternal: jest.fn().mockResolvedValue(undefined),
-    clipboardWriteText: jest.fn().mockResolvedValue(undefined),
-    executeCommand: jest.fn().mockResolvedValue(undefined),
+    showWarningMessage: vi.fn(),
+    showInformationMessage: vi.fn(),
+    openExternal: vi.fn().mockResolvedValue(undefined),
+    clipboardWriteText: vi.fn().mockResolvedValue(undefined),
+    executeCommand: vi.fn().mockResolvedValue(undefined),
   };
 
   it("shows warning when url is not available", async () => {
-    const showWarningMessage = jest.fn();
+    const showWarningMessage = vi.fn();
     await copyUrl({ ...baseDeps, getBaseUrl: () => "", showWarningMessage }, null);
     expect(showWarningMessage).toHaveBeenCalledWith("No URL available for this item.");
     expect(baseDeps.clipboardWriteText).not.toHaveBeenCalled();
   });
 
   it("writes url to clipboard and shows info when arg is RepoNode", async () => {
-    const clipboardWriteText = jest.fn().mockResolvedValue(undefined);
-    const showInformationMessage = jest.fn();
+    const clipboardWriteText = vi.fn().mockResolvedValue(undefined);
+    const showInformationMessage = vi.fn();
     const repo: RepoRef = {
       host: "gitea.example.com",
       owner: "o",
@@ -87,13 +87,13 @@ describe("copyUrl", () => {
 
 describe("openBaseUrlSettings", () => {
   it("calls executeCommand with workbench.action.openSettings and filter", async () => {
-    const executeCommand = jest.fn().mockResolvedValue(undefined);
+    const executeCommand = vi.fn().mockResolvedValue(undefined);
     await openBaseUrlSettings({
       getBaseUrl: () => "",
-      showWarningMessage: jest.fn(),
-      showInformationMessage: jest.fn(),
-      openExternal: jest.fn(),
-      clipboardWriteText: jest.fn(),
+      showWarningMessage: vi.fn(),
+      showInformationMessage: vi.fn(),
+      openExternal: vi.fn(),
+      clipboardWriteText: vi.fn(),
       executeCommand,
     });
     expect(executeCommand).toHaveBeenCalledWith(

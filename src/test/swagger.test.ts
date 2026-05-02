@@ -68,7 +68,7 @@ test("discovers fallback job logs path and basePath root", () => {
 
 test("fetches swagger from first matching path", async () => {
   const client = {
-    getJson: jest.fn(async () => ({ paths: { "/version": {} } })),
+    getJson: vi.fn(async () => ({ paths: { "/version": {} } })),
   };
 
   const doc = await fetchSwagger(client as any);
@@ -79,7 +79,7 @@ test("fetches swagger from first matching path", async () => {
 
 test("fetchSwagger skips 404 responses", async () => {
   const client = {
-    getJson: jest
+    getJson: vi
       .fn()
       .mockRejectedValueOnce(new HttpError(404, "/swagger.v1.json", "not found"))
       .mockResolvedValueOnce({ paths: { "/version": {} } }),
@@ -93,7 +93,7 @@ test("fetchSwagger skips 404 responses", async () => {
 
 test("fetchSwagger ignores invalid docs", async () => {
   const client = {
-    getJson: jest.fn(async () => ({ version: "1" })),
+    getJson: vi.fn(async () => ({ version: "1" })),
   };
 
   const doc = await fetchSwagger(client as any);

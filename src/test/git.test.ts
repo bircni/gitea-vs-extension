@@ -4,9 +4,9 @@ type QueuedResult = { stdout?: string; stderr?: string; err?: Error };
 
 const resultQueue: QueuedResult[] = [];
 
-jest.mock("child_process", () => {
+vi.mock("child_process", () => {
   const { promisify } = require("util");
-  const execFileMock = jest.fn();
+  const execFileMock = vi.fn();
   const promisifyWithCustom = promisify as { custom?: symbol };
   const customSymbol = promisifyWithCustom.custom;
   if (customSymbol) {
