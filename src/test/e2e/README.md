@@ -20,3 +20,11 @@ npm run test:e2e
 ```
 
 The first run may download a VS Code build. On Linux CI, ensure a display or use the official `xvfb-run` pattern from the VS Code extension samples.
+
+## Real Gitea fixture run
+
+`npm run test:e2e:gitea` launches `docker.gitea.com/gitea:1.26.1` from the committed fixture archive at `src/test/e2e/fixtures/gitea-1.26.1-fixture.tar.gz`.
+
+The runner unpacks the archive into `.tmp/e2e-gitea/<run-id>/data`, starts Gitea with that data mounted to `/data`, creates a throwaway access token, writes temporary workspace settings, and launches the same VS Code extension-host suite in real-Gitea mode.
+
+This path does not require `act_runner`; it verifies real Gitea API behavior for repository discovery, PR loading, inline review comments, and creating a review comment from the editor command. It requires Docker locally and an X display or `xvfb-run` on Linux CI.

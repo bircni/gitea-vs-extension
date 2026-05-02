@@ -183,7 +183,8 @@ export class GiteaApi {
     const list = Array.isArray(response)
       ? response
       : extractArray(response, ["entries", "reviews"]);
-    return list.map((item) => normalizePullRequestReview(item as Record<string, unknown>));
+    const items = list.length === 0 && isObjectWithId(response) ? [response] : list;
+    return items.map((item) => normalizePullRequestReview(item as Record<string, unknown>));
   }
 
   async listPullRequestReviewComments(
@@ -433,6 +434,10 @@ function extractArray(response: Record<string, unknown>, keys: string[]): unknow
     return response;
   }
   return [];
+}
+
+function isObjectWithId(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && "id" in value;
 }
 
 function getHost(baseUrl: string): string | undefined {

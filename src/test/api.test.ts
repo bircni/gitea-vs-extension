@@ -47,6 +47,14 @@ describe("GiteaApi review comment endpoints", () => {
     );
   });
 
+  test("normalizes singleton pull request review response from Gitea 1.26", async () => {
+    client.getJson.mockResolvedValueOnce({ id: 7, state: "COMMENT", user: { login: "alice" } });
+
+    const reviews = await api.listPullRequestReviews(repo, 12);
+
+    expect(reviews.map((review) => review.id)).toEqual([7]);
+  });
+
   test("requests review comments for a review", async () => {
     client.getJson.mockResolvedValueOnce([{ id: 1, body: "ok" }]);
 

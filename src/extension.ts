@@ -128,7 +128,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.commands.registerCommand("gitea-vs-extension.addReviewComment", () =>
       reviewCommentsController.addReviewCommentAtSelection(),
     ),
-    ...registerExtensionTestCommands(context, store, refreshController),
+    ...registerExtensionTestCommands(context, store, refreshController, reviewCommentsController),
     ...wireExpandCollapsePersistence({
       trees,
       expanded,

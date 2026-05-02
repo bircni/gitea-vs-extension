@@ -51,6 +51,7 @@
     "test:live": "node scripts/gitea-live-smoke.cjs",
     "compile:e2e": "tsc --project tsconfig.e2e.json",
     "test:e2e": "npm run compile && npm run bundle && npm run compile:e2e && node out/test/e2e/runTest.js",
+    "test:e2e:gitea": "npm run compile && npm run bundle && npm run compile:e2e && node out/test/e2e/runGiteaFixtureTest.js",
     "test:coverage": "vitest run --coverage",
     "test:report": "vitest run --coverage --coverage.reporter=html && echo 'HTML report generated at: .tmp/coverage/index.html'",
     "test:watch": "vitest",
