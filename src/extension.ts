@@ -125,6 +125,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     logger,
     { dispose: () => refreshController.dispose() },
     ...commands.register(),
+    vscode.commands.registerCommand("gitea-vs-extension.addReviewComment", () =>
+      reviewCommentsController.addReviewCommentAtSelection(),
+    ),
     ...registerExtensionTestCommands(context, store, refreshController),
     ...wireExpandCollapsePersistence({
       trees,

@@ -9,6 +9,7 @@ Works with VS Code, Cursor, VSCodium, Windsurf, and other VS Code compatible edi
 - Workflow runs with colored status icons
 - Workflows grouped by branch
 - Pull Requests view with author, labels, and last updated time
+- Inline pull request review comments, including adding a new review comment from the editor context menu
 - Jobs and step logs with one click
 - Download workflow artifacts from the tree (context menu); double-click an artifact to open it in the editor (or be prompted to download first)
 - Secrets and variables management
@@ -28,7 +29,7 @@ Use a personal access token with scopes that allow:
 
 - Reading repositories
 - Reading Actions runs, jobs, and artifacts
-- Reading pull requests
+- Reading pull requests; write access to pull requests is required to add review comments from the editor
 - Managing secrets/variables if you want to use the Settings view for those actions
 
 If you do not plan to manage secrets or variables, you can use a read-only token.
@@ -52,7 +53,7 @@ Shows workflow runs for your **current branch** only (when the repo is from your
 
 ### Pull Requests
 
-Lists open PRs per repository with author, labels, and last updated time.
+Lists open PRs per repository with author, labels, and last updated time. Existing review comments are shown inline for the current branch. To add a new review comment, right click a line in a file on a branch with an open PR and run `gitea-vs-extension: Add Review Comment`.
 
 ### Settings
 

@@ -4,6 +4,7 @@ import { createHash } from "crypto";
 import * as vscode from "vscode";
 import { getSettings } from "../config/settings";
 import type { GiteaApi } from "../gitea/api";
+import { HttpError } from "../gitea/client";
 import type { PullRequest, PullRequestReviewComment, RepoRef } from "../gitea/models";
 import type { Logger } from "../util/logging";
 import { execGit } from "../util/git";
@@ -61,6 +62,84 @@ export class ReviewCommentsController implements vscode.Disposable {
       return;
     }
     void this.refreshForCurrentBranch();
+  }
+
+  async addReviewCommentAtSelection(): Promise<void> {
+    const settings = getSettings();
+    if (!settings.reviewCommentsEnabled) {
+      void vscode.window.showWarningMessage(
+        "Enable gitea-vs-extension.reviewComments.enabled before adding review comments.",
+      );
+      return;
+    }
+
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      void vscode.window.showInformationMessage(
+        "Open a file in a workspace before adding a review comment.",
+      );
+      return;
+    }
+
+    const folder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
+    if (!folder) {
+      void vscode.window.showInformationMessage(
+        "Open a file inside a workspace before adding a review comment.",
+      );
+      return;
+    }
+
+    try {
+      const repo = await resolveRepoFromFolder(folder.uri.fsPath, settings.baseUrl);
+      if (!repo) {
+        void vscode.window.showWarningMessage(
+          "Could not resolve a Gitea repository for the active file.",
+        );
+        return;
+      }
+
+      const { branch, sha } = await getGitHead(folder.uri.fsPath);
+      const pullRequest = await this.findMatchingPullRequest(repo, branch, sha);
+      if (!pullRequest) {
+        void vscode.window.showInformationMessage(
+          "No open pull request matches the current branch. Open a PR first, then add a review comment.",
+        );
+        return;
+      }
+
+      const commentPath = workspaceRelativePath(folder, editor.document.uri);
+      if (!commentPath) {
+        void vscode.window.showWarningMessage(
+          "Could not resolve a repository-relative path for the active file.",
+        );
+        return;
+      }
+
+      const line = selectedReviewLine(editor.selection);
+      const body = await vscode.window.showInputBox({
+        title: "Add Gitea Review Comment",
+        prompt: `Comment on ${commentPath}:${line} in PR #${pullRequest.number}`,
+        ignoreFocusOut: true,
+      });
+      const trimmed = body?.trim();
+      if (!trimmed) {
+        return;
+      }
+
+      await this.api.createPullRequestReviewComment(repo, pullRequest.number, {
+        body: trimmed,
+        path: commentPath,
+        line,
+        commitId: pullRequest.headSha ?? sha,
+      });
+      void vscode.window.showInformationMessage(
+        `Added review comment to PR #${pullRequest.number}.`,
+      );
+      await this.refreshForCurrentBranch();
+    } catch (error) {
+      this.logger.debug(`Failed to add review comment: ${formatError(error)}`);
+      void vscode.window.showErrorMessage(formatReviewCommentCreateError(error));
+    }
   }
 
   async refreshForCurrentBranch(): Promise<void> {
@@ -383,6 +462,21 @@ function getActiveWorkspaceFolder(): vscode.WorkspaceFolder | undefined {
   return vscode.workspace.workspaceFolders?.[0];
 }
 
+export function selectedReviewLine(selection: vscode.Selection): number {
+  return Math.max(1, selection.active.line + 1);
+}
+
+export function workspaceRelativePath(
+  folder: vscode.WorkspaceFolder,
+  uri: vscode.Uri,
+): string | undefined {
+  const relative = path.relative(folder.uri.fsPath, uri.fsPath);
+  if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) {
+    return undefined;
+  }
+  return relative.split(path.sep).join("/");
+}
+
 function fileUriForComment(workspaceRoot: vscode.Uri, commentPath: string): vscode.Uri | undefined {
   const normalized = normalizeDiffPath(commentPath);
   const parts = normalized.split("/").filter(Boolean);
@@ -456,6 +550,16 @@ function formatError(error: unknown): string {
     return error.message;
   }
   return "Unknown error";
+}
+
+function formatReviewCommentCreateError(error: unknown): string {
+  if (error instanceof HttpError) {
+    return `Failed to add Gitea review comment (HTTP ${error.status}).`;
+  }
+  if (error instanceof Error) {
+    return `Failed to add Gitea review comment: ${error.message}`;
+  }
+  return "Failed to add Gitea review comment.";
 }
 
 export function buildDiffPositionMap(diffText: string): Map<string, Map<number, number>> {

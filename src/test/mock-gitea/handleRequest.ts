@@ -272,19 +272,54 @@ async function handleRepoRoutes(
             body: "",
             submitted_at: "2020-01-02T00:00:00Z",
           },
+          ...[...state.reviewComments.keys()].map((id) => ({
+            id,
+            state: "COMMENTED",
+            user: { login: "reviewer" },
+            body: "",
+            submitted_at: "2020-01-02T00:00:00Z",
+          })),
         ],
       });
       return;
     }
     if (method === "POST") {
-      await readBody(req);
-      sendJson(res, 201, { id: 402 });
+      const raw = await readBody(req);
+      const body = raw
+        ? (JSON.parse(raw) as {
+            comments?: { body?: string; path?: string; new_position?: number }[];
+          })
+        : {};
+      const reviewId = state.nextReviewId++;
+      state.reviewComments.set(
+        reviewId,
+        (body.comments ?? []).map((comment) => ({
+          id: state.nextReviewCommentId++,
+          body: comment.body,
+          path: comment.path,
+          line: comment.new_position,
+        })),
+      );
+      sendJson(res, 201, { id: reviewId });
       return;
     }
   }
 
   const commentsRe = /^pulls\/([^/]+)\/reviews\/([^/]+)\/comments$/;
-  if (commentsRe.test(rest) && method === "GET") {
+  const mComments = commentsRe.exec(rest);
+  if (mComments && method === "GET") {
+    const reviewId = Number(mComments[2]);
+    const createdComments = state.reviewComments.get(reviewId);
+    if (createdComments) {
+      sendJson(res, 200, {
+        comments: createdComments.map((comment) => ({
+          ...comment,
+          user: { login: "reviewer", avatar_url: `${baseUrl}/api/v1/mock/avatar.png` },
+          created_at: "2020-01-03T00:00:00Z",
+        })),
+      });
+      return;
+    }
     sendJson(res, 200, {
       comments: [
         {

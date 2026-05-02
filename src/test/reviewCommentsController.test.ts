@@ -1,9 +1,12 @@
 import * as vscode from "vscode";
+import * as path from "path";
 import {
   buildDiffPositionMap,
   compareReviewCommentById,
   fingerprintCommentPlan,
   planReviewCommentThreads,
+  selectedReviewLine,
+  workspaceRelativePath,
 } from "../controllers/reviewCommentsController";
 import type { PullRequestReviewComment } from "../gitea/models";
 import type * as fsModule from "fs";
@@ -97,6 +100,36 @@ test("deleted-only lines do not add to file map", () => {
   const fileMap = map.get("f");
   expect(fileMap?.get(3)).toBe(1);
   expect(fileMap?.size).toBe(1);
+});
+
+test("selectedReviewLine uses the active editor line as a one-based line number", () => {
+  const selection = { active: { line: 4 } } as vscode.Selection;
+
+  expect(selectedReviewLine(selection)).toBe(5);
+});
+
+test("workspaceRelativePath returns slash-separated repository paths", () => {
+  const folderPath = path.join("workspace", "repo");
+  const folder = {
+    uri: vscode.Uri.file(folderPath),
+    name: "repo",
+    index: 0,
+  } as vscode.WorkspaceFolder;
+  const uri = vscode.Uri.file(path.join(folderPath, "src", "file.ts"));
+
+  expect(workspaceRelativePath(folder, uri)).toBe("src/file.ts");
+});
+
+test("workspaceRelativePath rejects files outside the workspace folder", () => {
+  const rootPath = path.join("workspace", "repo");
+  const folder = {
+    uri: vscode.Uri.file(rootPath),
+    name: "repo",
+    index: 0,
+  } as vscode.WorkspaceFolder;
+  const uri = vscode.Uri.file(path.join("workspace", "other", "file.ts"));
+
+  expect(workspaceRelativePath(folder, uri)).toBeUndefined();
 });
 
 describe("review comment render fingerprint", () => {
