@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0](https://github.com/bircni/gitea-vs-extension/compare/v0.2.1..v0.3.0) - 2026-05-03
+
+### Added
+
+- **(review)** add editor review comment command - ([6e50621](https://github.com/bircni/gitea-vs-extension/commit/6e506210613f8e0e6060807eee13074c1879f858))
+
+### Internal
+
+- **(review)** Add E2E tests with Gitea fixture - ([4f70fbb](https://github.com/bircni/gitea-vs-extension/commit/4f70fbb10081ec30174407cf8f18aa03012d482a))
+- Update dependencies - ([524da01](https://github.com/bircni/gitea-vs-extension/commit/524da0181468ba50f9f8d190c9ccc7ea94b1dddd))
+- Migrate to vitest - ([12d14c4](https://github.com/bircni/gitea-vs-extension/commit/12d14c4b290aba49047f91bceff39d621681515c))
+
 ## [0.2.1](https://github.com/bircni/gitea-vs-extension/compare/v0.2.0..v0.2.1) - 2026-04-02
 
 ### Fixed
