@@ -274,6 +274,11 @@
       {
         "command": "gitea-vs-extension.openOrRevealArtifact",
         "title": "Open"
+      },
+      {
+        "command": "gitea-vs-extension.checkoutPrBranch",
+        "title": "gitea-vs-extension: Checkout PR Branch",
+        "icon": "$(source-control)"
       }
     ],
     "menus": {
@@ -327,6 +332,11 @@
         },
         {
           "command": "gitea-vs-extension.openInBrowser",
+          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned || view == gitea-vs-extension.pullRequests) && viewItem == giteaPullRequest",
+          "group": "inline"
+        },
+        {
+          "command": "gitea-vs-extension.checkoutPrBranch",
           "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned || view == gitea-vs-extension.pullRequests) && viewItem == giteaPullRequest",
           "group": "inline"
         },

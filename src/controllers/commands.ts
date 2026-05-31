@@ -7,6 +7,7 @@ import type { ActionVariable, GiteaApi, Secret } from "../gitea/api";
 import type { RepoRef, WorkflowRun } from "../gitea/models";
 import { computeArtifactSavePath } from "../util/artifactDownload";
 import { extractRepo, isRepoRef } from "../util/commandArgs";
+import { execGit } from "../util/git";
 import type { RepoStateStore } from "../util/cache";
 import type { ActionsTreeProvider } from "../views/actionsTreeProvider";
 import { RepoNode } from "../views/nodes";
@@ -16,6 +17,7 @@ import {
   revealArtifactInExplorer,
 } from "./artifactCommands";
 import { copyUrl, openBaseUrlSettings, openInBrowser } from "./browserCommands";
+import { checkoutPrBranch } from "./checkoutCommands";
 import { openLatestFailedJobLogs, viewJobLogs } from "./logCommands";
 import {
   createSecret,
@@ -105,6 +107,9 @@ export class CommandsController {
       vscode.commands.registerCommand("gitea-vs-extension.openOrRevealArtifact", (arg) =>
         this.handleOpenOrRevealArtifact(arg),
       ),
+      vscode.commands.registerCommand("gitea-vs-extension.checkoutPrBranch", (arg) =>
+        this.handleCheckoutPrBranch(arg),
+      ),
     ];
   }
 
@@ -118,6 +123,19 @@ export class CommandsController {
 
   private async handleOpenOrRevealArtifact(arg: unknown): Promise<void> {
     await openOrRevealArtifact(this.artifactDeps(), arg);
+  }
+
+  private async handleCheckoutPrBranch(arg: unknown): Promise<void> {
+    await checkoutPrBranch(
+      {
+        getWorkspaceFolderPath: this.store.getWorkspaceFolderPath.bind(this.store),
+        execGit,
+        showInformationMessage: (msg: string) => void vscode.window.showInformationMessage(msg),
+        showWarningMessage: (msg: string) => void vscode.window.showWarningMessage(msg),
+        showErrorMessage: (msg: string) => void vscode.window.showErrorMessage(msg),
+      },
+      arg,
+    );
   }
 
   private artifactDeps() {
