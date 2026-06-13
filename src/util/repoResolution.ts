@@ -28,7 +28,7 @@ export async function resolveRepoFromFolder(
       .split(/\r?\n/)
       .map((line) => line.trim())
       .filter(Boolean)
-      .map((line) => line.split(/\s+/)[1])
+      .map((line) => line.split(/\s+/, 2)[1])
       .filter(Boolean);
 
     for (const remoteUrl of remoteUrls) {

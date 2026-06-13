@@ -37,7 +37,7 @@ export async function viewJobLogs(deps: LogCommandsDeps, arg: unknown): Promise<
     if (settings.jobLogsSaveToRepo) {
       const folderPath = deps.getWorkspaceFolderPath(payload.repo);
       if (folderPath) {
-        const safe = (id: number | string) => String(id).replace(/[^a-zA-Z0-9.-]/g, "-");
+        const safe = (id: number | string) => String(id).replaceAll(/[^a-zA-Z0-9.-]/g, "-");
         const fileName = `run-${safe(payload.run.id)}-job-${safe(payload.job.id)}.log`;
         const logDir = deps.pathJoin(folderPath, ".tmp", "gitea-logs");
         const filePath = deps.pathJoin(logDir, fileName);

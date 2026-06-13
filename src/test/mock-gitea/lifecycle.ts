@@ -1,4 +1,4 @@
-import type { Server } from "http";
+import type { Server } from "node:http";
 import { createMockGiteaServer } from "./server";
 import { createInitialState, type MockState } from "./state";
 

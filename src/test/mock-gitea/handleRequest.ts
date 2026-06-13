@@ -1,4 +1,4 @@
-import type { IncomingMessage, Server, ServerResponse } from "http";
+import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import { requireToken } from "./auth";
 import { TEST_REPO_NAME, TEST_REPO_OWNER } from "./fixture";
 import { MIN_SWAGGER_JSON } from "./swaggerDoc";
@@ -79,10 +79,9 @@ async function handle(
 
     if (
       method === "GET" &&
-      (pathname === "/swagger.v1.json" ||
-        pathname === "/api/swagger.v1.json" ||
-        pathname === "/api/swagger.json" ||
-        pathname === "/api/swagger")
+      ["/swagger.v1.json", "/api/swagger.v1.json", "/api/swagger.json", "/api/swagger"].includes(
+        pathname,
+      )
     ) {
       sendText(res, 200, MIN_SWAGGER_JSON, "application/json");
       return;
@@ -208,7 +207,7 @@ async function handleRepoRoutes(
   if (/^actions\/runs\/[^/]+\/artifacts\/302\/download$/.test(rest) && method === "GET") {
     const runId = /^actions\/runs\/([^/]+)\/artifacts\/302\/download$/.exec(rest)?.[1] ?? "101";
     const zipUrl = `${baseUrl}/api/v1/repos/${TEST_REPO_OWNER}/${TEST_REPO_NAME}/actions/runs/${encodeURIComponent(runId)}/artifacts/303/download`;
-    const html = `<!DOCTYPE html><html><body><a href="${zipUrl.replace(/&/g, "&amp;")}">Found</a></body></html>`;
+    const html = `<!DOCTYPE html><html><body><a href="${zipUrl.replaceAll("&", "&amp;")}">Found</a></body></html>`;
     sendText(res, 200, html, "text/html; charset=utf-8");
     return;
   }

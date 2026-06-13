@@ -9,7 +9,7 @@ vi.mock("../util/repoResolution", () => ({
 }));
 
 describe("RepoDiscovery", () => {
-  const baseUrl = "http://gitea.example.com:3000";
+  const baseUrl = "https://gitea.example.com:3000";
 
   test("filters accessible repos by host", async () => {
     const api = {

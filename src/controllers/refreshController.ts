@@ -74,7 +74,7 @@ export class RefreshController {
       this.store.setRepos(repos);
 
       try {
-        const discoveredRepoKeys = new Set(repos.map(repoKey));
+        const discoveredRepoKeys = new Set(repos.map((repo) => repoKey(repo)));
         const workspaceRepos = await resolveWorkspaceRepos(settings.baseUrl);
         const repoToFolder = new Map<string, string>();
         for (const { repo, folder } of workspaceRepos) {
@@ -94,7 +94,7 @@ export class RefreshController {
         this.onDidUpdate();
       }
 
-      await Promise.all([...repos.map((repo) => this.refreshRepo(repo, settings.maxRunsPerRepo))]);
+      await Promise.all(repos.map((repo) => this.refreshRepo(repo, settings.maxRunsPerRepo)));
 
       this.updateSummary();
     } finally {

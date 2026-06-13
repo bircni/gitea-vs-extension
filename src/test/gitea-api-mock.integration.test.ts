@@ -1,6 +1,6 @@
-import * as fs from "fs";
-import * as os from "os";
-import * as path from "path";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { GiteaApi } from "../gitea/api";
 import { GiteaHttpClient } from "../gitea/client";
@@ -186,11 +186,10 @@ describe("GiteaApi against hermetic mock (008 inventory)", () => {
       }),
     ).resolves.toBeUndefined();
     const updatedReviews = await api.listPullRequestReviews(repo, num);
-    const createdComments = (
-      await Promise.all(
-        updatedReviews.map((review) => api.listPullRequestReviewComments(repo, num, review.id)),
-      )
-    ).flat();
+    const reviewComments = await Promise.all(
+      updatedReviews.map((review) => api.listPullRequestReviewComments(repo, num, review.id)),
+    );
+    const createdComments = reviewComments.flat();
     expect(createdComments.some((comment) => comment.body === "created by integration test")).toBe(
       true,
     );

@@ -143,7 +143,7 @@ export function normalizeConclusion(input?: string): ApiConclusion | undefined {
   if (value === "success") {
     return "success";
   }
-  if (value === "failure" || value === "failed" || value === "error") {
+  if (["failure", "failed", "error"].includes(value)) {
     return "failure";
   }
   if (value === "cancelled" || value === "canceled") {
@@ -413,5 +413,5 @@ function normalizeLabels(value: unknown): PullRequestLabel[] | undefined {
       color: asString(label.color),
     }))
     .filter((label) => label.name);
-  return labels.length ? labels : undefined;
+  return labels.length > 0 ? labels : undefined;
 }

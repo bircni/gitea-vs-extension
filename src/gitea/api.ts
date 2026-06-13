@@ -1,5 +1,5 @@
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from "node:fs";
+import path from "node:path";
 import { HttpError, type GiteaHttpClient } from "./client";
 import { discoverEndpoints, fallbackEndpoints, fetchSwagger, type EndpointMap } from "./swagger";
 import { computeArtifactSavePath } from "../util/artifactDownload";
@@ -138,18 +138,18 @@ export class GiteaApi {
     const dir = path.dirname(savePath);
     try {
       fs.mkdirSync(dir, { recursive: true });
-    } catch (err) {
-      throw new EndpointError(`Cannot create directory for artifact: ${String(err)}`);
+    } catch (error) {
+      throw new EndpointError(`Cannot create directory for artifact: ${String(error)}`);
     }
     try {
       fs.writeFileSync(savePath, buffer);
-    } catch (err) {
+    } catch (error) {
       try {
         fs.unlinkSync(savePath);
       } catch {
         /* ignore */
       }
-      throw new EndpointError(`Failed to write artifact file: ${String(err)}`);
+      throw new EndpointError(`Failed to write artifact file: ${String(error)}`);
     }
     return savePath;
   }
@@ -376,11 +376,7 @@ export class GiteaApi {
       const swagger = await fetchSwagger(this.client);
       this.endpoints = discoverEndpoints(swagger);
     } catch (error) {
-      if (error instanceof HttpError) {
-        this.endpoints = fallbackEndpoints();
-      } else {
-        this.endpoints = fallbackEndpoints();
-      }
+      this.endpoints = error instanceof HttpError ? fallbackEndpoints() : fallbackEndpoints();
     }
 
     this.lastBaseUrl = baseUrl;
@@ -478,5 +474,5 @@ function extractRedirectUrlFromHtml(buffer: Uint8Array): string | null {
   if (!hrefMatch?.[1]) {
     return null;
   }
-  return hrefMatch[1].replace(/&amp;/gi, "&");
+  return hrefMatch[1].replaceAll(/&amp;/gi, "&");
 }

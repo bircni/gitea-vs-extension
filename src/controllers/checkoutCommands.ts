@@ -92,7 +92,7 @@ export async function checkoutPrBranch(deps: CheckoutCommandsDeps, arg: unknown)
       await deps.execGit(["checkout", headRef], cwd);
       try {
         await deps.execGit(["merge", "--ff-only", `${remote}/${headRef}`], cwd);
-      } catch (_mergeErr) {
+      } catch {
         deps.showWarningMessage(
           `Fast-forward merge from ${remote}/${headRef} failed. Your branch may be behind the PR head.`,
         );
@@ -104,13 +104,7 @@ export async function checkoutPrBranch(deps: CheckoutCommandsDeps, arg: unknown)
 
     deps.showInformationMessage(`Checked out branch '${headRef}' for PR #${pullRequest.number}.`);
   } catch (error) {
-    let message: string;
-    if (error instanceof Error) {
-      message = error.message;
-    } else {
-      // For non-Error throws, show a generic message to match test expectation
-      message = "Failed to checkout PR branch.";
-    }
+    const message = error instanceof Error ? error.message : "Failed to checkout PR branch.";
     // Sanitize error to avoid leaking tokens/URLs
     const sanitized = sanitizeGitError(message);
     deps.showErrorMessage(`Checkout failed: ${sanitized}`);
@@ -151,5 +145,5 @@ async function branchExists(
 function sanitizeGitError(message: string): string {
   // Remove potential tokens from URLs (e.g. https://token@host/...)
   // Preserve the original scheme (http or https)
-  return message.replace(/(https?):\/\/[^@]*@/g, "$1://***@");
+  return message.replaceAll(/(https?):\/\/[^@]*@/g, "$1://***@");
 }

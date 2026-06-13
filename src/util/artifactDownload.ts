@@ -1,4 +1,4 @@
-import * as path from "path";
+import path from "node:path";
 import type { Artifact, RepoRef } from "../gitea/models";
 
 const REPLACE_INVALID = /[/\\:*?"<>|]/g;
@@ -7,7 +7,7 @@ const REPLACE_INVALID = /[/\\:*?"<>|]/g;
  * Sanitizes a segment for use in a file path (removes path separators and other invalid chars).
  */
 function sanitizeSegment(segment: string): string {
-  return String(segment).replace(REPLACE_INVALID, "-").trim() || "unknown";
+  return String(segment).replaceAll(REPLACE_INVALID, "-").trim() || "unknown";
 }
 
 /**

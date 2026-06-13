@@ -49,7 +49,7 @@ export function hostMatches(baseHost: string, remoteHost: string): boolean {
   if (normalizedBase === normalizedRemote) {
     return true;
   }
-  const baseHostname = normalizedBase.split(":")[0];
-  const remoteHostname = normalizedRemote.split(":")[0];
+  const baseHostname = normalizedBase.split(":", 1)[0];
+  const remoteHostname = normalizedRemote.split(":", 1)[0];
   return baseHostname === remoteHostname;
 }

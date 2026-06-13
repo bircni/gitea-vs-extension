@@ -36,12 +36,12 @@ describe("CommandsController", () => {
     const refreshAll = vi.fn();
     const store = {
       getRepos: () => [] as RepoRef[],
-      getEntry: () => undefined,
-      getBranchContext: () => undefined,
-      getBranchFilter: () => undefined,
+      getEntry: () => {},
+      getBranchContext: () => {},
+      getBranchFilter: () => {},
     };
     const treeProvider = { refresh: vi.fn() };
-    const settingsProvider = { getCurrentRepo: () => undefined, setTokenStatus: vi.fn() };
+    const settingsProvider = { getCurrentRepo: () => {}, setTokenStatus: vi.fn() };
     const controller = new CommandsController(
       createMockContext(),
       {} as never,
@@ -53,19 +53,21 @@ describe("CommandsController", () => {
     const disposables = controller.register();
     expect(Array.isArray(disposables)).toBe(true);
     expect(disposables.length).toBeGreaterThan(0);
-    disposables.forEach((d) => expect(d).toHaveProperty("dispose"));
+    for (const d of disposables) {
+      expect(d).toHaveProperty("dispose");
+    }
   });
 
   it("refresh command calls refreshController.refreshAll()", async () => {
     const refreshAll = vi.fn();
     const store = {
       getRepos: () => [] as RepoRef[],
-      getEntry: () => undefined,
-      getBranchContext: () => undefined,
-      getBranchFilter: () => undefined,
+      getEntry: () => {},
+      getBranchContext: () => {},
+      getBranchFilter: () => {},
     };
     const treeProvider = { refresh: vi.fn() };
-    const settingsProvider = { getCurrentRepo: () => undefined, setTokenStatus: vi.fn() };
+    const settingsProvider = { getCurrentRepo: () => {}, setTokenStatus: vi.fn() };
     const controller = new CommandsController(
       createMockContext(),
       {} as never,
@@ -88,12 +90,12 @@ describe("CommandsController", () => {
     const refreshAll = vi.fn();
     const store = {
       getRepos: () => [] as RepoRef[],
-      getEntry: () => undefined,
-      getBranchContext: () => undefined,
-      getBranchFilter: () => undefined,
+      getEntry: () => {},
+      getBranchContext: () => {},
+      getBranchFilter: () => {},
     };
     const treeProvider = { refresh: vi.fn() };
-    const settingsProvider = { getCurrentRepo: () => undefined, setTokenStatus: vi.fn() };
+    const settingsProvider = { getCurrentRepo: () => {}, setTokenStatus: vi.fn() };
     const controller = new CommandsController(
       createMockContext(),
       {} as never,

@@ -1,4 +1,4 @@
-import * as http from "http";
+import * as http from "node:http";
 import { createRequestListener } from "./router";
 import type { MockState } from "./state";
 

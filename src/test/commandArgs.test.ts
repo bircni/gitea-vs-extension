@@ -47,7 +47,7 @@ describe("isRepoRef", () => {
 
   it("returns false for null or non-object", () => {
     expect(isRepoRef(null)).toBe(false);
-    expect(isRepoRef(undefined)).toBe(false);
+    expect(isRepoRef()).toBe(false);
     expect(isRepoRef("")).toBe(false);
     expect(isRepoRef(1)).toBe(false);
   });

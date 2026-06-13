@@ -106,7 +106,7 @@ export class RepoStateStore {
   }
 
   getEntries(): RepoCacheEntry[] {
-    return Array.from(this.entries.values());
+    return [...this.entries.values()];
   }
 
   private key(repo: RepoRef): string {

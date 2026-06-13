@@ -24,24 +24,24 @@ const mockJob: Job = {
 
 const baseLogDeps: LogCommandsDeps = {
   getJobLogs: vi.fn().mockResolvedValue("log content"),
-  getWorkspaceFolderPath: vi.fn().mockReturnValue(undefined),
+  getWorkspaceFolderPath: vi.fn().mockReturnValue(),
   getSettings: vi.fn().mockReturnValue({}),
   pathJoin: (...segments: string[]) => segments.join("/"),
   mkdirSync: vi.fn(),
   writeFileSync: vi.fn(),
   uriFile: vi.fn((p: string) => ({ fsPath: p })),
   openTextDocument: vi.fn().mockResolvedValue({}),
-  showTextDocument: vi.fn().mockResolvedValue(undefined),
+  showTextDocument: vi.fn().mockResolvedValue(),
   showWarningMessage: vi.fn(),
   showInformationMessage: vi.fn(),
-  getEntry: vi.fn().mockReturnValue(undefined),
-  loadRunDetails: vi.fn().mockResolvedValue(undefined),
+  getEntry: vi.fn().mockReturnValue(),
+  loadRunDetails: vi.fn().mockResolvedValue(),
 };
 
 describe("viewJobLogs", () => {
   it("shows warning when arg does not normalize to LogArg", async () => {
     const showWarningMessage = vi.fn();
-    await viewJobLogs({ ...baseLogDeps, showWarningMessage }, undefined);
+    await viewJobLogs({ ...baseLogDeps, showWarningMessage });
     expect(showWarningMessage).toHaveBeenCalledWith("Job not found.");
     expect(baseLogDeps.getJobLogs).not.toHaveBeenCalled();
   });
@@ -61,7 +61,7 @@ describe("viewJobLogs", () => {
     const writeFileSync = vi.fn();
     const uriFile = vi.fn((p: string) => ({ fsPath: p }));
     const openTextDocument = vi.fn().mockResolvedValue({});
-    const showTextDocument = vi.fn().mockResolvedValue(undefined);
+    const showTextDocument = vi.fn().mockResolvedValue();
     const payload = { repo: mockRepo, run: mockRun, job: mockJob };
     await viewJobLogs(
       {
@@ -95,7 +95,7 @@ describe("viewJobLogs", () => {
   it("opens in-memory doc when jobLogsSaveToRepo is false", async () => {
     const getJobLogs = vi.fn().mockResolvedValue("log content");
     const openTextDocument = vi.fn().mockResolvedValue({});
-    const showTextDocument = vi.fn().mockResolvedValue(undefined);
+    const showTextDocument = vi.fn().mockResolvedValue();
     const payload = { repo: mockRepo, run: mockRun, job: mockJob };
     await viewJobLogs({ ...baseLogDeps, getJobLogs, openTextDocument, showTextDocument }, payload);
     expect(openTextDocument).toHaveBeenCalledWith({
@@ -125,7 +125,7 @@ describe("viewJobLogs", () => {
 describe("openLatestFailedJobLogs", () => {
   it("shows warning when arg does not normalize to run payload", async () => {
     const showWarningMessage = vi.fn();
-    await openLatestFailedJobLogs({ ...baseLogDeps, showWarningMessage }, undefined);
+    await openLatestFailedJobLogs({ ...baseLogDeps, showWarningMessage });
     expect(showWarningMessage).toHaveBeenCalledWith("Run not found.");
   });
 
@@ -139,7 +139,7 @@ describe("openLatestFailedJobLogs", () => {
         ...baseLogDeps,
         showInformationMessage,
         getEntry,
-        loadRunDetails: vi.fn().mockResolvedValue(undefined),
+        loadRunDetails: vi.fn().mockResolvedValue(),
       },
       { repo: mockRepo, run: mockRun },
     );
@@ -156,10 +156,10 @@ describe("openLatestFailedJobLogs", () => {
     const getEntry = vi.fn().mockReturnValue({
       jobsByRun: new Map([["1", [mockJob, failedJob]]]),
     });
-    const loadRunDetails = vi.fn().mockResolvedValue(undefined);
+    const loadRunDetails = vi.fn().mockResolvedValue();
     const getJobLogs = vi.fn().mockResolvedValue("failed job log");
     const openTextDocument = vi.fn().mockResolvedValue({});
-    const showTextDocument = vi.fn().mockResolvedValue(undefined);
+    const showTextDocument = vi.fn().mockResolvedValue();
     await openLatestFailedJobLogs(
       {
         ...baseLogDeps,

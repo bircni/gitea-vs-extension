@@ -31,7 +31,7 @@ const pr: PullRequest = {
 describe("checkoutPrBranch", () => {
   it("shows warning when arg is undefined", async () => {
     const deps = makeDeps();
-    await checkoutPrBranch(deps, undefined);
+    await checkoutPrBranch(deps);
     expect(deps.showWarningMessage).toHaveBeenCalledWith("No pull request selected.");
   });
 
@@ -46,7 +46,7 @@ describe("checkoutPrBranch", () => {
   });
 
   it("shows warning when workspace folder is not found", async () => {
-    const deps = makeDeps({ getWorkspaceFolderPath: vi.fn().mockReturnValue(undefined) });
+    const deps = makeDeps({ getWorkspaceFolderPath: vi.fn().mockReturnValue() });
     const node = new PullRequestNode(repo, pr);
     await checkoutPrBranch(deps, node);
     expect(deps.showWarningMessage).toHaveBeenCalledWith(

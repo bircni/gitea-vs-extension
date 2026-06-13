@@ -15,8 +15,7 @@ test("createLimiter enforces serial execution with maxConcurrent=1", async () =>
   });
 
   const taskB = limiter(async () => {
-    events.push("startB");
-    events.push("endB");
+    events.push("startB", "endB");
     return "B";
   });
 
@@ -57,5 +56,5 @@ test("createLimiter allows two concurrent tasks", async () => {
 
   const results = await Promise.all([taskA, taskB, taskC]);
   expect(started).toBe(3);
-  expect(results.sort()).toEqual(["A", "B", "C"]);
+  expect(results.toSorted()).toEqual(["A", "B", "C"]);
 });

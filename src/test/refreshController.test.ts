@@ -51,7 +51,7 @@ function createMockStore() {
       const key = `${repo.host}/${repo.owner}/${repo.name}`;
       const e = entries.get(key);
       if (!e) {
-        return undefined;
+        return;
       }
       return {
         repo: e.repo,
@@ -68,12 +68,10 @@ function createMockStore() {
       };
     }),
     updateEntry: vi.fn(),
-    getEntries: vi.fn(() =>
-      Array.from(entries.values()).map((e) => ({ repo: e.repo, runs: e.runs })),
-    ),
-    getBranchContext: vi.fn(() => undefined),
+    getEntries: vi.fn(() => [...entries.values()].map((e) => ({ repo: e.repo, runs: e.runs }))),
+    getBranchContext: vi.fn(() => {}),
     setBranchContext: vi.fn(),
-    getBranchFilter: vi.fn(() => undefined),
+    getBranchFilter: vi.fn(() => {}),
     setBranchFilter: vi.fn(),
     setWorkspaceFolders: vi.fn(),
   };
@@ -332,9 +330,9 @@ describe("RefreshController.refreshRepo", () => {
     const store = createMockStore();
     store.getRepos.mockReturnValue([mockRepo]);
     store.getEntries.mockReturnValue([{ repo: mockRepo, runs: [] }]);
-    store.getEntry.mockReturnValue(undefined);
-    store.getWorkspaceFolderPath.mockReturnValue(undefined);
-    store.getBranchFilter.mockReturnValue(undefined);
+    store.getEntry.mockReturnValue();
+    store.getWorkspaceFolderPath.mockReturnValue();
+    store.getBranchFilter.mockReturnValue();
 
     const api = createMockApi();
     const runs = [

@@ -1,5 +1,5 @@
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from "node:fs";
+import path from "node:path";
 import * as vscode from "vscode";
 import { getArtifactDownloadBaseDir, getSettings } from "../config/settings";
 import { clearToken, getEffectiveToken, setToken } from "../config/secrets";
@@ -154,9 +154,13 @@ export class CommandsController {
   }
 
   private async handleSwitchBranchFilter(arg?: RepoRef | RepoNode): Promise<void> {
-    const repo =
-      (arg instanceof RepoNode ? arg.repo : isRepoRef(arg) ? arg : undefined) ??
-      this.settingsProvider.getCurrentRepo();
+    let repo: RepoRef | undefined;
+    if (arg instanceof RepoNode) {
+      repo = arg.repo;
+    } else if (isRepoRef(arg)) {
+      repo = arg;
+    }
+    repo ??= this.settingsProvider.getCurrentRepo();
     if (!repo) {
       void vscode.window.showInformationMessage(
         "Select a repository in the Workflows or Workflow Runs view first, then run the command again.",
@@ -167,7 +171,7 @@ export class CommandsController {
     const context = this.store.getBranchContext(repo);
     const entry = this.store.getEntry(repo);
     const branchNames = entry
-      ? [...new Set(entry.runs.map((r) => r.branch).filter(Boolean) as string[])].sort()
+      ? [...new Set(entry.runs.map((r) => r.branch).filter(Boolean) as string[])].toSorted()
       : [];
 
     const currentBranchLabel =

@@ -8,7 +8,7 @@ vi.mock("../util/git", () => ({
 }));
 
 describe("repoResolution", () => {
-  const baseUrl = "http://gitea.example.com:3000";
+  const baseUrl = "https://gitea.example.com:3000";
 
   beforeEach(() => {
     (execGit as Mock).mockReset();

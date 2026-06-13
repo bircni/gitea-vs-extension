@@ -74,18 +74,18 @@ export function buildWorkflowGroupDescriptors(
     for (const run of entry.runs) {
       const branchName = run.branch ?? "unknown";
       const existing = groups.get(branchName);
-      if (!existing) {
+      if (existing) {
+        existing.runs.push({ repo: entry.repo, run });
+      } else {
         groups.set(branchName, {
           name: branchName,
           runs: [{ repo: entry.repo, run }],
         });
-      } else {
-        existing.runs.push({ repo: entry.repo, run });
       }
     }
   }
 
-  const ordered = Array.from(groups.values()).sort((a, b) => {
+  const ordered = [...groups.values()].toSorted((a, b) => {
     const aActive = a.runs.some((e) => e.run.status === "running" || e.run.status === "queued");
     const bActive = b.runs.some((e) => e.run.status === "running" || e.run.status === "queued");
     if (aActive && !bActive) {
@@ -116,16 +116,18 @@ export function getFilteredRunsForDisplay(
   let runs = filterRunsByBranch(entry.runs, filter, context);
 
   if (filter.mode === "currentBranch" && context.status === "resolved" && context.branchName) {
-    const prNumbersForCurrentBranch = entry.pullRequests
-      .filter((pr: PullRequest) => pr.headRef === context.branchName)
-      .map((pr: PullRequest) => pr.number);
+    const prNumbersForCurrentBranch = new Set(
+      entry.pullRequests
+        .filter((pr: PullRequest) => pr.headRef === context.branchName)
+        .map((pr: PullRequest) => pr.number),
+    );
     const seenIds = new Set(runs.map((r) => String(r.id)));
     for (const run of entry.runs) {
       const branch = run.branch ?? "unknown";
       const prMatch = /^PR #(\d+)$/.exec(branch);
       if (
         prMatch &&
-        prNumbersForCurrentBranch.includes(Number(prMatch[1])) &&
+        prNumbersForCurrentBranch.has(Number(prMatch[1])) &&
         !seenIds.has(String(run.id))
       ) {
         seenIds.add(String(run.id));

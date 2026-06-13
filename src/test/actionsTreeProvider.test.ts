@@ -47,7 +47,7 @@ describe("ActionsTreeProvider", () => {
   it("getChildren(undefined) returns root nodes", async () => {
     const store = createMockStore();
     const provider = new ActionsTreeProvider("runs", store as never, {} as never, new Set());
-    const children = await provider.getChildren(undefined);
+    const children = await provider.getChildren();
     expect(Array.isArray(children)).toBe(true);
     expect(children.length).toBeGreaterThan(0);
     expect(children[0]).toBeInstanceOf(RepoNode);
@@ -59,7 +59,7 @@ describe("ActionsTreeProvider", () => {
     const store = createMockStore();
     store.getRepos.mockReturnValue([]);
     const provider = new ActionsTreeProvider("runs", store as never, {} as never, new Set());
-    const children = await provider.getChildren(undefined);
+    const children = await provider.getChildren();
     expect(children.length).toBe(1);
     expect(children[0].label).toContain("baseUrl");
   });

@@ -35,7 +35,7 @@ export enum TreeItemCollapsibleState {
 /* eslint-enable @typescript-eslint/naming-convention */
 
 export const commands = {
-  executeCommand: vi.fn().mockResolvedValue(undefined),
+  executeCommand: vi.fn().mockResolvedValue(),
   registerCommand: vi.fn((_id: string, handler: (...args: unknown[]) => unknown) => ({
     dispose: vi.fn(),
     _handler: handler,
@@ -45,7 +45,9 @@ export const commands = {
 export class EventEmitter<T> {
   private listeners: ((e: T) => void)[] = [];
   fire(data: T): void {
-    this.listeners.forEach((l) => l(data));
+    for (const l of this.listeners) {
+      l(data);
+    }
   }
   get event(): (listener: (e: T) => void) => { dispose(): void } {
     return (listener: (e: T) => void) => {
@@ -60,8 +62,8 @@ export class EventEmitter<T> {
 }
 
 export const env = {
-  openExternal: vi.fn().mockResolvedValue(undefined),
-  clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
+  openExternal: vi.fn().mockResolvedValue(),
+  clipboard: { writeText: vi.fn().mockResolvedValue() },
 };
 
 export class ThemeColor {
