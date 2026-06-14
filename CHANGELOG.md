@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0](https://github.com/bircni/gitea-vs-extension/compare/v0.3.0..v0.4.0) - 2026-06-14
+
+### Added
+
+- **(commands)** add checkout PR branch command ([#15](https://github.com/bircni/gitea-vs-extension/issues/15)) - ([8afdffa](https://github.com/bircni/gitea-vs-extension/commit/8afdffa71a718cdf0c55011aa3230205767fd988))
+
+### Internal
+
+- **(lint)** enable eslint unicorn ([#35](https://github.com/bircni/gitea-vs-extension/issues/35)) - ([b27fcb2](https://github.com/bircni/gitea-vs-extension/commit/b27fcb2e9f01d450f6a1b3ab9d1ee784bc8fe513))
+- Update swagger - ([9b560d7](https://github.com/bircni/gitea-vs-extension/commit/9b560d7efb2995abd02a49d43a20aacc12edf5f2))
+
 ## [0.3.0](https://github.com/bircni/gitea-vs-extension/compare/v0.2.1..v0.3.0) - 2026-05-03
 
 ### Added
