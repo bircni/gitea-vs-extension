@@ -1,4 +1,4 @@
-import type { IncomingMessage } from "http";
+import type { IncomingMessage } from "node:http";
 import { MOCK_GITEA_TOKEN } from "./fixture";
 
 export function getBearerToken(req: IncomingMessage): string | undefined {

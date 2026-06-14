@@ -1,6 +1,6 @@
-import * as fs from "fs";
-import * as path from "path";
-import { createHash } from "crypto";
+import * as fs from "node:fs";
+import path from "node:path";
+import { createHash } from "node:crypto";
 import * as vscode from "vscode";
 import { getSettings } from "../config/settings";
 import type { GiteaApi } from "../gitea/api";
@@ -296,7 +296,7 @@ export class ReviewCommentsController implements vscode.Disposable {
     sha?: string,
   ): Promise<PullRequest | undefined> {
     const pullRequests = await this.api.listPullRequests(repo);
-    if (!pullRequests.length) {
+    if (pullRequests.length === 0) {
       return undefined;
     }
 
@@ -321,7 +321,7 @@ export class ReviewCommentsController implements vscode.Disposable {
     pullRequestNumber: number,
   ): Promise<PullRequestReviewComment[]> {
     const reviews = await this.api.listPullRequestReviews(repo, pullRequestNumber);
-    if (!reviews.length) {
+    if (reviews.length === 0) {
       return [];
     }
 
@@ -399,13 +399,13 @@ export class ReviewCommentsController implements vscode.Disposable {
       return;
     }
 
-    if (this.activeKey !== key) {
-      this.clear();
-    } else {
+    if (this.activeKey === key) {
       for (const thread of this.threads.values()) {
         thread.dispose();
       }
       this.threads.clear();
+    } else {
+      this.clear();
     }
 
     this.activeKey = key;
@@ -477,7 +477,7 @@ export function fingerprintCommentPlan(
   plan: Map<ThreadKey, ThreadPlan>,
 ): string {
   const header = `${folderFsPath}:${pullRequestNumber}`;
-  const keys = [...plan.keys()].sort();
+  const keys = [...plan.keys()].toSorted();
   const lines: string[] = [header];
   for (const threadKey of keys) {
     const entry = plan.get(threadKey);
@@ -538,7 +538,7 @@ export function workspaceRelativePath(
 function fileUriForComment(workspaceRoot: vscode.Uri, commentPath: string): vscode.Uri | undefined {
   const normalized = normalizeDiffPath(commentPath);
   const parts = normalized.split("/").filter(Boolean);
-  if (!parts.length) {
+  if (parts.length === 0) {
     return undefined;
   }
   const fsPath = path.resolve(workspaceRoot.fsPath, ...parts);
@@ -627,7 +627,7 @@ export function buildDiffPositionMap(diffText: string): Map<string, Map<number, 
   let currentFile: string | undefined;
   let inHunk = false;
   let diffPosition = 0;
-  let newLine = 0;
+  let newline = 0;
 
   for (const line of lines) {
     if (line.startsWith("diff --git ")) {
@@ -653,7 +653,7 @@ export function buildDiffPositionMap(diffText: string): Map<string, Map<number, 
     if (line.startsWith("@@ ")) {
       const match = /@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(line);
       if (match) {
-        newLine = Number(match[2]);
+        newline = Number(match[2]);
       }
       inHunk = true;
       continue;
@@ -663,7 +663,7 @@ export function buildDiffPositionMap(diffText: string): Map<string, Map<number, 
       continue;
     }
 
-    if (line.startsWith("\\ No newline")) {
+    if (line.startsWith(String.raw`\ No newline`)) {
       continue;
     }
 
@@ -674,14 +674,14 @@ export function buildDiffPositionMap(diffText: string): Map<string, Map<number, 
     }
 
     if (line.startsWith(" ")) {
-      fileMap.set(diffPosition, newLine);
-      newLine += 1;
+      fileMap.set(diffPosition, newline);
+      newline += 1;
       continue;
     }
 
     if (line.startsWith("+")) {
-      fileMap.set(diffPosition, newLine);
-      newLine += 1;
+      fileMap.set(diffPosition, newline);
+      newline += 1;
       continue;
     }
 

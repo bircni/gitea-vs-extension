@@ -1,5 +1,5 @@
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from "node:fs";
+import path from "node:path";
 import { runTests } from "@vscode/test-electron";
 import { MOCK_GITEA_TOKEN, startMockGitea, stopMockGitea } from "../mock-gitea";
 
@@ -47,7 +47,7 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((err) => {
-  console.error(err);
+main().catch((error) => {
+  console.error(error);
   process.exit(1);
 });

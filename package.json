@@ -44,7 +44,7 @@
     "format:write": "prettier --write \"src/**/*.ts\" \"*.json\" \"*.md\"",
     "install:debug": "npm run build && code --install-extension dist/extension.vsix --force",
     "uninstall:debug": "code --uninstall-extension bircni.gitea-vs-extension",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 0",
     "package": "vsce package --out dist/extension.vsix",
     "test": "vitest run --passWithNoTests",
     "test:integration": "vitest run src/test/gitea-api-mock.integration.test.ts",
@@ -424,24 +424,25 @@
     "@eslint/js": "10.0.1",
     "@tsconfig/node-lts": "24.0.0",
     "@types/mocha": "10.0.10",
-    "@types/node": "25.9.1",
+    "@types/node": "25.9.3",
     "@types/vscode": "1.105.0",
-    "@vitest/coverage-v8": "^4.1.7",
-    "@vscode/test-electron": "2.5.2",
-    "@vscode/vsce": "3.9.1",
+    "@vitest/coverage-v8": "^4.1.8",
+    "@vscode/test-electron": "3.0.0",
+    "@vscode/vsce": "3.9.2",
     "depcheck": "1.4.7",
-    "esbuild": "0.28.0",
-    "eslint": "10.4.1",
+    "esbuild": "0.28.1",
+    "eslint": "10.5.0",
     "glob": "13.0.6",
     "jiti": "2.7.0",
     "mocha": "11.7.6",
-    "prettier": "3.8.3",
+    "prettier": "3.8.4",
     "rimraf": "6.1.3",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.60.0",
-    "vitest": "^4.1.7"
+    "typescript-eslint": "8.61.0",
+    "vitest": "^4.1.8"
   },
   "dependencies": {
-    "undici": "8.3.0"
+    "eslint-plugin-unicorn": "^65.0.1",
+    "undici": "8.4.1"
   }
 }

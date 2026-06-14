@@ -111,7 +111,7 @@ describe("bootstrap helpers", () => {
 
   describe("loadExpandedState", () => {
     it("returns empty set when no stored state", () => {
-      const storage = { get: vi.fn().mockReturnValue(undefined) };
+      const storage = { get: vi.fn().mockReturnValue() };
       expect(loadExpandedState(storage as never)).toEqual(new Set());
     });
 

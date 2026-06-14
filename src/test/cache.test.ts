@@ -53,9 +53,10 @@ describe("RepoStateStore", () => {
   test("setWorkspaceFolders and getWorkspaceFolderPath", () => {
     const store = new RepoStateStore();
     store.setRepos([repoA, repoB]);
-    const map = new Map<string, string>();
-    map.set("example.com/octo/alpha", "/path/a");
-    map.set("example.com/octo/beta", "/path/b");
+    const map = new Map<string, string>([
+      ["example.com/octo/alpha", "/path/a"],
+      ["example.com/octo/beta", "/path/b"],
+    ]);
     store.setWorkspaceFolders(map);
 
     expect(store.getWorkspaceFolderPath(repoA)).toBe("/path/a");

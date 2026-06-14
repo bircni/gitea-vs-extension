@@ -1,4 +1,4 @@
-import * as fs from "fs";
+import * as fs from "node:fs";
 import { EndpointError, GiteaApi } from "../gitea/api";
 import type { RepoRef } from "../gitea/models";
 import { HttpError } from "../gitea/client";
@@ -16,7 +16,7 @@ vi.mock("../gitea/swagger", async () => {
   const actual = await vi.importActual<typeof swaggerModule>("../gitea/swagger");
   return {
     ...actual,
-    fetchSwagger: vi.fn(async () => undefined),
+    fetchSwagger: vi.fn(async () => {}),
   };
 });
 
@@ -28,13 +28,13 @@ describe("GiteaApi review comment endpoints", () => {
     getText: vi.fn(),
     requestText: vi.fn(),
   };
-  const api = new GiteaApi(client as any, () => "http://example.com");
+  const api = new GiteaApi(client as any, () => "https://example.com");
 
   beforeEach(() => {
     client.getJson.mockReset();
     client.getText.mockReset();
     client.requestText.mockReset();
-    (fetchSwagger as Mock).mockReset().mockResolvedValue(undefined);
+    (fetchSwagger as Mock).mockReset().mockResolvedValue();
   });
 
   test("requests pull request reviews with state=all", async () => {
@@ -118,8 +118,8 @@ describe("GiteaApi core endpoints", () => {
     client.getJson.mockReset();
     client.getText.mockReset();
     client.requestText.mockReset();
-    (fetchSwagger as Mock).mockReset().mockResolvedValue(undefined);
-    api = new GiteaApi(client as any, () => "http://example.com");
+    (fetchSwagger as Mock).mockReset().mockResolvedValue();
+    api = new GiteaApi(client as any, () => "https://example.com");
   });
 
   test("lists runs with limit query param", async () => {
@@ -244,16 +244,16 @@ describe("GiteaApi core endpoints", () => {
       requestText: vi.fn(),
       getBinary: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
     };
-    const apiWithBinary = new GiteaApi(clientWithBinary as any, () => "http://example.com");
+    const apiWithBinary = new GiteaApi(clientWithBinary as any, () => "https://example.com");
     const mkdirSpy = fs.mkdirSync as unknown as Mock;
     const writeSpy = fs.writeFileSync as unknown as Mock;
-    mkdirSpy.mockImplementation(() => undefined);
-    writeSpy.mockImplementation(() => undefined);
+    mkdirSpy.mockImplementation(() => {});
+    writeSpy.mockImplementation(() => {});
 
     const artifact = {
       id: 1,
       name: "dist",
-      downloadUrl: "http://example.com/api/v1/repos/owner/repo/actions/artifacts/1/zip",
+      downloadUrl: "https://example.com/api/v1/repos/owner/repo/actions/artifacts/1/zip",
     };
     const savePath = await apiWithBinary.downloadArtifactToFile(
       repo,
@@ -289,16 +289,16 @@ describe("GiteaApi core endpoints", () => {
         .mockResolvedValueOnce(new TextEncoder().encode(htmlRedirect))
         .mockResolvedValueOnce(zipPayload),
     };
-    const apiWithBinary = new GiteaApi(clientWithBinary as any, () => "http://example.com");
+    const apiWithBinary = new GiteaApi(clientWithBinary as any, () => "https://example.com");
     const mkdirSpy = fs.mkdirSync as unknown as Mock;
     const writeSpy = fs.writeFileSync as unknown as Mock;
-    mkdirSpy.mockImplementation(() => undefined);
-    writeSpy.mockImplementation(() => undefined);
+    mkdirSpy.mockImplementation(() => {});
+    writeSpy.mockImplementation(() => {});
 
     const artifact = {
       id: 1,
       name: "dist",
-      downloadUrl: "http://example.com/api/v1/repos/owner/repo/actions/artifacts/1/zip",
+      downloadUrl: "https://example.com/api/v1/repos/owner/repo/actions/artifacts/1/zip",
     };
     const savePath = await apiWithBinary.downloadArtifactToFile(
       repo,
@@ -417,7 +417,7 @@ describe("GiteaApi core endpoints", () => {
     client.getJson.mockResolvedValueOnce([
       { owner: { login: "octo" }, name: "demo", html_url: "http://x" },
     ]);
-    const apiWithHost = new GiteaApi(client as any, () => "http://example.com");
+    const apiWithHost = new GiteaApi(client as any, () => "https://example.com");
 
     const repos = await apiWithHost.listAccessibleRepos();
 

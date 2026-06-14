@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import * as path from "path";
+import path from "node:path";
 import {
   buildDiffPositionMap,
   compareReviewCommentById,
@@ -10,7 +10,7 @@ import {
   workspaceRelativePath,
 } from "../controllers/reviewCommentsController";
 import type { PullRequestReviewComment } from "../gitea/models";
-import type * as fsModule from "fs";
+import type * as fsModule from "node:fs";
 
 vi.mock("fs", async () => ({
   ...(await vi.importActual<typeof fsModule>("fs")),
@@ -83,7 +83,7 @@ test("skips /dev/null in +++ line", () => {
   expect(map.size).toBe(0);
 });
 
-test("skips \\ No newline at end of file line", () => {
+test(String.raw`skips \ No newline at end of file line`, () => {
   const diff = [
     "diff --git a/f b/f",
     "--- a/f",
@@ -91,7 +91,7 @@ test("skips \\ No newline at end of file line", () => {
     "@@ -1,1 +1,2 @@",
     " a",
     "+b",
-    "\\ No newline at end of file",
+    String.raw`\ No newline at end of file`,
   ].join("\n");
 
   const map = buildDiffPositionMap(diff);

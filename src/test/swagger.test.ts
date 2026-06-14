@@ -1,5 +1,5 @@
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from "node:fs";
+import path from "node:path";
 import { discoverEndpoints, fetchSwagger } from "../gitea/swagger";
 import { HttpError } from "../gitea/client";
 
@@ -26,7 +26,7 @@ test("finds actions endpoints", () => {
 });
 
 test("uses fallback endpoints when swagger is missing", () => {
-  const endpoints = discoverEndpoints(undefined);
+  const endpoints = discoverEndpoints();
   expect(endpoints.listRuns).toBe("/api/v1/repos/{owner}/{repo}/actions/runs");
   expect(endpoints.listJobs).toBe("/api/v1/repos/{owner}/{repo}/actions/runs/{run}/jobs");
   expect(endpoints.version).toBe("/api/v1/version");

@@ -162,7 +162,7 @@ describe("getFilteredRunsForDisplay", () => {
 
   it("returns all runs when no context or filter", () => {
     const e = entry(r, [run(1, "main"), run(2, "feat")]);
-    expect(getFilteredRunsForDisplay(e, undefined, undefined)).toHaveLength(2);
+    expect(getFilteredRunsForDisplay(e)).toHaveLength(2);
   });
 
   it("returns all runs for allBranches", () => {
@@ -287,6 +287,6 @@ describe("getBranchFilterDescription", () => {
   });
 
   it("returns undefined when no context or filter", () => {
-    expect(getBranchFilterDescription("runs", undefined, undefined)).toBeUndefined();
+    expect(getBranchFilterDescription("runs")).toBeUndefined();
   });
 });

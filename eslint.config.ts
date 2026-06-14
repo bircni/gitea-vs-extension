@@ -1,4 +1,7 @@
+/// <reference types="node" />
+
 import eslint from "@eslint/js";
+import eslintPluginUnicorn from "eslint-plugin-unicorn";
 import tseslint from "typescript-eslint";
 
 // ESLint flat config for VS Code extension
@@ -7,11 +10,12 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
+  eslintPluginUnicorn.configs.recommended,
   {
     languageOptions: {
       parserOptions: {
         projectService: true,
-        tsconfigRootDir: import.meta.dirname,
+        tsconfigRootDir: process.cwd(),
       },
     },
   },
@@ -96,6 +100,14 @@ export default tseslint.config(
       "prefer-spread": "warn",
       "no-lonely-if": "warn",
       yoda: "warn",
+
+      // eslint-plugin-unicorn: keep recommended defaults except rules that conflict with
+      // established naming (camelCase files, RepoRef, err/msg/arg) and null in API types.
+      "unicorn/filename-case": "off",
+      "unicorn/prevent-abbreviations": "off",
+      "unicorn/no-null": "off",
+      "unicorn/prefer-https": "off",
+      "unicorn/number-literal-case": "off",
     },
   },
   {
@@ -137,6 +149,19 @@ export default tseslint.config(
       "@typescript-eslint/no-unsafe-return": "off",
       "@typescript-eslint/require-await": "off",
       "@typescript-eslint/no-floating-promises": "off",
+      "@typescript-eslint/no-empty-function": "off",
+      "unicorn/no-this-outside-of-class": "off",
+      "unicorn/prefer-top-level-await": "off",
+      "unicorn/no-process-exit": "off",
+    },
+  },
+  // E2E CLI entry points (not *.test.ts)
+  {
+    files: ["src/test/e2e/runTest.ts", "src/test/e2e/runGiteaFixtureTest.ts"],
+    rules: {
+      "unicorn/prefer-top-level-await": "off",
+      "unicorn/no-process-exit": "off",
+      "@typescript-eslint/no-empty-function": "off",
     },
   },
 );

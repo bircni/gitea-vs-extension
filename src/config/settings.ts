@@ -73,11 +73,11 @@ export function getArtifactDownloadBaseDir(): string {
 
   if (!raw) {
     return firstFolder
-      ? `${firstFolder.replace(/\\/g, "/")}/.tmp/gitea-artifacts`
+      ? `${firstFolder.replaceAll("\\", "/")}/.tmp/gitea-artifacts`
       : `${process.env.HOME ?? process.env.USERPROFILE ?? "/tmp"}/.tmp/gitea-artifacts`;
   }
 
-  const normalized = raw.replace(/\\/g, "/").trim();
+  const normalized = raw.replaceAll("\\", "/").trim();
   const isAbsolute =
     normalized.startsWith("/") || (normalized.length >= 2 && normalized[1] === ":"); // Windows drive
 
@@ -85,7 +85,7 @@ export function getArtifactDownloadBaseDir(): string {
     return normalized;
   }
   const base = firstFolder
-    ? firstFolder.replace(/\\/g, "/")
+    ? firstFolder.replaceAll("\\", "/")
     : (process.env.HOME ?? process.env.USERPROFILE ?? "/tmp");
   return normalized.startsWith("/") ? `${base}${normalized}` : `${base}/${normalized}`;
 }

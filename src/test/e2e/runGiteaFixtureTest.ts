@@ -1,8 +1,8 @@
-import * as fs from "fs";
-import * as os from "os";
-import * as path from "path";
-import { execFile, spawnSync } from "child_process";
-import { promisify } from "util";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import path from "node:path";
+import { execFile, spawnSync } from "node:child_process";
+import { promisify } from "node:util";
 import { request } from "undici";
 import { runTests } from "@vscode/test-electron";
 import { GITEA_FIXTURE_ARCHIVE, type GiteaFixtureMetadata } from "./giteaFixture";
@@ -89,8 +89,8 @@ async function main(): Promise<void> {
       },
     });
   } finally {
-    await docker(["rm", "-f", containerName]).catch(() => undefined);
-    await normalizeRunRootPermissions(runRoot, metadata?.image).catch(() => undefined);
+    await docker(["rm", "-f", containerName]).catch(() => {});
+    await normalizeRunRootPermissions(runRoot, metadata?.image).catch(() => {});
     fs.rmSync(runRoot, { recursive: true, force: true });
   }
 }
@@ -143,8 +143,8 @@ function prepareRuntimeSecrets(dataRoot: string): void {
 }
 
 function replaceIniValue(input: string, key: string, value: string): string {
-  const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const pattern = new RegExp(`^${escaped}\\s*=.*$`, "m");
+  const escaped = key.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+  const pattern = new RegExp(String.raw`^${escaped}\s*=.*$`, "m");
   if (pattern.test(input)) {
     return input.replace(pattern, `${key} = ${value}`);
   }
@@ -238,7 +238,7 @@ async function docker(args: string[]): Promise<{ stdout: string; stderr: string 
   return execFileAsync("docker", args, { maxBuffer: 10 * 1024 * 1024 });
 }
 
-main().catch((err) => {
-  console.error(err);
+main().catch((error) => {
+  console.error(error);
   process.exit(1);
 });

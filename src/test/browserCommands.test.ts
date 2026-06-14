@@ -15,20 +15,20 @@ describe("openInBrowser", () => {
     getBaseUrl: () => "https://gitea.example.com",
     showWarningMessage: vi.fn(),
     showInformationMessage: vi.fn(),
-    openExternal: vi.fn().mockResolvedValue(undefined),
-    clipboardWriteText: vi.fn().mockResolvedValue(undefined),
-    executeCommand: vi.fn().mockResolvedValue(undefined),
+    openExternal: vi.fn().mockResolvedValue(),
+    clipboardWriteText: vi.fn().mockResolvedValue(),
+    executeCommand: vi.fn().mockResolvedValue(),
   };
 
   it("shows warning when resolveOpenUrl returns undefined", async () => {
     const showWarningMessage = vi.fn();
-    await openInBrowser({ ...baseDeps, getBaseUrl: () => "", showWarningMessage }, undefined);
+    await openInBrowser({ ...baseDeps, getBaseUrl: () => "", showWarningMessage });
     expect(showWarningMessage).toHaveBeenCalledWith("No URL available for this item.");
     expect(baseDeps.openExternal).not.toHaveBeenCalled();
   });
 
   it("calls openExternal with url when arg is RepoNode with htmlUrl", async () => {
-    const openExternal = vi.fn().mockResolvedValue(undefined);
+    const openExternal = vi.fn().mockResolvedValue();
     const repo: RepoRef = {
       host: "gitea.example.com",
       owner: "o",
@@ -49,9 +49,9 @@ describe("copyUrl", () => {
     getBaseUrl: () => "https://gitea.example.com",
     showWarningMessage: vi.fn(),
     showInformationMessage: vi.fn(),
-    openExternal: vi.fn().mockResolvedValue(undefined),
-    clipboardWriteText: vi.fn().mockResolvedValue(undefined),
-    executeCommand: vi.fn().mockResolvedValue(undefined),
+    openExternal: vi.fn().mockResolvedValue(),
+    clipboardWriteText: vi.fn().mockResolvedValue(),
+    executeCommand: vi.fn().mockResolvedValue(),
   };
 
   it("shows warning when url is not available", async () => {
@@ -62,7 +62,7 @@ describe("copyUrl", () => {
   });
 
   it("writes url to clipboard and shows info when arg is RepoNode", async () => {
-    const clipboardWriteText = vi.fn().mockResolvedValue(undefined);
+    const clipboardWriteText = vi.fn().mockResolvedValue();
     const showInformationMessage = vi.fn();
     const repo: RepoRef = {
       host: "gitea.example.com",
@@ -87,7 +87,7 @@ describe("copyUrl", () => {
 
 describe("openBaseUrlSettings", () => {
   it("calls executeCommand with workbench.action.openSettings and filter", async () => {
-    const executeCommand = vi.fn().mockResolvedValue(undefined);
+    const executeCommand = vi.fn().mockResolvedValue();
     await openBaseUrlSettings({
       getBaseUrl: () => "",
       showWarningMessage: vi.fn(),

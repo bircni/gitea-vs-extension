@@ -17,7 +17,7 @@ test("normalizes status values", () => {
   expect(normalizeStatus("in_progress")).toBe("running");
   expect(normalizeStatus("success")).toBe("completed");
   expect(normalizeStatus("unknown-value")).toBe("unknown");
-  expect(normalizeStatus(undefined)).toBe("unknown");
+  expect(normalizeStatus()).toBe("unknown");
 });
 
 test("normalizes conclusion values", () => {
@@ -28,7 +28,7 @@ test("normalizes conclusion values", () => {
   expect(normalizeConclusion("neutral")).toBe("unknown");
   expect(normalizeConclusion("completed")).toBe("unknown");
   expect(normalizeConclusion("error")).toBe("failure");
-  expect(normalizeConclusion(undefined)).toBeUndefined();
+  expect(normalizeConclusion()).toBeUndefined();
 });
 
 test("normalizes run payload", () => {
@@ -284,23 +284,23 @@ test("normalizes repository status payload", () => {
   const status = normalizeRepoStatus({
     state: "failed",
     description: "build failed",
-    targetUrl: "http://example.com/build",
+    targetUrl: "https://example.com/build",
     updated_at: "2024-01-03T00:00:00Z",
   });
 
   expect(status.state).toBe("failure");
   expect(status.description).toBe("build failed");
-  expect(status.targetUrl).toBe("http://example.com/build");
+  expect(status.targetUrl).toBe("https://example.com/build");
 });
 
 test("normalizes repository status with url fallback and unknown state", () => {
   const status = normalizeRepoStatus({
     state: "unexpected",
-    url: "http://example.com/status",
+    url: "https://example.com/status",
   });
 
   expect(status.state).toBe("unknown");
-  expect(status.targetUrl).toBe("http://example.com/status");
+  expect(status.targetUrl).toBe("https://example.com/status");
 });
 
 test("normalizes pull request review comment payload", () => {

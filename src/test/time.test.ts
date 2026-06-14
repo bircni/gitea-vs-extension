@@ -2,7 +2,7 @@
 import { formatDuration, formatRelativeTime, shortSha } from "../util/time";
 
 test("formatRelativeTime handles undefined and invalid input", () => {
-  expect(formatRelativeTime(undefined)).toBeUndefined();
+  expect(formatRelativeTime()).toBeUndefined();
   expect(formatRelativeTime("not-a-date")).toBeUndefined();
 });
 
@@ -35,6 +35,6 @@ test("formatDuration returns undefined for invalid dates", () => {
 });
 
 test("shortSha returns a 7-character prefix", () => {
-  expect(shortSha(undefined)).toBeUndefined();
+  expect(shortSha()).toBeUndefined();
   expect(shortSha("abcdef123456")).toBe("abcdef1");
 });

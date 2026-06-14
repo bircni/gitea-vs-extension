@@ -10,7 +10,7 @@ const mockRepo: RepoRef = { host: "gitea.example", owner: "o", name: "n" };
 describe("SettingsTreeProvider", () => {
   it("getChildren(undefined) returns message when no repo selected", () => {
     const provider = new SettingsTreeProvider();
-    const children = provider.getChildren(undefined);
+    const children = provider.getChildren();
     expect(Array.isArray(children)).toBe(true);
     expect(children.length).toBe(1);
     expect(children[0]).toBeInstanceOf(MessageNode);
@@ -20,7 +20,7 @@ describe("SettingsTreeProvider", () => {
   it("getChildren(undefined) returns roots after setRepository", () => {
     const provider = new SettingsTreeProvider();
     provider.setRepository(mockRepo);
-    const children = provider.getChildren(undefined);
+    const children = provider.getChildren();
     expect(children.length).toBe(3);
     expect(children[0]).toBeInstanceOf(SecretsRootNode);
     expect(children[1]).toBeInstanceOf(VariablesRootNode);
@@ -31,7 +31,7 @@ describe("SettingsTreeProvider", () => {
     const provider = new SettingsTreeProvider();
     provider.setRepository(mockRepo);
     provider.setSecretsLoading();
-    const roots = provider.getChildren(undefined);
+    const roots = provider.getChildren();
     const secretsRoot = roots[0];
     const children = provider.getChildren(secretsRoot);
     expect(children.length).toBe(1);
@@ -46,7 +46,7 @@ describe("SettingsTreeProvider", () => {
       { name: "SECRET_A", description: "A secret" },
       { name: "SECRET_B", description: undefined },
     ]);
-    const roots = provider.getChildren(undefined);
+    const roots = provider.getChildren();
     const secretsRoot = roots[0];
     const children = provider.getChildren(secretsRoot);
     expect(children.length).toBe(2);
@@ -56,7 +56,7 @@ describe("SettingsTreeProvider", () => {
 
   it("getTreeItem returns element as TreeItem", () => {
     const provider = new SettingsTreeProvider();
-    const roots = provider.getChildren(undefined);
+    const roots = provider.getChildren();
     expect(provider.getTreeItem(roots[0])).toBe(roots[0]);
   });
 });

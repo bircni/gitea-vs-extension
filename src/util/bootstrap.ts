@@ -78,7 +78,7 @@ export function updateExpandedState(
   } else {
     expanded.delete(key);
   }
-  void storage.update(EXPANDED_STATE_KEY, Array.from(expanded));
+  void storage.update(EXPANDED_STATE_KEY, [...expanded]);
 }
 
 /** Update status bar text from refresh summary. */
@@ -202,9 +202,7 @@ export function wireRefreshAndStatusBar(deps: RefreshAndStatusBarDeps): vscode.D
     onAfterRefreshTrigger,
   } = deps;
 
-  const disposables: vscode.Disposable[] = [];
-
-  disposables.push(
+  const disposables: vscode.Disposable[] = [
     onSettingsChange(() => {
       refreshController.scheduleNext();
       void refreshController.refreshAll();
@@ -238,7 +236,7 @@ export function wireRefreshAndStatusBar(deps: RefreshAndStatusBarDeps): vscode.D
         }
       }
     }),
-  );
+  ];
 
   return disposables;
 }

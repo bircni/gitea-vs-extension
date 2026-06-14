@@ -48,11 +48,11 @@ export async function downloadArtifact(deps: ArtifactCommandsDeps, arg: unknown)
       baseDir,
     );
     deps.showInformationMessage(`Artifact saved to ${savePath}`);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     deps.showErrorMessage(`Download failed: ${message}`);
     if (deps.getSettings().debugLogging && deps.logError) {
-      deps.logError("gitea-vs-extension.downloadArtifact", err);
+      deps.logError("gitea-vs-extension.downloadArtifact", error);
     }
   }
 }
@@ -74,8 +74,8 @@ export async function revealArtifactInExplorer(
   }
   try {
     await deps.executeCommand("revealFileInOS", deps.uriFile(savePath));
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     deps.showErrorMessage(`Reveal failed: ${message}`);
   }
 }
@@ -96,8 +96,8 @@ export async function openOrRevealArtifact(
   }
   try {
     await deps.executeCommand("vscode.open", deps.uriFile(savePath));
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     deps.showErrorMessage(`Open failed: ${message}`);
   }
 }

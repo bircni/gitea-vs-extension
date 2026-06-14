@@ -10,15 +10,20 @@ export function iconForStatus(status: ApiStatus, conclusion?: ApiConclusion): vs
   }
 
   switch (conclusion) {
-    case "success":
+    case "success": {
       return new vscode.ThemeIcon("check", new vscode.ThemeColor("charts.green"));
-    case "failure":
+    }
+    case "failure": {
       return new vscode.ThemeIcon("error", new vscode.ThemeColor("charts.red"));
-    case "cancelled":
+    }
+    case "cancelled": {
       return new vscode.ThemeIcon("circle-slash", new vscode.ThemeColor("charts.gray"));
-    case "skipped":
+    }
+    case "skipped": {
       return new vscode.ThemeIcon("debug-step-over", new vscode.ThemeColor("charts.yellow"));
-    default:
+    }
+    default: {
       return new vscode.ThemeIcon("question", new vscode.ThemeColor("disabledForeground"));
+    }
   }
 }

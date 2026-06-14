@@ -151,7 +151,7 @@ export class PullRequestNode extends vscode.TreeItem {
     this.contextValue = "giteaPullRequest";
     const updated = formatRelativeTime(pullRequest.updatedAt);
     const labelNames = (pullRequest.labels ?? []).map((label) => label.name).filter(Boolean);
-    const labelSummary = labelNames.length ? labelNames.join(", ") : undefined;
+    const labelSummary = labelNames.length > 0 ? labelNames.join(", ") : undefined;
     if (pullRequest.author && updated) {
       this.description = labelSummary
         ? `${pullRequest.state} by ${pullRequest.author} · ${updated} · ${labelSummary}`

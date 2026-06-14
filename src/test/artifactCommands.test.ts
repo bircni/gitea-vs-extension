@@ -30,7 +30,7 @@ describe("normalizeArtifactArg", () => {
   });
 
   it("returns undefined when arg is not ArtifactNode", () => {
-    expect(normalizeArtifactArg(undefined)).toBeUndefined();
+    expect(normalizeArtifactArg()).toBeUndefined();
     expect(normalizeArtifactArg(null)).toBeUndefined();
     expect(
       normalizeArtifactArg({ repo: mockRepo, runId: 1, artifact: mockArtifact }),
@@ -53,7 +53,7 @@ describe("downloadArtifact", () => {
       executeCommand: vi.fn(),
       uriFile: (p) => ({ fsPath: p }),
     };
-    await downloadArtifact(deps, undefined);
+    await downloadArtifact(deps);
     expect(showInformationMessage).toHaveBeenCalledWith(
       "Select an artifact from the tree to download.",
     );
@@ -153,7 +153,7 @@ describe("revealArtifactInExplorer", () => {
       executeCommand: vi.fn(),
       uriFile: (p) => ({ fsPath: p }),
     };
-    await revealArtifactInExplorer(deps, undefined);
+    await revealArtifactInExplorer(deps);
     expect(showInformationMessage).toHaveBeenCalledWith(
       "Select an artifact from the tree to reveal in file explorer.",
     );
@@ -179,7 +179,7 @@ describe("revealArtifactInExplorer", () => {
   });
 
   it("calls revealFileInOS when artifact file exists", async () => {
-    const executeCommand = vi.fn().mockResolvedValue(undefined);
+    const executeCommand = vi.fn().mockResolvedValue();
     const uriFile = vi.fn((p: string) => ({ fsPath: p }));
     const deps: ArtifactCommandsDeps = {
       downloadArtifactToFile: vi.fn(),
@@ -229,7 +229,7 @@ describe("openOrRevealArtifact", () => {
       executeCommand: vi.fn(),
       uriFile: (p) => ({ fsPath: p }),
     };
-    await openOrRevealArtifact(deps, undefined);
+    await openOrRevealArtifact(deps);
     expect(showInformationMessage).not.toHaveBeenCalled();
   });
 
@@ -251,7 +251,7 @@ describe("openOrRevealArtifact", () => {
   });
 
   it("calls vscode.open when artifact file exists", async () => {
-    const executeCommand = vi.fn().mockResolvedValue(undefined);
+    const executeCommand = vi.fn().mockResolvedValue();
     const uriFile = vi.fn((p: string) => ({ fsPath: p }));
     const deps: ArtifactCommandsDeps = {
       downloadArtifactToFile: vi.fn(),

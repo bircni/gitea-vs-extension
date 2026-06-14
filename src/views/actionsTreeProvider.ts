@@ -160,11 +160,11 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       if (entry.error) {
         return [new ErrorNode(entry.error)];
       }
-      if (!entry.pullRequests.length) {
+      if (entry.pullRequests.length === 0) {
         return [new MessageNode("No pull requests found.")];
       }
       const nodes: TreeNode[] = entry.pullRequests.map((pr) => new PullRequestNode(repo, pr));
-      if (entry.errors.length) {
+      if (entry.errors.length > 0) {
         nodes.push(new SectionNode("errors", "Errors", repo));
       }
       return nodes;
@@ -222,11 +222,11 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const nodes: TreeNode[] = jobs.map((job) => new JobNode(repo, run, job));
 
     const artifacts = entry.artifactsByRun.get(runKey) ?? [];
-    if (artifacts.length) {
+    if (artifacts.length > 0) {
       nodes.push(new SectionNode("artifacts", "Artifacts", repo, run.id));
     }
 
-    if (!nodes.length) {
+    if (nodes.length === 0) {
       nodes.push(new MessageNode("No jobs found for this run."));
     }
 
@@ -235,7 +235,7 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
 
   private getJobChildren(repo: RepoRef, run: WorkflowRun, job: Job): TreeNode[] {
     const steps = job.steps ?? [];
-    if (!steps.length) {
+    if (steps.length === 0) {
       return [new MessageNode("No steps reported.")];
     }
     return steps.map((step) => new StepNode(repo, run, job, step));
@@ -246,7 +246,7 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     if (!entry) {
       return [];
     }
-    if (!entry.pullRequests.length) {
+    if (entry.pullRequests.length === 0) {
       return [new MessageNode("No pull requests found.")];
     }
     return entry.pullRequests.map((pr) => new PullRequestNode(repo, pr));
@@ -258,7 +258,7 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       return [];
     }
     const artifacts = entry.artifactsByRun.get(String(runId)) ?? [];
-    if (!artifacts.length) {
+    if (artifacts.length === 0) {
       return [new MessageNode("No artifacts found.")];
     }
     return artifacts.map((artifact) => new ArtifactNode(repo, runId, artifact));
@@ -269,7 +269,7 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     if (!entry) {
       return [];
     }
-    if (!entry.errors.length) {
+    if (entry.errors.length === 0) {
       return [new MessageNode("No errors recorded.")];
     }
     return entry.errors.map((message) => new ErrorNode(message));

@@ -1,4 +1,4 @@
-import * as path from "path";
+import path from "node:path";
 import { globSync } from "glob";
 // Mocha's runtime export is the constructor (PascalCase).
 // eslint-disable-next-line @typescript-eslint/naming-convention -- external API
