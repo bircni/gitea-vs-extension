@@ -46,13 +46,16 @@ export class GiteaApi {
     return response.version ?? "OK";
   }
 
-  async listRuns(repo: RepoRef, limit: number): Promise<WorkflowRun[]> {
+  async listRuns(repo: RepoRef, limit: number, branch?: string): Promise<WorkflowRun[]> {
     const endpoints = await this.ensureEndpoints();
     const path = endpoints.listRuns;
     if (!path) {
       throw new EndpointError("Runs endpoint not available");
     }
-    const url = withQuery(fillRepoPath(path, repo), { limit: String(limit) });
+    const url = withQuery(fillRepoPath(path, repo), {
+      limit: String(limit),
+      branch,
+    });
     const response = await this.client.getJson<Record<string, unknown>>(url);
     const list = extractArray(response, ["workflow_runs", "entries", "runs"]);
     return list.map((item) => normalizeRun(item as Record<string, unknown>));

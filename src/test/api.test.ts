@@ -130,6 +130,16 @@ describe("GiteaApi core endpoints", () => {
     expect(client.getJson).toHaveBeenCalledWith("/api/v1/repos/owner/repo/actions/runs?limit=5");
   });
 
+  test("lists runs with branch query param when provided", async () => {
+    client.getJson.mockResolvedValueOnce({ workflow_runs: [] });
+
+    await api.listRuns(repo, 5, "main");
+
+    expect(client.getJson).toHaveBeenCalledWith(
+      "/api/v1/repos/owner/repo/actions/runs?limit=5&branch=main",
+    );
+  });
+
   test("lists jobs with run id", async () => {
     client.getJson.mockResolvedValueOnce({ jobs: [] });
 

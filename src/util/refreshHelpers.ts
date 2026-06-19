@@ -5,7 +5,7 @@
 import { EndpointError } from "../gitea/api";
 import { HttpError } from "../gitea/client";
 import type { Artifact, Job, RepoRef, WorkflowRun } from "../gitea/models";
-import type { BranchContext, BranchContextStatus } from "./branchContext";
+import type { BranchContext, BranchContextStatus, BranchFilterState } from "./branchContext";
 import type { LoadState, RepoCacheEntry } from "./cache";
 
 export type RefreshSummary = {
@@ -51,6 +51,44 @@ export function getInitialBranchFilterMode(
   context: BranchContext,
 ): "currentBranch" | "allBranches" {
   return context.status === "resolved" ? "currentBranch" : "allBranches";
+}
+
+/**
+ * Resolve the branch to request server-side run filtering for, given the active filter and context.
+ * Returns the branch name for currentBranch (when resolved) or specificBranch filters, else undefined
+ * (allBranches, or current branch unresolved — in which case the all-branches fetch already suffices).
+ */
+export function resolveBranchFetch(
+  context: BranchContext | undefined,
+  filter: BranchFilterState | undefined,
+): string | undefined {
+  if (!filter) {
+    return undefined;
+  }
+  if (filter.mode === "specificBranch" && filter.branchName) {
+    return filter.branchName;
+  }
+  if (filter.mode === "currentBranch" && context?.status === "resolved" && context.branchName) {
+    return context.branchName;
+  }
+  return undefined;
+}
+
+/**
+ * Merge two run lists, de-duplicating by id (first occurrence wins) and sorting most-recent first
+ * by createdAt (falling back to updatedAt). Used to combine the all-branches fetch with a
+ * branch-filtered fetch so the current-branch view sees runs beyond the recent all-branch window.
+ */
+export function mergeRunsById(primary: WorkflowRun[], extra: WorkflowRun[]): WorkflowRun[] {
+  const byId = new Map<string, WorkflowRun>();
+  for (const run of [...primary, ...extra]) {
+    const key = String(run.id);
+    if (!byId.has(key)) {
+      byId.set(key, run);
+    }
+  }
+  const runTime = (run: WorkflowRun): string => run.createdAt ?? run.updatedAt ?? "";
+  return [...byId.values()].toSorted((a, b) => runTime(b).localeCompare(runTime(a)));
 }
 
 /**

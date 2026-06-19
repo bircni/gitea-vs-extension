@@ -9,9 +9,11 @@ import {
   computeRefreshSummary,
   formatRefreshError,
   getInitialBranchFilterMode,
+  mergeRunsById,
   nextEntryErrorState,
   nextEntryLoadingState,
   nextEntrySuccessState,
+  resolveBranchFetch,
   type RefreshSummary,
 } from "../util/refreshHelpers";
 import type { GiteaApi } from "../gitea/api";
@@ -124,7 +126,24 @@ export class RefreshController {
     }
 
     try {
-      const runs = await this.limiter(() => this.api.listRuns(repo, limit));
+      const allBranchesRuns = await this.limiter(() => this.api.listRuns(repo, limit));
+      // The all-branches fetch only covers the most-recent `limit` runs across every branch, so a
+      // less-active branch (e.g. the current one) can be crowded out. When a specific branch is in
+      // effect, fetch its runs directly from the server and merge so that view shows the full set.
+      const branchToFetch = resolveBranchFetch(context, this.store.getBranchFilter(repo));
+      let runs = allBranchesRuns;
+      if (branchToFetch) {
+        try {
+          const branchRuns = await this.limiter(() =>
+            this.api.listRuns(repo, limit, branchToFetch),
+          );
+          runs = mergeRunsById(allBranchesRuns, branchRuns);
+        } catch (error) {
+          this.logger.debug(
+            `Failed to load branch runs for ${repo.owner}/${repo.name} (${branchToFetch}): ${formatRefreshError(error)}`,
+          );
+        }
+      }
       this.store.updateEntry(repo, (entry) => {
         entry.runs = runs;
       });

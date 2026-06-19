@@ -11,10 +11,13 @@ import {
   computeRefreshSummary,
   formatRefreshError,
   getInitialBranchFilterMode,
+  mergeRunsById,
   nextEntryErrorState,
   nextEntryLoadingState,
   nextEntrySuccessState,
+  resolveBranchFetch,
 } from "../util/refreshHelpers";
+import type { BranchContext, BranchFilterState } from "../util/branchContext";
 
 const mockRepo: RepoRef = { host: "gitea.example.com", owner: "o", name: "n" };
 
@@ -189,5 +192,58 @@ describe("nextEntrySuccessState", () => {
 describe("nextEntryErrorState", () => {
   it("returns loading false and error message", () => {
     expect(nextEntryErrorState("Failed")).toEqual({ loading: false, error: "Failed" });
+  });
+});
+
+describe("resolveBranchFetch", () => {
+  const context: BranchContext = { repo: mockRepo, branchName: "main", status: "resolved" };
+
+  it("returns the resolved current branch in currentBranch mode", () => {
+    const filter: BranchFilterState = { repo: mockRepo, mode: "currentBranch" };
+    expect(resolveBranchFetch(context, filter)).toBe("main");
+  });
+
+  it("returns the filter branch in specificBranch mode", () => {
+    const filter: BranchFilterState = { repo: mockRepo, mode: "specificBranch", branchName: "dev" };
+    expect(resolveBranchFetch(context, filter)).toBe("dev");
+  });
+
+  it("returns undefined in allBranches mode", () => {
+    const filter: BranchFilterState = { repo: mockRepo, mode: "allBranches" };
+    expect(resolveBranchFetch(context, filter)).toBeUndefined();
+  });
+
+  it("returns undefined when current branch is unresolved", () => {
+    const unresolved: BranchContext = { repo: mockRepo, branchName: null, status: "detached" };
+    const filter: BranchFilterState = { repo: mockRepo, mode: "currentBranch" };
+    expect(resolveBranchFetch(unresolved, filter)).toBeUndefined();
+  });
+
+  it("returns undefined when no filter is set", () => {
+    // eslint-disable-next-line unicorn/no-useless-undefined -- filter is a required positional arg
+    expect(resolveBranchFetch(context, undefined)).toBeUndefined();
+  });
+});
+
+const run = (id: number, createdAt: string): WorkflowRun => ({
+  id,
+  name: `run ${id}`,
+  status: "completed",
+  createdAt,
+});
+
+describe("mergeRunsById", () => {
+  it("de-duplicates by id keeping the first occurrence", () => {
+    const primary = [run(1, "2024-01-03T00:00:00Z")];
+    const extra = [run(1, "2024-01-03T00:00:00Z"), run(2, "2024-01-02T00:00:00Z")];
+    const merged = mergeRunsById(primary, extra);
+    expect(merged.map((r) => r.id)).toEqual([1, 2]);
+  });
+
+  it("sorts most-recent first by createdAt", () => {
+    const primary = [run(1, "2024-01-01T00:00:00Z")];
+    const extra = [run(2, "2024-01-05T00:00:00Z"), run(3, "2024-01-03T00:00:00Z")];
+    const merged = mergeRunsById(primary, extra);
+    expect(merged.map((r) => r.id)).toEqual([2, 3, 1]);
   });
 });

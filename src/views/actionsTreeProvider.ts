@@ -121,6 +121,12 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       );
     }
 
+    // "Current Branch Runs" with a single repo: the repo node is a redundant collapse level, so
+    // render its runs directly at the root. Multiple repos keep the repo grouping to stay distinct.
+    if (this.mode === "runs" && repos.length === 1) {
+      return this.getRepoChildren(repos[0]);
+    }
+
     const autoExpand = repos.length === 1;
     return repos.map((repo) => {
       if (this.mode === "pullRequests") {
