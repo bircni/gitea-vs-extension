@@ -3,8 +3,8 @@
  */
 import { getSettings } from "../config/settings";
 import { ActionsTreeProvider } from "../views/actionsTreeProvider";
-import { RepoNode } from "../views/nodes";
-import type { RepoRef } from "../gitea/models";
+import { MessageNode, RepoNode, RunNode } from "../views/nodes";
+import type { RepoRef, WorkflowRun } from "../gitea/models";
 import type { Mock } from "vitest";
 
 vi.mock("../config/settings", () => ({
@@ -44,12 +44,41 @@ function createMockStore() {
 }
 
 describe("ActionsTreeProvider", () => {
-  it("getChildren(undefined) returns root nodes", async () => {
+  it("runs mode with a single repo flattens runs to the root (no RepoNode)", async () => {
+    const run: WorkflowRun = { id: 1, name: "build", branch: "main", status: "completed" };
+    const store = createMockStore();
+    store.getEntry.mockReturnValue({
+      repo: mockRepo,
+      runs: [run],
+      pullRequests: [],
+      loading: false,
+      error: undefined,
+      errors: [],
+    });
+    const provider = new ActionsTreeProvider("runs", store as never, {} as never, new Set());
+    const children = await provider.getChildren();
+    expect(children.length).toBe(1);
+    expect(children[0]).toBeInstanceOf(RunNode);
+    expect(children[0]).not.toBeInstanceOf(RepoNode);
+    expect((children[0] as RunNode).repo).toEqual(mockRepo);
+  });
+
+  it("runs mode with a single repo and no runs shows a flattened message (no RepoNode)", async () => {
     const store = createMockStore();
     const provider = new ActionsTreeProvider("runs", store as never, {} as never, new Set());
     const children = await provider.getChildren();
-    expect(Array.isArray(children)).toBe(true);
-    expect(children.length).toBeGreaterThan(0);
+    expect(children.length).toBe(1);
+    expect(children[0]).toBeInstanceOf(MessageNode);
+    expect(children[0]).not.toBeInstanceOf(RepoNode);
+  });
+
+  it("runs mode with multiple repos keeps the RepoNode grouping", async () => {
+    const otherRepo: RepoRef = { host: "gitea.example", owner: "o", name: "other" };
+    const store = createMockStore();
+    store.getRepos.mockReturnValue([mockRepo, otherRepo]);
+    const provider = new ActionsTreeProvider("runs", store as never, {} as never, new Set());
+    const children = await provider.getChildren();
+    expect(children.length).toBe(2);
     expect(children[0]).toBeInstanceOf(RepoNode);
     expect((children[0] as RepoNode).repo).toEqual(mockRepo);
   });
