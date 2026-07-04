@@ -7,6 +7,7 @@ vi.mock("undici", () => {
   const Agent = vi.fn(
     class MockAgent {
       constructor(public options: unknown) {}
+      close = vi.fn();
     },
   );
   return { request, Agent };
@@ -180,7 +181,7 @@ test("uses https agent with insecure configuration", async () => {
     connect: { rejectUnauthorized: false },
   });
   const [, options] = requestMock.mock.calls[0];
-  expect(options.dispatcher).toEqual({ options: { connect: { rejectUnauthorized: false } } });
+  expect(options.dispatcher).toMatchObject({ options: { connect: { rejectUnauthorized: false } } });
 });
 
 test("returns binary data when requested", async () => {
@@ -214,6 +215,9 @@ test("reuses cached agent when tls setting stays the same", async () => {
   insecure = false;
   await client.getText("/repos");
   expect(AgentMock).toHaveBeenCalledTimes(2);
+  // The previous agent is closed so its keep-alive socket pool isn't orphaned.
+  const firstAgent = AgentMock.mock.results[0].value as { close: Mock };
+  expect(firstAgent.close).toHaveBeenCalledTimes(1);
 });
 
 test("does not create agent for http urls", async () => {

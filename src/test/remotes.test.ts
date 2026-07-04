@@ -1,4 +1,3 @@
-// ...existing code...
 import { hostMatches, normalizeHost, parseRemoteUrl } from "../gitea/remotes";
 
 test("parses https remotes", () => {

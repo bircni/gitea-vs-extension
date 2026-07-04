@@ -34,13 +34,6 @@ export function formatRelativeTime(iso?: string): string | undefined {
   return `${value}${unit} ${suffix}`;
 }
 
-export function shortSha(sha?: string): string | undefined {
-  if (!sha) {
-    return undefined;
-  }
-  return sha.slice(0, 7);
-}
-
 export function formatDuration(start?: string, end?: string): string | undefined {
   if (!start) {
     return undefined;
