@@ -37,6 +37,8 @@ export class GiteaHttpClient {
       return this.cachedAgent;
     }
 
+    // Close the previous agent so its keep-alive socket pool isn't orphaned on config change.
+    void this.cachedAgent?.close();
     this.cachedAgent = new Agent({
       connect: {
         rejectUnauthorized: !config.insecureSkipVerify,

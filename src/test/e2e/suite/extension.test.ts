@@ -25,6 +25,84 @@ suite(`gitea-vs-extension E2E (${isRealGitea ? "real Gitea" : "mock"})`, () => {
     );
   });
 
+  test("M4: refresh discovers runs and pull requests for the mock repo", async function () {
+    if (isRealGitea) {
+      this.skip();
+    }
+    const snapshot = await vscode.commands.executeCommand<RepoSnapshot>(
+      "gitea-vs-extension.__testRepoSnapshot",
+    );
+    assert.ok(snapshot.repos.length > 0, "expected at least one mock repo");
+    const repo = snapshot.repos[0];
+    assert.ok(repo.runCount >= 1, `expected at least one run, got ${repo.runCount}`);
+    assert.ok(
+      repo.pullRequestCount >= 1,
+      `expected at least one pull request, got ${repo.pullRequestCount}`,
+    );
+  });
+
+  test("M5: loading run details fetches jobs and artifacts", async function () {
+    if (isRealGitea) {
+      this.skip();
+    }
+    const details = await vscode.commands.executeCommand<RunDetailsSnapshot>(
+      "gitea-vs-extension.__testLoadFirstRunDetails",
+    );
+    assert.ok(details.jobCount >= 1, `expected at least one job, got ${details.jobCount}`);
+    assert.ok(
+      details.artifactCount >= 1,
+      `expected at least one artifact, got ${details.artifactCount}`,
+    );
+  });
+
+  test("M6: viewJobLogs opens the job log content", async function () {
+    if (isRealGitea) {
+      this.skip();
+    }
+    const result = await vscode.commands.executeCommand<{ content: string }>(
+      "gitea-vs-extension.__testViewFirstJobLog",
+    );
+    assert.match(result.content, /mock log line/);
+  });
+
+  test("M7: downloadArtifact saves the artifact to disk", async function () {
+    if (isRealGitea) {
+      this.skip();
+    }
+    const result = await vscode.commands.executeCommand<{
+      savePath: string;
+      exists: boolean;
+      content: string;
+    }>("gitea-vs-extension.__testDownloadFirstArtifact");
+    assert.ok(result.exists, `expected artifact file at ${result.savePath}`);
+    assert.ok(result.content.length > 0, "expected non-empty artifact content");
+  });
+
+  test("M8: specific-branch filter triggers a server-side fetch and merges runs", async function () {
+    if (isRealGitea) {
+      this.skip();
+    }
+    const before = await vscode.commands.executeCommand<RepoSnapshot>(
+      "gitea-vs-extension.__testRepoSnapshot",
+    );
+    const beforeCount = before.repos[0].runCount;
+
+    await vscode.commands.executeCommand(
+      "gitea-vs-extension.__testSetBranchFilter",
+      "specificBranch",
+      "feature",
+    );
+
+    const after = await vscode.commands.executeCommand<RepoSnapshot>(
+      "gitea-vs-extension.__testRepoSnapshot",
+    );
+    const afterCount = after.repos[0].runCount;
+    assert.ok(
+      afterCount > beforeCount,
+      `expected branch fetch to add runs (before ${beforeCount}, after ${afterCount})`,
+    );
+  });
+
   test("G1: real Gitea fixture is version 1.26.1", async function () {
     if (!isRealGitea) {
       this.skip();
@@ -166,6 +244,12 @@ type RepoSnapshot = {
     runCount: number;
     branchContext?: { status: string; branchName?: string | null };
   }[];
+};
+
+type RunDetailsSnapshot = {
+  runId: number | string;
+  jobCount: number;
+  artifactCount: number;
 };
 
 type ReviewCommentSnapshot = {

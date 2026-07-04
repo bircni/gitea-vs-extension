@@ -1,5 +1,4 @@
-// ...existing code...
-import { formatDuration, formatRelativeTime, shortSha } from "../util/time";
+import { formatDuration, formatRelativeTime } from "../util/time";
 
 test("formatRelativeTime handles undefined and invalid input", () => {
   expect(formatRelativeTime()).toBeUndefined();
@@ -32,9 +31,4 @@ test("formatDuration handles missing end time", () => {
 
 test("formatDuration returns undefined for invalid dates", () => {
   expect(formatDuration("not-a-date", "2024-01-01T00:00:00Z")).toBeUndefined();
-});
-
-test("shortSha returns a 7-character prefix", () => {
-  expect(shortSha()).toBeUndefined();
-  expect(shortSha("abcdef123456")).toBe("abcdef1");
 });

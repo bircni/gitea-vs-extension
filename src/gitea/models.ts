@@ -349,13 +349,6 @@ function normalizeBranch(value?: string): string | undefined {
   if (value.startsWith("tags/")) {
     return value.slice("tags/".length);
   }
-  if (value.startsWith("refs/pull/")) {
-    const prMatch = /^refs\/pull\/(\d+)\/head$/.exec(value);
-    if (prMatch) {
-      return `PR #${prMatch[1]}`;
-    }
-    return value;
-  }
   const prMatch = /^pull\/(\d+)\/head$/.exec(value);
   if (prMatch) {
     return `PR #${prMatch[1]}`;

@@ -122,7 +122,7 @@ async function handle(
         sendText(res, 404, "not found");
         return;
       }
-      await handleRepoRoutes(state, req, res, method, baseUrl, rest);
+      await handleRepoRoutes(state, req, res, method, baseUrl, rest, url.searchParams);
       return;
     }
 
@@ -141,21 +141,36 @@ async function handleRepoRoutes(
   method: string,
   baseUrl: string,
   rest: string,
+  search: URLSearchParams,
 ): Promise<void> {
   if (rest === "actions/runs" && method === "GET") {
-    sendJson(res, 200, {
-      workflow_runs: [
-        {
-          id: 101,
-          status: "completed",
-          conclusion: "success",
-          name: "Mock workflow",
-          head_branch: "main",
-          head_sha: "abc123",
-          created_at: "2020-01-01T00:00:00Z",
-        },
-      ],
-    });
+    // The all-branches fetch (no `branch`) only sees run 101 on main. A server-side branch fetch
+    // returns an extra run (106) scoped to that branch, so the client's merge produces two runs —
+    // this lets the e2e suite verify the branch param is forwarded and mergeRunsById combines them.
+    const branch = search.get("branch");
+    const runs: Record<string, unknown>[] = [
+      {
+        id: 101,
+        status: "completed",
+        conclusion: "success",
+        name: "Mock workflow",
+        head_branch: "main",
+        head_sha: "abc123",
+        created_at: "2020-01-02T00:00:00Z",
+      },
+    ];
+    if (branch) {
+      runs.push({
+        id: 106,
+        status: "completed",
+        conclusion: "success",
+        name: `Mock ${branch} run`,
+        head_branch: branch,
+        head_sha: "feed106",
+        created_at: "2020-01-01T00:00:00Z",
+      });
+    }
+    sendJson(res, 200, { workflow_runs: runs });
     return;
   }
 
