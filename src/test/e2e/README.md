@@ -9,8 +9,13 @@ E2E runs the packaged extension in a real VS Code instance via `@vscode/test-ele
 3. **M1**: extension activates (`bircni.gitea-vs-extension`).
 4. **M2**: `gitea-vs-extension.testConnection` runs against the mock (workspace `baseUrl` + test token).
 5. **M3**: `gitea-vs-extension.__testRefreshDone` awaits a full refresh and returns repo count; asserts mock returned at least one repo.
+6. **M4**: `__testRepoSnapshot` asserts the mock repo has ≥1 run and ≥1 pull request.
+7. **M5**: `__testLoadFirstRunDetails` loads the first run's jobs and artifacts; asserts both are non-empty.
+8. **M6**: `__testViewFirstJobLog` runs the real `viewJobLogs` command and asserts the opened document shows the mock log line.
+9. **M7**: `__testDownloadFirstArtifact` runs the real `downloadArtifact` command and asserts the artifact file is written to disk with content.
+10. **M8**: `__testSetBranchFilter` forces a `specificBranch` filter, then asserts the next refresh performs a server-side branch fetch and `mergeRunsById` combines the results into more runs.
 
-Internal commands `__testRepoCount` and `__testRefreshDone` are registered only when `EXTENSION_TEST_MODE=1`.
+Internal commands (`__testRepoCount`, `__testRefreshDone`, `__testRepoSnapshot`, `__testLoadFirstRunDetails`, `__testViewFirstJobLog`, `__testDownloadFirstArtifact`, `__testSetBranchFilter`, and the review-comment helpers) are registered only when `EXTENSION_TEST_MODE=1`.
 
 ## Run
 
