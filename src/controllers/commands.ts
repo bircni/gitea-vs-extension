@@ -219,6 +219,8 @@ export class CommandsController {
       this.store.setBranchFilter({ repo, mode: "specificBranch", branchName: id });
     }
 
+    const settings = getSettings();
+    await this.refreshController.refreshRepo(repo, settings.maxRunsPerRepo);
     this.treeProvider.refresh();
     this.refreshViews?.();
   }

@@ -66,14 +66,23 @@ export class RefreshController {
     try {
       const settings = getSettings();
       let repos: RepoRef[] = [];
+      let discoverySucceeded = true;
 
       try {
         repos = await this.discovery.discoverRepos(settings.discoveryMode, settings.baseUrl);
       } catch (error) {
+        discoverySucceeded = false;
         this.logger.warn(`Repository discovery failed: ${formatRefreshError(error)}`);
       }
 
-      this.store.setRepos(repos);
+      // Keep previously discovered repositories visible when discovery fails transiently. They can
+      // still be refreshed individually, while replacing the store with an empty list would make
+      // a network outage look like the user has no repositories.
+      if (discoverySucceeded) {
+        this.store.setRepos(repos);
+      } else {
+        repos = this.store.getRepos();
+      }
 
       try {
         const discoveredRepoKeys = new Set(repos.map((repo) => repoKey(repo)));

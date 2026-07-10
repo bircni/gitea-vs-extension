@@ -1,5 +1,6 @@
 export const workspace = {
   workspaceFolders: [] as { uri: { fsPath: string } }[] | undefined,
+  getConfiguration: vi.fn(),
 };
 
 export const window = {

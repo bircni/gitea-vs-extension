@@ -140,6 +140,22 @@ describe("GiteaApi core endpoints", () => {
     );
   });
 
+  test("loads every page of accessible repositories", async () => {
+    const firstPage = Array.from({ length: 50 }, (_, index) => ({
+      owner: { login: "owner" },
+      name: `repo-${index}`,
+    }));
+    client.getJson
+      .mockResolvedValueOnce(firstPage)
+      .mockResolvedValueOnce([{ owner: { login: "owner" }, name: "repo-50" }]);
+
+    const repos = await api.listAccessibleRepos();
+
+    expect(client.getJson).toHaveBeenNthCalledWith(1, "/api/v1/user/repos?page=1&limit=50");
+    expect(client.getJson).toHaveBeenNthCalledWith(2, "/api/v1/user/repos?page=2&limit=50");
+    expect(repos).toHaveLength(51);
+  });
+
   test("lists jobs with run id", async () => {
     client.getJson.mockResolvedValueOnce({ jobs: [] });
 
