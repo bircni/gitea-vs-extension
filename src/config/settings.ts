@@ -20,43 +20,39 @@ export function getSettings(): ExtensionSettings {
   const config = vscode.workspace.getConfiguration("gitea-vs-extension");
   const legacyConfig = vscode.workspace.getConfiguration("bircni.gitea-vs-extension");
   return {
-    baseUrl: (config.get<string>("baseUrl") ?? legacyConfig.get<string>("baseUrl") ?? "").trim(),
-    tlsInsecureSkipVerify:
-      config.get<boolean>("tls.insecureSkipVerify") ??
-      legacyConfig.get<boolean>("tls.insecureSkipVerify") ??
-      false,
-    discoveryMode:
-      config.get<DiscoveryMode>("discovery.mode") ??
-      legacyConfig.get<DiscoveryMode>("discovery.mode") ??
-      "workspace",
-    runningRefreshSeconds:
-      config.get<number>("refresh.runningIntervalSeconds") ??
-      legacyConfig.get<number>("refresh.runningIntervalSeconds") ??
-      15,
-    idleRefreshSeconds:
-      config.get<number>("refresh.idleIntervalSeconds") ??
-      legacyConfig.get<number>("refresh.idleIntervalSeconds") ??
-      60,
-    maxRunsPerRepo:
-      config.get<number>("maxRunsPerRepo") ?? legacyConfig.get<number>("maxRunsPerRepo") ?? 20,
-    maxJobsPerRun:
-      config.get<number>("maxJobsPerRun") ?? legacyConfig.get<number>("maxJobsPerRun") ?? 50,
-    debugLogging:
-      config.get<boolean>("logging.debug") ?? legacyConfig.get<boolean>("logging.debug") ?? false,
-    reviewCommentsEnabled:
-      config.get<boolean>("reviewComments.enabled") ??
-      legacyConfig.get<boolean>("reviewComments.enabled") ??
-      true,
-    jobLogsSaveToRepo:
-      config.get<boolean>("jobLogs.saveToRepo") ??
-      legacyConfig.get<boolean>("jobLogs.saveToRepo") ??
-      true,
-    artifactsDownloadPath: (
-      config.get<string>("artifacts.downloadPath") ??
-      legacyConfig.get<string>("artifacts.downloadPath") ??
-      ".tmp/gitea-artifacts/"
+    baseUrl: getSetting(config, legacyConfig, "baseUrl", "").trim(),
+    tlsInsecureSkipVerify: getSetting(config, legacyConfig, "tls.insecureSkipVerify", false),
+    discoveryMode: getSetting<DiscoveryMode>(config, legacyConfig, "discovery.mode", "workspace"),
+    runningRefreshSeconds: getSetting(config, legacyConfig, "refresh.runningIntervalSeconds", 15),
+    idleRefreshSeconds: getSetting(config, legacyConfig, "refresh.idleIntervalSeconds", 60),
+    maxRunsPerRepo: getSetting(config, legacyConfig, "maxRunsPerRepo", 20),
+    maxJobsPerRun: getSetting(config, legacyConfig, "maxJobsPerRun", 50),
+    debugLogging: getSetting(config, legacyConfig, "logging.debug", false),
+    reviewCommentsEnabled: getSetting(config, legacyConfig, "reviewComments.enabled", true),
+    jobLogsSaveToRepo: getSetting(config, legacyConfig, "jobLogs.saveToRepo", true),
+    artifactsDownloadPath: getSetting(
+      config,
+      legacyConfig,
+      "artifacts.downloadPath",
+      ".tmp/gitea-artifacts/",
     ).trim(),
   };
+}
+
+/**
+ * Prefer an explicitly configured modern setting. `get()` includes contributed defaults, so it
+ * cannot distinguish an unset modern value from its default when reading legacy configuration.
+ */
+function getSetting<T>(
+  config: vscode.WorkspaceConfiguration,
+  legacyConfig: vscode.WorkspaceConfiguration,
+  key: string,
+  fallback: T,
+): T {
+  const inspected = config.inspect<T>(key);
+  const explicitModernValue =
+    inspected?.workspaceFolderValue ?? inspected?.workspaceValue ?? inspected?.globalValue;
+  return explicitModernValue ?? legacyConfig.get<T>(key) ?? fallback;
 }
 
 /**

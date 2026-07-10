@@ -158,15 +158,16 @@ describe("RefreshController", () => {
     controller.dispose();
   });
 
-  it("refreshAll() when discovery throws still sets repos and continues", async () => {
+  it("refreshAll() preserves previously discovered repos when discovery throws", async () => {
     const store = createMockStore();
-    store.getRepos.mockReturnValue([]);
+    store.getRepos.mockReturnValue([mockRepo]);
     const logger = { warn: vi.fn(), debug: vi.fn() };
     const discovery = createMockDiscovery();
     discovery.discoverRepos.mockRejectedValue(new Error("Discovery failed"));
+    const api = createMockApi();
 
     const controller = new RefreshController(
-      createMockApi() as never,
+      api as never,
       store as never,
       discovery as never,
       logger as never,
@@ -179,7 +180,8 @@ describe("RefreshController", () => {
     expect(logger.warn).toHaveBeenCalledWith(
       expect.stringContaining("Repository discovery failed"),
     );
-    expect(store.setRepos).toHaveBeenCalledWith([]);
+    expect(store.setRepos).not.toHaveBeenCalled();
+    expect(api.listRuns).toHaveBeenCalledWith(mockRepo, 10);
     controller.dispose();
   });
 

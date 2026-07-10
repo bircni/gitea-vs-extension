@@ -352,7 +352,17 @@ export class GiteaApi {
     if (!path) {
       throw new EndpointError("Repository listing endpoint not available");
     }
-    const response = await this.client.getJson<unknown[]>(path);
+    const pageSize = 50;
+    const response: unknown[] = [];
+    for (let page = 1; ; page += 1) {
+      const items = await this.client.getJson<unknown[]>(
+        withQuery(path, { page: String(page), limit: String(pageSize) }),
+      );
+      response.push(...items);
+      if (items.length < pageSize) {
+        break;
+      }
+    }
     const host = getHost(this.baseUrlProvider());
     if (!host) {
       return [];
