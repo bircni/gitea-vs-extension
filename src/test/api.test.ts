@@ -382,10 +382,10 @@ describe("GiteaApi core endpoints", () => {
     expect(version).toBe("fallback");
   });
 
-  test("lists secrets and variables", async () => {
+  test("lists secrets and variables from Gitea array responses", async () => {
     client.getJson
-      .mockResolvedValueOnce({ secrets: [{ name: "TOKEN" }] })
-      .mockResolvedValueOnce({ variables: [{ name: "REGION" }] });
+      .mockResolvedValueOnce([{ name: "TOKEN" }])
+      .mockResolvedValueOnce([{ name: "REGION" }]);
 
     const secrets = await api.listSecrets(repo);
     const variables = await api.listVariables(repo);
