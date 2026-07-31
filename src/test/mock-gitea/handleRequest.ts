@@ -364,13 +364,15 @@ async function handleRepoRoutes(
   }
 
   if (rest === "actions/secrets" && method === "GET") {
-    sendJson(res, 200, {
-      secrets: [...state.secrets.entries()].map(([name, v]) => ({
+    sendJson(
+      res,
+      200,
+      [...state.secrets.entries()].map(([name, v]) => ({
         name,
         description: v.description,
         created_at: "2020-01-01T00:00:00Z",
       })),
-    });
+    );
     return;
   }
 
@@ -392,13 +394,15 @@ async function handleRepoRoutes(
   }
 
   if (rest === "actions/variables" && method === "GET") {
-    sendJson(res, 200, {
-      variables: [...state.variables.values()].map((v) => ({
+    sendJson(
+      res,
+      200,
+      [...state.variables.values()].map((v) => ({
         name: v.name,
         value: v.value ?? v.data,
         description: v.description,
       })),
-    });
+    );
     return;
   }
 
