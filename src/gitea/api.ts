@@ -67,14 +67,14 @@ export class GiteaApi {
     if (!path) {
       throw new EndpointError("Jobs endpoint not available");
     }
-    const url = withQuery(
-      fillRepoPath(path, repo)
-        .replace("{run}", encodeURIComponent(String(runId)))
-        .replace("{run_id}", encodeURIComponent(String(runId))),
-      {
-        limit: limit ? String(limit) : undefined,
-      },
+    const runPath = fillPlaceholder(
+      fillPlaceholder(fillRepoPath(path, repo), "{run}", runId),
+      "{run_id}",
+      runId,
     );
+    const url = withQuery(runPath, {
+      limit: limit ? String(limit) : undefined,
+    });
     const response = await this.client.getJson<Record<string, unknown>>(url);
     const list = extractArray(response, ["workflow_jobs", "jobs", "entries"]);
     return list.map((item) => normalizeJob(item as Record<string, unknown>));
@@ -86,9 +86,11 @@ export class GiteaApi {
     if (!path) {
       throw new EndpointError("Job logs endpoint not available");
     }
-    const url = fillRepoPath(path, repo)
-      .replace("{job_id}", encodeURIComponent(String(jobId)))
-      .replace("{job}", encodeURIComponent(String(jobId)));
+    const url = fillPlaceholder(
+      fillPlaceholder(fillRepoPath(path, repo), "{job_id}", jobId),
+      "{job}",
+      jobId,
+    );
     return this.client.getText(url);
   }
 
@@ -98,9 +100,11 @@ export class GiteaApi {
     if (!path) {
       return [];
     }
-    const base = fillRepoPath(path, repo)
-      .replace("{run}", encodeURIComponent(String(runId)))
-      .replace("{run_id}", encodeURIComponent(String(runId)));
+    const base = fillPlaceholder(
+      fillPlaceholder(fillRepoPath(path, repo), "{run}", runId),
+      "{run_id}",
+      runId,
+    );
     const response = await this.client.getJson<Record<string, unknown>>(base);
     const list = extractArray(response, ["artifacts", "entries"]);
     return list.map((item) => normalizeArtifact(item as Record<string, unknown>));
@@ -178,10 +182,9 @@ export class GiteaApi {
     if (!path) {
       return [];
     }
-    const url = withQuery(
-      fillRepoPath(path, repo).replace("{index}", encodeURIComponent(String(pullRequestNumber))),
-      { state: "all" },
-    );
+    const url = withQuery(fillPlaceholder(fillRepoPath(path, repo), "{index}", pullRequestNumber), {
+      state: "all",
+    });
     const response = await this.client.getJson<Record<string, unknown> | unknown[]>(url);
     const list = Array.isArray(response)
       ? response
@@ -200,9 +203,11 @@ export class GiteaApi {
     if (!path) {
       return [];
     }
-    const url = fillRepoPath(path, repo)
-      .replace("{index}", encodeURIComponent(String(pullRequestNumber)))
-      .replace("{id}", encodeURIComponent(String(reviewId)));
+    const url = fillPlaceholder(
+      fillPlaceholder(fillRepoPath(path, repo), "{index}", pullRequestNumber),
+      "{id}",
+      reviewId,
+    );
     const response = await this.client.getJson<Record<string, unknown> | unknown[]>(url);
     const list = Array.isArray(response)
       ? response
@@ -220,10 +225,7 @@ export class GiteaApi {
     if (!path) {
       throw new EndpointError("Pull request reviews endpoint not available");
     }
-    const url = fillRepoPath(path, repo).replace(
-      "{index}",
-      encodeURIComponent(String(pullRequestNumber)),
-    );
+    const url = fillPlaceholder(fillRepoPath(path, repo), "{index}", pullRequestNumber);
     await this.client.requestText("POST", url, {
       body: {
         event: "COMMENT",
@@ -397,10 +399,18 @@ export class GiteaApi {
   }
 }
 
+/**
+ * Substitutes a `{placeholder}` in an endpoint template with a URL-encoded value.
+ *
+ * The replacement is passed as a function so `$`-sequences in the value are never interpreted as
+ * `String#replace` patterns.
+ */
+function fillPlaceholder(path: string, placeholder: string, value: string | number): string {
+  return path.replace(placeholder, () => encodeURIComponent(String(value)));
+}
+
 function fillRepoPath(path: string, repo: RepoRef): string {
-  return path
-    .replace("{owner}", encodeURIComponent(repo.owner))
-    .replace("{repo}", encodeURIComponent(repo.name));
+  return fillPlaceholder(fillPlaceholder(path, "{owner}", repo.owner), "{repo}", repo.name);
 }
 
 function withQuery(path: string, params: Record<string, string | undefined>): string {

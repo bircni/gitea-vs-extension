@@ -246,11 +246,10 @@ export class ReviewCommentsController implements vscode.Disposable {
     for (const plan of this.lastThreadPlan.values()) {
       for (const c of plan.comments) {
         const url = c.avatarUrl;
-        if (!url || seen.has(url)) {
-          continue;
+        if (url && !seen.has(url)) {
+          seen.add(url);
+          this.avatarCache.getAvatarUri(url);
         }
-        seen.add(url);
-        this.avatarCache.getAvatarUri(url);
       }
     }
   }
@@ -258,7 +257,7 @@ export class ReviewCommentsController implements vscode.Disposable {
   /** Update comment avatars after a URL finishes downloading — avoids a full refresh/flicker. */
   private patchAvatarsForUrl(url: string): void {
     for (const [threadKey, plan] of this.lastThreadPlan) {
-      if (!plan.comments.some((c) => c.avatarUrl === url)) {
+      if (plan.comments.every((c) => c.avatarUrl !== url)) {
         continue;
       }
       const thread = this.threads.get(threadKey);
@@ -477,7 +476,7 @@ export function fingerprintCommentPlan(
   plan: Map<ThreadKey, ThreadPlan>,
 ): string {
   const header = `${folderFsPath}:${pullRequestNumber}`;
-  const keys = [...plan.keys()].toSorted();
+  const keys = [...plan.keys()].toSorted((a, b) => a.localeCompare(b));
   const lines: string[] = [header];
   for (const threadKey of keys) {
     const entry = plan.get(threadKey);
@@ -567,8 +566,8 @@ export function compareReviewCommentById(
   if (
     Number.isFinite(na) &&
     Number.isFinite(nb) &&
-    Number.isInteger(na) &&
-    Number.isInteger(nb) &&
+    Number.isSafeInteger(na) &&
+    Number.isSafeInteger(nb) &&
     na.toString() === sa &&
     nb.toString() === sb
   ) {
@@ -673,20 +672,11 @@ export function buildDiffPositionMap(diffText: string): Map<string, Map<number, 
       continue;
     }
 
-    if (line.startsWith(" ")) {
+    // Context (" ") and added ("+") lines exist in the new file; deletions ("-") consume a diff
+    // position but do not advance the new-file line number.
+    if (line.startsWith(" ") || line.startsWith("+")) {
       fileMap.set(diffPosition, newline);
       newline += 1;
-      continue;
-    }
-
-    if (line.startsWith("+")) {
-      fileMap.set(diffPosition, newline);
-      newline += 1;
-      continue;
-    }
-
-    if (line.startsWith("-")) {
-      continue;
     }
   }
 

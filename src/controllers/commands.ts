@@ -171,7 +171,9 @@ export class CommandsController {
     const context = this.store.getBranchContext(repo);
     const entry = this.store.getEntry(repo);
     const branchNames = entry
-      ? [...new Set(entry.runs.map((r) => r.branch).filter(Boolean) as string[])].toSorted()
+      ? [...new Set(entry.runs.map((r) => r.branch).filter(Boolean) as string[])].toSorted((a, b) =>
+          a.localeCompare(b),
+        )
       : [];
 
     const currentBranchLabel =

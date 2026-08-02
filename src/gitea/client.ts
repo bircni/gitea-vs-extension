@@ -136,11 +136,11 @@ export class GiteaHttpClient {
 }
 
 function isSameOrigin(baseUrl: string, url: string): boolean {
+  if (!baseUrl) {
+    return false;
+  }
   try {
     const targetOrigin = new URL(url).origin;
-    if (!baseUrl) {
-      return false;
-    }
     const baseOrigin = new URL(baseUrl).origin;
     return targetOrigin === baseOrigin;
   } catch {

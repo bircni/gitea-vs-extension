@@ -9,7 +9,7 @@ function configuration(
   return {
     get: vi.fn((key: string) => values[key]),
     inspect: vi.fn((key: string) =>
-      key in explicitValues
+      Object.hasOwn(explicitValues, key)
         ? { defaultValue: values[key], globalValue: explicitValues[key] }
         : undefined,
     ),

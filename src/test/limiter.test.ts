@@ -31,16 +31,13 @@ test("createLimiter rejects invalid maxConcurrent values", () => {
 test("createLimiter allows two concurrent tasks", async () => {
   const limiter = createLimiter(2);
   let started = 0;
-  let gateResolve: (() => void) | undefined;
-  const gate = new Promise<void>((resolve) => {
-    gateResolve = resolve;
-  });
+  const { promise: gate, resolve: gateResolve } = Promise.withResolvers<void>();
 
   const task = (label: string) =>
     limiter(async () => {
       started += 1;
       if (started === 2) {
-        gateResolve?.();
+        gateResolve();
       }
       await gate;
       return label;
@@ -55,5 +52,5 @@ test("createLimiter allows two concurrent tasks", async () => {
 
   const results = await Promise.all([taskA, taskB, taskC]);
   expect(started).toBe(3);
-  expect(results.toSorted()).toEqual(["A", "B", "C"]);
+  expect(results.toSorted((a, b) => a.localeCompare(b))).toEqual(["A", "B", "C"]);
 });

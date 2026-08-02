@@ -220,7 +220,6 @@ describe("resolveBranchFetch", () => {
   });
 
   it("returns undefined when no filter is set", () => {
-    // eslint-disable-next-line unicorn/no-useless-undefined -- filter is a required positional arg
     expect(resolveBranchFetch(context, undefined)).toBeUndefined();
   });
 });

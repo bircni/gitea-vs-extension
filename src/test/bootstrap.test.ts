@@ -101,11 +101,13 @@ describe("bootstrap helpers", () => {
 
     it("returns undefined for unknown element", () => {
       expect(getExpandedKey({})).toBeUndefined();
-      expect(
-        getExpandedKey(
-          new PullRequestNode(repo("o", "n"), { id: 1, number: 1, title: "x", state: "open" }),
-        ),
-      ).toBeUndefined();
+      const pullRequestNode = new PullRequestNode(repo("o", "n"), {
+        id: 1,
+        number: 1,
+        title: "x",
+        state: "open",
+      });
+      expect(getExpandedKey(pullRequestNode)).toBeUndefined();
     });
   });
 

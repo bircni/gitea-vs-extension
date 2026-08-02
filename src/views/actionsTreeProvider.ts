@@ -213,7 +213,6 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
 
     const runKey = String(run.id);
     const state = entry.jobsStateByRun.get(runKey) ?? "unloaded";
-    const error = entry.jobsErrorByRun.get(runKey);
     if (state === "unloaded") {
       return [new MessageNode("Expand to load jobs.")];
     }
@@ -221,7 +220,7 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       return [new MessageNode("Loading jobs...")];
     }
     if (state === "error") {
-      return [new ErrorNode(error ?? "Failed to load jobs.")];
+      return [new ErrorNode(entry.jobsErrorByRun.get(runKey) ?? "Failed to load jobs.")];
     }
 
     const jobs = entry.jobsByRun.get(runKey) ?? [];

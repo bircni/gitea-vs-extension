@@ -16,7 +16,7 @@ export function formatRelativeTime(iso?: string): string | undefined {
     [7, "d"],
     [4, "w"],
     [12, "mo"],
-    [Number.POSITIVE_INFINITY, "y"],
+    [Infinity, "y"],
   ];
 
   let value = seconds;

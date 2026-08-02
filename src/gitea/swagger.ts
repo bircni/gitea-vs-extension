@@ -90,18 +90,22 @@ export function discoverEndpoints(doc?: SwaggerDoc): EndpointMap {
 }
 
 export function fallbackEndpoints(): EndpointMap {
+  // `{owner}`, `{repo}`, … are Gitea path placeholders filled in per request, not interpolations.
   const basePath = "/api/v1";
   return {
-    listRuns: `${basePath}/repos/{owner}/{repo}/actions/runs`,
-    listJobs: `${basePath}/repos/{owner}/{repo}/actions/runs/{run}/jobs`,
-    jobLogs: `${basePath}/repos/{owner}/{repo}/actions/jobs/{job_id}/logs`,
-    listRunArtifacts: `${basePath}/repos/{owner}/{repo}/actions/runs/{run}/artifacts`,
-    listRepoArtifacts: `${basePath}/repos/{owner}/{repo}/actions/artifacts`,
-    listPullRequests: `${basePath}/repos/{owner}/{repo}/pulls`,
-    listPullRequestReviews: `${basePath}/repos/{owner}/{repo}/pulls/{index}/reviews`,
-    listPullRequestReviewComments: `${basePath}/repos/{owner}/{repo}/pulls/{index}/reviews/{id}/comments`,
-    listRepos: `${basePath}/user/repos`,
-    version: `${basePath}/version`,
+    listRuns: joinPath(basePath, "/repos/{owner}/{repo}/actions/runs"),
+    listJobs: joinPath(basePath, "/repos/{owner}/{repo}/actions/runs/{run}/jobs"),
+    jobLogs: joinPath(basePath, "/repos/{owner}/{repo}/actions/jobs/{job_id}/logs"),
+    listRunArtifacts: joinPath(basePath, "/repos/{owner}/{repo}/actions/runs/{run}/artifacts"),
+    listRepoArtifacts: joinPath(basePath, "/repos/{owner}/{repo}/actions/artifacts"),
+    listPullRequests: joinPath(basePath, "/repos/{owner}/{repo}/pulls"),
+    listPullRequestReviews: joinPath(basePath, "/repos/{owner}/{repo}/pulls/{index}/reviews"),
+    listPullRequestReviewComments: joinPath(
+      basePath,
+      "/repos/{owner}/{repo}/pulls/{index}/reviews/{id}/comments",
+    ),
+    listRepos: joinPath(basePath, "/user/repos"),
+    version: joinPath(basePath, "/version"),
   };
 }
 

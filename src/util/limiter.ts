@@ -20,18 +20,23 @@ export function createLimiter(maxConcurrent: number): Limiter {
   };
 
   return async <T>(task: () => Promise<T>): Promise<T> =>
-    new Promise<T>((resolve, reject) => {
-      const execute = (): void => {
+    new Promise<T>((resolve) => {
+      const execute = async (): Promise<void> => {
         activeCount += 1;
-        task()
-          .then(resolve, reject)
-          .finally(() => {
-            activeCount -= 1;
-            next();
-          });
+        const running = task();
+        // Adopting the task promise forwards its settlement — value or rejection reason — as is.
+        resolve(running);
+        try {
+          await running;
+        } catch {
+          // Already surfaced to the caller through the adopted promise.
+        } finally {
+          activeCount -= 1;
+          next();
+        }
       };
 
-      queue.push(execute);
+      queue.push(() => void execute());
       next();
     });
 }

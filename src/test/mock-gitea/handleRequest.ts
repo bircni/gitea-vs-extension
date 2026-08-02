@@ -117,11 +117,11 @@ async function handle(
     if (mRepo) {
       const owner = decodeURIComponent(mRepo[1]);
       const repo = decodeURIComponent(mRepo[2]);
-      const rest = mRepo[3];
       if (owner !== TEST_REPO_OWNER || repo !== TEST_REPO_NAME) {
         sendText(res, 404, "not found");
         return;
       }
+      const rest = mRepo[3];
       await handleRepoRoutes(state, req, res, method, baseUrl, rest, url.searchParams);
       return;
     }
@@ -365,7 +365,7 @@ async function handleRepoRoutes(
 
   if (rest === "actions/secrets" && method === "GET") {
     sendJson(res, 200, {
-      secrets: [...state.secrets.entries()].map(([name, v]) => ({
+      secrets: [...state.secrets].map(([name, v]) => ({
         name,
         description: v.description,
         created_at: "2020-01-01T00:00:00Z",

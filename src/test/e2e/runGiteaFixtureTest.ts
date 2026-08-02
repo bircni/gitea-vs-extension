@@ -89,8 +89,16 @@ async function main(): Promise<void> {
       },
     });
   } finally {
-    await docker(["rm", "-f", containerName]).catch(() => {});
-    await normalizeRunRootPermissions(runRoot, metadata?.image).catch(() => {});
+    try {
+      await docker(["rm", "-f", containerName]);
+    } catch {
+      /* best effort cleanup */
+    }
+    try {
+      await normalizeRunRootPermissions(runRoot, metadata?.image);
+    } catch {
+      /* best effort cleanup */
+    }
     fs.rmSync(runRoot, { recursive: true, force: true });
   }
 }
@@ -103,8 +111,9 @@ async function normalizeRunRootPermissions(
     return;
   }
 
-  const uid = process.getuid?.();
-  const gid = process.getgid?.();
+  const { getuid, getgid } = process;
+  const uid = getuid ? getuid() : undefined;
+  const gid = getgid ? getgid() : undefined;
   if (typeof uid !== "number" || typeof gid !== "number") {
     return;
   }
@@ -146,7 +155,7 @@ function replaceIniValue(input: string, key: string, value: string): string {
   const escaped = key.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
   const pattern = new RegExp(String.raw`^${escaped}\s*=.*$`, "m");
   if (pattern.test(input)) {
-    return input.replace(pattern, `${key} = ${value}`);
+    return input.replace(pattern, () => `${key} = ${value}`);
   }
   return `${input.trimEnd()}\n${key} = ${value}\n`;
 }
@@ -238,7 +247,13 @@ async function docker(args: string[]): Promise<{ stdout: string; stderr: string 
   return execFileAsync("docker", args, { maxBuffer: 10 * 1024 * 1024 });
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+async function cli(): Promise<void> {
+  try {
+    await main();
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
+  }
+}
+
+void cli();
