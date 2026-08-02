@@ -22,7 +22,7 @@ export type CurrentBranchResult = {
 export async function getCurrentBranchInFolder(folderPath: string): Promise<CurrentBranchResult> {
   try {
     const isRepo = await execGit(["rev-parse", "--is-inside-work-tree"], folderPath);
-    if (!isRepo.trim().startsWith("true")) {
+    if (!isRepo.trimStart().startsWith("true")) {
       return { branchName: null, status: "noRepo", reason: "Not a git repository" };
     }
   } catch {

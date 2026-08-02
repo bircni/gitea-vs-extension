@@ -47,7 +47,13 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+async function cli(): Promise<void> {
+  try {
+    await main();
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
+  }
+}
+
+void cli();

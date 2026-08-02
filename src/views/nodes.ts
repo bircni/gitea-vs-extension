@@ -210,23 +210,31 @@ export class MessageNode extends vscode.TreeItem {
     super(message, vscode.TreeItemCollapsibleState.None);
     this.contextValue = "giteaMessage";
     this.iconPath = new vscode.ThemeIcon(severity === "error" ? "warning" : "info");
-    if (action === "configureBaseUrl") {
-      this.command = {
-        command: "gitea-vs-extension.openBaseUrlSettings",
-        title: "Configure base URL",
-      };
-    }
-    if (action === "setToken") {
-      this.command = {
-        command: "gitea-vs-extension.setToken",
-        title: "Set token",
-      };
-    }
-    if (action === "switchBranchFilter") {
-      this.command = {
-        command: "gitea-vs-extension.switchBranchFilter",
-        title: "Change branch filter",
-      };
+    switch (action) {
+      case "configureBaseUrl": {
+        this.command = {
+          command: "gitea-vs-extension.openBaseUrlSettings",
+          title: "Configure base URL",
+        };
+        break;
+      }
+      case "setToken": {
+        this.command = {
+          command: "gitea-vs-extension.setToken",
+          title: "Set token",
+        };
+        break;
+      }
+      case "switchBranchFilter": {
+        this.command = {
+          command: "gitea-vs-extension.switchBranchFilter",
+          title: "Change branch filter",
+        };
+        break;
+      }
+      default: {
+        break;
+      }
     }
   }
 }

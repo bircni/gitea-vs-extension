@@ -79,11 +79,11 @@ export function registerExtensionTestCommands(
     }),
     vscode.commands.registerCommand("gitea-vs-extension.__testAddReviewComment", async () => {
       const filePath = process.env.GITEA_EXTENSION_TEST_COMMENT_FILE;
-      const line = Number(process.env.GITEA_EXTENSION_TEST_COMMENT_LINE ?? "1");
       if (!filePath) {
         throw new Error("GITEA_EXTENSION_TEST_COMMENT_FILE is required");
       }
-      if (!Number.isInteger(line) || line < 1) {
+      const line = Number(process.env.GITEA_EXTENSION_TEST_COMMENT_LINE ?? "1");
+      if (!Number.isSafeInteger(line) || line < 1) {
         throw new Error("GITEA_EXTENSION_TEST_COMMENT_LINE must be a positive integer");
       }
 

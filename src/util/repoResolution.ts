@@ -19,7 +19,7 @@ export async function resolveRepoFromFolder(
 
   try {
     const isRepo = await execGit(["rev-parse", "--is-inside-work-tree"], folderPath);
-    if (!isRepo.trim().startsWith("true")) {
+    if (!isRepo.trimStart().startsWith("true")) {
       return undefined;
     }
 

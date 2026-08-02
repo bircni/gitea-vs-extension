@@ -7,7 +7,7 @@ const REPLACE_INVALID = /[/\\:*?"<>|]/g;
  * Sanitizes a segment for use in a file path (removes path separators and other invalid chars).
  */
 function sanitizeSegment(segment: string): string {
-  return String(segment).replaceAll(REPLACE_INVALID, "-").trim() || "unknown";
+  return segment.replaceAll(REPLACE_INVALID, "-").trim() || "unknown";
 }
 
 /**

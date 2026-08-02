@@ -105,9 +105,19 @@ export default tseslint.config(
       // established naming (camelCase files, RepoRef, err/msg/arg) and null in API types.
       "unicorn/filename-case": "off",
       "unicorn/prevent-abbreviations": "off",
+      "unicorn/name-replacements": "off",
+      "unicorn/consistent-boolean-name": "off",
       "unicorn/no-null": "off",
       "unicorn/prefer-https": "off",
       "unicorn/number-literal-case": "off",
+      // Member order follows "public API first, helpers after"; enforcing the plugin order would
+      // only reshuffle existing classes.
+      "unicorn/consistent-class-member-order": "off",
+      // Reordering the operands of a condition can change short-circuit behaviour, so this stays a
+      // case-by-case judgement rather than a lint error.
+      "unicorn/prefer-simple-condition-first": "off",
+      // Iterator helpers (`Iterator#toArray()`) need Node 22; the bundle targets Node 18.
+      "unicorn/prefer-iterator-to-array": "off",
     },
   },
   {
@@ -153,6 +163,8 @@ export default tseslint.config(
       "unicorn/no-this-outside-of-class": "off",
       "unicorn/prefer-top-level-await": "off",
       "unicorn/no-process-exit": "off",
+      // Suite-scoped fixtures are set up in beforeAll/beforeEach by design.
+      "unicorn/no-top-level-assignment-in-function": "off",
     },
   },
   // E2E CLI entry points (not *.test.ts)

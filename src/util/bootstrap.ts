@@ -228,12 +228,14 @@ export function wireRefreshAndStatusBar(deps: RefreshAndStatusBarDeps): vscode.D
       }
     }),
     trees.settingsTree.onDidChangeVisibility((e) => {
-      if (e.visible) {
-        const repo = settingsProvider.getCurrentRepo();
-        if (repo) {
-          void vscode.commands.executeCommand("gitea-vs-extension.refreshSecrets", repo);
-          void vscode.commands.executeCommand("gitea-vs-extension.refreshVariables", repo);
-        }
+      if (!e.visible) {
+        return;
+      }
+
+      const repo = settingsProvider.getCurrentRepo();
+      if (repo) {
+        void vscode.commands.executeCommand("gitea-vs-extension.refreshSecrets", repo);
+        void vscode.commands.executeCommand("gitea-vs-extension.refreshVariables", repo);
       }
     }),
   ];

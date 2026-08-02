@@ -269,9 +269,9 @@ export class RefreshController {
 
   scheduleNext(): void {
     const settings = getSettings();
-    const intervalMs = this.isAnythingRunning()
-      ? settings.runningRefreshSeconds * 1000
-      : settings.idleRefreshSeconds * 1000;
+    const intervalMs =
+      (this.isAnythingRunning() ? settings.runningRefreshSeconds : settings.idleRefreshSeconds) *
+      1000;
 
     if (this.timer) {
       clearTimeout(this.timer);

@@ -298,10 +298,8 @@ describe("RefreshController", () => {
 
   it("concurrent refreshAll callers await the same run (single discovery)", async () => {
     const store = createMockStore();
-    let resolveDiscover!: (repos: RepoRef[]) => void;
-    const discoverPromise = new Promise<RepoRef[]>((resolve) => {
-      resolveDiscover = resolve;
-    });
+    const { promise: discoverPromise, resolve: resolveDiscover } =
+      Promise.withResolvers<RepoRef[]>();
     const discovery = {
       discoverRepos: vi.fn(() => discoverPromise),
     };

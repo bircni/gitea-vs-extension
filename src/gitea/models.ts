@@ -100,13 +100,7 @@ export type PullRequestReviewComment = {
 };
 
 export type RepoStatusState =
-  | "pending"
-  | "success"
-  | "error"
-  | "failure"
-  | "warning"
-  | "skipped"
-  | "unknown";
+  "pending" | "success" | "error" | "failure" | "warning" | "skipped" | "unknown";
 
 export type RepoStatus = {
   state: RepoStatusState;
@@ -337,23 +331,24 @@ export function normalizeRepoStatus(raw: Record<string, unknown>): RepoStatus {
 }
 
 function normalizeBranch(value?: string): string | undefined {
-  if (!value) {
+  let ref = value;
+  while (ref?.startsWith("refs/")) {
+    ref = ref.slice("refs/".length);
+  }
+  if (!ref) {
     return undefined;
   }
-  if (value.startsWith("refs/")) {
-    return normalizeBranch(value.slice("refs/".length));
+  if (ref.startsWith("heads/")) {
+    return ref.slice("heads/".length);
   }
-  if (value.startsWith("heads/")) {
-    return value.slice("heads/".length);
+  if (ref.startsWith("tags/")) {
+    return ref.slice("tags/".length);
   }
-  if (value.startsWith("tags/")) {
-    return value.slice("tags/".length);
-  }
-  const prMatch = /^pull\/(\d+)\/head$/.exec(value);
+  const prMatch = /^pull\/(\d+)\/head$/.exec(ref);
   if (prMatch) {
     return `PR #${prMatch[1]}`;
   }
-  return value;
+  return ref;
 }
 
 function extractRefFromPath(path?: string): string | undefined {

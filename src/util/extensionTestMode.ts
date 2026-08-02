@@ -6,6 +6,7 @@ export function resolveExtensionTestPat(): string | undefined {
   if (process.env.EXTENSION_TEST_MODE !== "1") {
     return undefined;
   }
-  const t = process.env.GITEA_EXTENSION_TEST_TOKEN?.trim();
-  return t === undefined || t === "" ? undefined : t;
+  const token = process.env.GITEA_EXTENSION_TEST_TOKEN;
+  const trimmed = token === undefined ? undefined : token.trim();
+  return trimmed === undefined || trimmed === "" ? undefined : trimmed;
 }
