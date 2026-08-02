@@ -29,12 +29,14 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const settingsProvider = new SettingsTreeProvider();
   settingsProvider.setTokenStatus(Boolean(resolveExtensionTestPat() ?? cachedToken));
 
+  const reloadToken = async (): Promise<void> => {
+    cachedToken = await getToken(context.secrets);
+    settingsProvider.setTokenStatus(Boolean(resolveExtensionTestPat() ?? cachedToken));
+  };
+
   context.secrets.onDidChange((event) => {
     if (event.key === TOKEN_KEY) {
-      void getToken(context.secrets).then((token) => {
-        cachedToken = token;
-        settingsProvider.setTokenStatus(Boolean(resolveExtensionTestPat() ?? token));
-      });
+      void reloadToken();
     }
   });
 

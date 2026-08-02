@@ -100,7 +100,13 @@ export type PullRequestReviewComment = {
 };
 
 export type RepoStatusState =
-  "pending" | "success" | "error" | "failure" | "warning" | "skipped" | "unknown";
+  | "pending"
+  | "success"
+  | "error"
+  | "failure"
+  | "warning"
+  | "skipped"
+  | "unknown";
 
 export type RepoStatus = {
   state: RepoStatusState;

@@ -87,8 +87,11 @@ export function mergeRunsById(primary: WorkflowRun[], extra: WorkflowRun[]): Wor
       byId.set(key, run);
     }
   }
-  const runTime = (run: WorkflowRun): string => run.createdAt ?? run.updatedAt ?? "";
   return [...byId.values()].toSorted((a, b) => runTime(b).localeCompare(runTime(a)));
+}
+
+function runTime(run: WorkflowRun): string {
+  return run.createdAt ?? run.updatedAt ?? "";
 }
 
 /**

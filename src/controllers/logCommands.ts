@@ -23,6 +23,11 @@ export type LogCommandsDeps = {
   loadRunDetails: (repo: RepoRef, runId: number | string) => Promise<void>;
 };
 
+/** Makes a run or job id safe to use inside a log file name. */
+function safeLogId(id: number | string): string {
+  return String(id).replaceAll(/[^a-zA-Z0-9.-]/g, "-");
+}
+
 export async function viewJobLogs(deps: LogCommandsDeps, arg: unknown): Promise<void> {
   const payload = normalizeLogArg(arg);
   if (!payload) {
@@ -37,8 +42,7 @@ export async function viewJobLogs(deps: LogCommandsDeps, arg: unknown): Promise<
     if (settings.jobLogsSaveToRepo) {
       const folderPath = deps.getWorkspaceFolderPath(payload.repo);
       if (folderPath) {
-        const safe = (id: number | string) => String(id).replaceAll(/[^a-zA-Z0-9.-]/g, "-");
-        const fileName = `run-${safe(payload.run.id)}-job-${safe(payload.job.id)}.log`;
+        const fileName = `run-${safeLogId(payload.run.id)}-job-${safeLogId(payload.job.id)}.log`;
         const logDir = deps.pathJoin(folderPath, ".tmp", "gitea-logs");
         const filePath = deps.pathJoin(logDir, fileName);
         deps.mkdirSync(logDir, { recursive: true });

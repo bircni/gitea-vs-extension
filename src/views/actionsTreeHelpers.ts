@@ -113,7 +113,8 @@ export function getFilteredRunsForDisplay(
   if (!context || !filter) {
     return entry.runs;
   }
-  let runs = filterRunsByBranch(entry.runs, filter, context);
+  // Copied so the PR-run merge below can never mutate the cached run list.
+  const runs = [...filterRunsByBranch(entry.runs, filter, context)];
 
   if (filter.mode === "currentBranch" && context.status === "resolved" && context.branchName) {
     const prNumbersForCurrentBranch = new Set(
@@ -131,7 +132,7 @@ export function getFilteredRunsForDisplay(
         !seenIds.has(String(run.id))
       ) {
         seenIds.add(String(run.id));
-        runs = [...runs, run];
+        runs.push(run);
       }
     }
   }

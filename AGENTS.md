@@ -29,7 +29,7 @@ Before making changes:
 - [undici](https://github.com/nodejs/undici) for HTTP
 - Vitest for tests
 - esbuild for bundling, vsce for packaging
-- ESLint, Prettier
+- oxlint (type-aware) for linting, oxfmt for formatting
 
 ## Project Structure
 
@@ -113,8 +113,8 @@ npm run test:report   # Tests then report path
 **Quality:**
 
 ```bash
-npm run lint     # ESLint
-npm run format   # Prettier check
+npm run lint     # oxlint (type-aware)
+npm run format   # oxfmt check
 npm run validate # check-unused + lint + format + test + build
 ```
 

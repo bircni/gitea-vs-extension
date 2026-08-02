@@ -21,11 +21,7 @@ import {
   type WorkflowRun,
 } from "./models";
 
-export class EndpointError extends Error {
-  constructor(message: string) {
-    super(message);
-  }
-}
+export class EndpointError extends Error {}
 
 export class GiteaApi {
   private endpoints?: EndpointMap;
