@@ -292,7 +292,6 @@ export class SecretNode extends vscode.TreeItem {
   ) {
     super(name, vscode.TreeItemCollapsibleState.None);
     this.contextValue = "giteaSecret";
-    this.description = description;
     this.iconPath = new vscode.ThemeIcon("lock");
   }
 }
@@ -314,7 +313,6 @@ export class VariableNode extends vscode.TreeItem {
   ) {
     super(name, vscode.TreeItemCollapsibleState.None);
     this.contextValue = "giteaVariable";
-    this.description = description;
     this.iconPath = new vscode.ThemeIcon("symbol-field");
     if (value) {
       this.tooltip = `${name}\nValue: ${value}`;

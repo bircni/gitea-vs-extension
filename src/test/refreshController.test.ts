@@ -51,7 +51,7 @@ function createMockStore() {
       const key = `${repo.host}/${repo.owner}/${repo.name}`;
       const e = entries.get(key);
       if (!e) {
-        return;
+        return undefined;
       }
       return {
         repo: e.repo,

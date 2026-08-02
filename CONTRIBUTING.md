@@ -38,7 +38,7 @@ npm run watch
 | ----------------------- | ----------------------------- |
 | `npm run compile`       | Build TypeScript to `dist/`   |
 | `npm run watch`         | Build and watch for changes   |
-| `npm run lint`          | Run ESLint                    |
+| `npm run lint`          | Run oxlint (type-aware)       |
 | `npm run format`        | Check formatting              |
 | `npm run format:write`  | Auto format files             |
 | `npm test`              | Run unit tests                |
@@ -74,7 +74,7 @@ npm run test:coverage
 ## Code Style
 
 - TypeScript strict mode
-- ESLint and Prettier
+- oxlint and oxfmt
 - Prefer explicit types and async/await
 
 ## Packaging

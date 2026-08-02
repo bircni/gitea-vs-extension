@@ -38,7 +38,13 @@ export async function startMockGitea(): Promise<MockGiteaInstance> {
     server,
     close: () =>
       new Promise((resolve, reject) => {
-        server.close((err) => (err ? reject(err) : resolve()));
+        server.close((err) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve();
+        });
       }),
   };
 }

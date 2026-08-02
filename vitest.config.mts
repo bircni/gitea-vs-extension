@@ -8,7 +8,7 @@ export default defineConfig({
     include: ["src/test/**/*.test.ts"],
     exclude: ["src/test/e2e/**"],
     alias: {
-      vscode: path.resolve(__dirname, "src/test/__mocks__/vscode.ts"),
+      vscode: path.resolve(import.meta.dirname, "src/test/__mocks__/vscode.ts"),
     },
     coverage: {
       provider: "v8",

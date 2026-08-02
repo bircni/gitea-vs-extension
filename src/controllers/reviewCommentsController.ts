@@ -728,16 +728,21 @@ class AvatarCache {
     }
 
     this.inflight.add(url);
-    void this.download(url, cachedPath)
-      .then(() => this.onAvatarCached(url))
-      .catch((error) => {
-        this.logger.debug(`Failed to cache avatar: ${formatError(error)}`);
-      })
-      .finally(() => {
-        this.inflight.delete(url);
-      });
+    void this.cache(url, cachedPath);
 
     return undefined;
+  }
+
+  /** Downloads an avatar in the background; the caller gets the cached URI on a later render. */
+  private async cache(url: string, cachedPath: string | undefined): Promise<void> {
+    try {
+      await this.download(url, cachedPath);
+      this.onAvatarCached(url);
+    } catch (error) {
+      this.logger.debug(`Failed to cache avatar: ${formatError(error)}`);
+    } finally {
+      this.inflight.delete(url);
+    }
   }
 
   private getCachePath(url: string): string | undefined {

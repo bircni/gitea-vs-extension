@@ -4,7 +4,6 @@ import {
   getFilteredRunsForDisplay,
   getRepoChildRunsState,
   getRootMessage,
-  type ProviderMode,
 } from "../views/actionsTreeHelpers";
 import type { BranchContext, BranchFilterState } from "../util/branchContext";
 import type { RepoCacheEntry } from "../util/cache";
