@@ -3,7 +3,7 @@ import { resolveRepoFromFolder, resolveWorkspaceRepos } from "../util/repoResolu
 import { execGit } from "../util/git";
 import type { Mock } from "vitest";
 
-vi.mock("../util/git", () => ({
+vi.mock(import("../util/git"), () => ({
   execGit: vi.fn(),
 }));
 

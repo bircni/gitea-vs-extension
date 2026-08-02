@@ -50,7 +50,7 @@ export class EventEmitter<T> {
       l(data);
     }
   }
-  get event(): (listener: (e: T) => void) => { dispose(): void } {
+  get event(): (listener: (e: T) => void) => { dispose: () => void } {
     return (listener: (e: T) => void) => {
       this.listeners.push(listener);
       return {

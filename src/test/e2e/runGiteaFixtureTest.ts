@@ -229,14 +229,16 @@ async function waitForGitea(baseUrl: string): Promise<void> {
     } catch (error) {
       lastError = error;
     }
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 1000);
+    });
   }
   throw new Error(`Gitea did not become ready: ${String(lastError)}`);
 }
 
 async function getMappedPort(containerName: string): Promise<string> {
   const { stdout } = await docker(["port", containerName, "3000/tcp"]);
-  const match = /:(\d+)\s*$/.exec(stdout.trim());
+  const match = /:(?<port>\d+)\s*$/.exec(stdout.trim());
   if (!match) {
     throw new Error(`could not resolve mapped Gitea port from: ${stdout}`);
   }

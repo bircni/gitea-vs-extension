@@ -21,7 +21,12 @@ import {
   type WorkflowRun,
 } from "./models";
 
-export class EndpointError extends Error {}
+export class EndpointError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "EndpointError";
+  }
+}
 
 export class GiteaApi {
   private endpoints?: EndpointMap;
@@ -489,7 +494,7 @@ function extractRedirectUrlFromHtml(buffer: Uint8Array): string | null {
   if (!trimmed.startsWith("<")) {
     return null;
   }
-  const hrefMatch = /href\s*=\s*["']([^"']+)["']/i.exec(text);
+  const hrefMatch = /href\s*=\s*["'](?<url>[^"']+)["']/i.exec(text);
   if (!hrefMatch?.[1]) {
     return null;
   }

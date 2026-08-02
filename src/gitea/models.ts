@@ -350,7 +350,7 @@ function normalizeBranch(value?: string): string | undefined {
   if (ref.startsWith("tags/")) {
     return ref.slice("tags/".length);
   }
-  const prMatch = /^pull\/(\d+)\/head$/.exec(ref);
+  const prMatch = /^pull\/(?<number>\d+)\/head$/.exec(ref);
   if (prMatch) {
     return `PR #${prMatch[1]}`;
   }

@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import path from "node:path";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+
 import { GiteaApi } from "../gitea/api";
 import { GiteaHttpClient } from "../gitea/client";
 import type { RepoRef } from "../gitea/models";
@@ -167,7 +167,7 @@ describe("GiteaApi against hermetic mock (008 inventory)", () => {
   it("rows 8–12: PRs, reviews, comments, create comment, diff", async () => {
     const repo = repoRef();
     const prs = await api.listPullRequests(repo);
-    expect(prs.length).toBe(1);
+    expect(prs).toHaveLength(1);
     const num = prs[0]?.number ?? 1;
 
     const reviews = await api.listPullRequestReviews(repo, num);

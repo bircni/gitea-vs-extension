@@ -12,7 +12,7 @@ import {
 import type { PullRequestReviewComment } from "../gitea/models";
 import type * as fsModule from "node:fs";
 
-vi.mock("fs", async () => ({
+vi.mock(import("node:fs"), async () => ({
   ...(await vi.importActual<typeof fsModule>("fs")),
   existsSync: vi.fn(() => true),
 }));

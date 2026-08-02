@@ -4,7 +4,7 @@ import type { RepoRef } from "../gitea/models";
 import { resolveRepoFromFolder } from "../util/repoResolution";
 import type { Mock } from "vitest";
 
-vi.mock("../util/repoResolution", () => ({
+vi.mock(import("../util/repoResolution"), () => ({
   resolveRepoFromFolder: vi.fn(),
 }));
 

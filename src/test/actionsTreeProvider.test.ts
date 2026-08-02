@@ -7,11 +7,11 @@ import { MessageNode, RepoNode, RunNode } from "../views/nodes";
 import type { RepoRef, WorkflowRun } from "../gitea/models";
 import type { Mock } from "vitest";
 
-vi.mock("../config/settings", () => ({
+vi.mock(import("../config/settings"), () => ({
   getSettings: vi.fn(() => ({ baseUrl: "https://gitea.example", discoveryMode: "all" })),
 }));
 
-vi.mock("../config/secrets", () => {
+vi.mock(import("../config/secrets"), () => {
   const fn = vi.fn().mockResolvedValue("mock-token");
   return {
     getToken: fn,
@@ -57,7 +57,7 @@ describe("ActionsTreeProvider", () => {
     });
     const provider = new ActionsTreeProvider("runs", store as never, {} as never, new Set());
     const children = await provider.getChildren();
-    expect(children.length).toBe(1);
+    expect(children).toHaveLength(1);
     expect(children[0]).toBeInstanceOf(RunNode);
     expect(children[0]).not.toBeInstanceOf(RepoNode);
     expect((children[0] as RunNode).repo).toEqual(mockRepo);
@@ -67,7 +67,7 @@ describe("ActionsTreeProvider", () => {
     const store = createMockStore();
     const provider = new ActionsTreeProvider("runs", store as never, {} as never, new Set());
     const children = await provider.getChildren();
-    expect(children.length).toBe(1);
+    expect(children).toHaveLength(1);
     expect(children[0]).toBeInstanceOf(MessageNode);
     expect(children[0]).not.toBeInstanceOf(RepoNode);
   });
@@ -78,7 +78,7 @@ describe("ActionsTreeProvider", () => {
     store.getRepos.mockReturnValue([mockRepo, otherRepo]);
     const provider = new ActionsTreeProvider("runs", store as never, {} as never, new Set());
     const children = await provider.getChildren();
-    expect(children.length).toBe(2);
+    expect(children).toHaveLength(2);
     expect(children[0]).toBeInstanceOf(RepoNode);
     expect((children[0] as RepoNode).repo).toEqual(mockRepo);
   });
@@ -89,7 +89,7 @@ describe("ActionsTreeProvider", () => {
     store.getRepos.mockReturnValue([]);
     const provider = new ActionsTreeProvider("runs", store as never, {} as never, new Set());
     const children = await provider.getChildren();
-    expect(children.length).toBe(1);
+    expect(children).toHaveLength(1);
     expect(children[0].label).toContain("baseUrl");
   });
 

@@ -66,7 +66,7 @@ export async function checkoutPrBranch(deps: CheckoutCommandsDeps, arg: unknown)
     return;
   }
   // Validate headRef: must be a safe git ref (no leading dash, no spaces, no dangerous chars)
-  if (!/^([A-Za-z0-9._\-/]+)$/.test(headRef) || headRef.startsWith("-")) {
+  if (!/^[A-Za-z0-9._\-/]+$/.test(headRef) || headRef.startsWith("-")) {
     deps.showWarningMessage(`PR head branch name is invalid or unsafe for git: ${headRef}`);
     return;
   }
@@ -145,5 +145,5 @@ async function branchExists(
 function sanitizeGitError(message: string): string {
   // Remove potential tokens from URLs (e.g. https://token@host/...)
   // Preserve the original scheme (http or https)
-  return message.replaceAll(/(https?):\/\/[^@]*@/g, "$1://***@");
+  return message.replaceAll(/(?<scheme>https?):\/\/[^@]*@/g, "$<scheme>://***@");
 }

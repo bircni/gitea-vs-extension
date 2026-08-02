@@ -125,7 +125,7 @@ export function getFilteredRunsForDisplay(
     const seenIds = new Set(runs.map((r) => String(r.id)));
     for (const run of entry.runs) {
       const branch = run.branch ?? "unknown";
-      const prMatch = /^PR #(\d+)$/.exec(branch);
+      const prMatch = /^PR #(?<number>\d+)$/.exec(branch);
       if (
         prMatch &&
         prNumbersForCurrentBranch.has(Number(prMatch[1])) &&

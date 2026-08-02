@@ -12,7 +12,7 @@ describe("SettingsTreeProvider", () => {
     const provider = new SettingsTreeProvider();
     const children = provider.getChildren();
     expect(Array.isArray(children)).toBe(true);
-    expect(children.length).toBe(1);
+    expect(children).toHaveLength(1);
     expect(children[0]).toBeInstanceOf(MessageNode);
     expect((children[0] as MessageNode).label).toContain("Open a Gitea repository");
   });
@@ -21,7 +21,7 @@ describe("SettingsTreeProvider", () => {
     const provider = new SettingsTreeProvider();
     provider.setRepository(mockRepo);
     const children = provider.getChildren();
-    expect(children.length).toBe(3);
+    expect(children).toHaveLength(3);
     expect(children[0]).toBeInstanceOf(SecretsRootNode);
     expect(children[1]).toBeInstanceOf(VariablesRootNode);
     expect(children[2]).toBeInstanceOf(ConfigRootNode);
@@ -34,7 +34,7 @@ describe("SettingsTreeProvider", () => {
     const roots = provider.getChildren();
     const secretsRoot = roots[0];
     const children = provider.getChildren(secretsRoot);
-    expect(children.length).toBe(1);
+    expect(children).toHaveLength(1);
     expect(children[0]).toBeInstanceOf(MessageNode);
     expect((children[0] as MessageNode).label).toContain("Loading");
   });
@@ -49,7 +49,7 @@ describe("SettingsTreeProvider", () => {
     const roots = provider.getChildren();
     const secretsRoot = roots[0];
     const children = provider.getChildren(secretsRoot);
-    expect(children.length).toBe(2);
+    expect(children).toHaveLength(2);
     expect(children[0].label).toBe("SECRET_A");
     expect(children[1].label).toBe("SECRET_B");
   });
