@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2](https://github.com/bircni/gitea-vs-extension/compare/v0.4.1..v0.4.2) - 2026-08-02
+
+### Changed
+
+- cleanup (agent leak, dead code) ([#38](https://github.com/bircni/gitea-vs-extension/issues/38)) - ([f00ce88](https://github.com/bircni/gitea-vs-extension/commit/f00ce885b75c93831b894c0a6b430322c7b82d88))
+
+### Fixed
+
+- **(refresh)** preserve repository state and refresh filters ([#39](https://github.com/bircni/gitea-vs-extension/issues/39)) - ([98e4751](https://github.com/bircni/gitea-vs-extension/commit/98e47513c09c652a2733b0f05905b7e85c61812d))
+
 ## [0.4.1](https://github.com/bircni/gitea-vs-extension/compare/v0.4.0..v0.4.1) - 2026-06-19
 
 ### Fixed
