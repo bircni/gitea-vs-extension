@@ -650,7 +650,7 @@ export function buildDiffPositionMap(diffText: string): Map<string, Map<number, 
     }
 
     if (line.startsWith("@@ ")) {
-      const match = /@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(line);
+      const match = /@@ -(?<oldStart>\d+)(?:,\d+)? \+(?<newStart>\d+)(?:,\d+)? @@/.exec(line);
       if (match) {
         newline = Number(match[2]);
       }

@@ -1,6 +1,9 @@
 import { createLimiter } from "../util/limiter";
 
-const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+const delay = (ms: number) =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
 
 test("createLimiter enforces serial execution with maxConcurrent=1", async () => {
   const limiter = createLimiter(1);

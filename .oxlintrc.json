@@ -4,7 +4,9 @@
   "categories": {
     "correctness": "error",
     "suspicious": "error",
-    "perf": "error"
+    "perf": "error",
+    "pedantic": "error",
+    "style": "error"
   },
   "ignorePatterns": [
     "dist",
@@ -96,15 +98,101 @@
 
     "node/no-exports-assign": "error",
 
-    // Repo-wide exceptions.
+    "typescript/switch-exhaustiveness-check": [
+      "error",
+      { "considerDefaultExhaustiveForUnions": true }
+    ],
+
+    // --- Repo-wide exceptions to the categories above -------------------------------------
+    // Metrics and formatting opinions: the codebase does not follow them and would only churn.
+    "capitalized-comments": "off",
+    "func-names": "off",
+    "func-style": "off",
+    "id-length": "off",
+    "init-declarations": "off",
+    "max-classes-per-file": "off",
+    "max-lines": "off",
+    "max-lines-per-function": "off",
+    "max-params": "off",
+    "max-statements": "off",
+    "no-inline-comments": "off",
+    "no-magic-numbers": "off",
+    "no-ternary": "off",
+    "prefer-destructuring": "off",
+    "sort-imports": "off",
+    "sort-keys": "off",
+    "import/max-dependencies": "off",
+
+    // Module shape: named exports, declared where they are defined, are the house style.
+    "import/exports-last": "off",
+    "import/group-exports": "off",
+    "import/no-named-export": "off",
+    "import/prefer-default-export": "off",
+    // `import * as vscode` / `node:fs` are unavoidable in a Node-hosted VS Code extension.
+    "import/no-namespace": "off",
+    "import/no-nodejs-modules": "off",
+    // Inline specifiers are used when an import mixes values and types, `import type` when it
+    // does not; neither setting of this rule expresses that.
+    "import/consistent-type-specifier-style": "off",
+
     // Several refresh paths fetch sequentially on purpose to stay within Gitea rate limits.
     "no-await-in-loop": "off",
+    "no-continue": "off",
     // VS Code's own tree-provider convention is a leading underscore for the private emitter.
     "no-underscore-dangle": "off",
     "no-shadow": "off",
+    // Adding the `u` flag changes escape handling in existing patterns.
+    "require-unicode-regexp": "off",
+    // `async` without `await` is often required to satisfy an interface; the type-aware
+    // typescript/require-await covers the cases that matter.
+    "require-await": "off",
+    // The extension host is synchronous in these paths (activation, tree rendering).
+    "node/no-sync": "off",
+    "node/global-require": "off",
+    "node/callback-return": "off",
+    "promise/avoid-new": "off",
+    "promise/prefer-await-to-callbacks": "off",
+
+    // Type-level strictness that would rewrite the whole codebase for no defect class.
+    "typescript/prefer-readonly-parameter-types": "off",
+    "typescript/strict-boolean-expressions": "off",
+    "typescript/strict-void-return": "off",
+    "typescript/no-confusing-void-expression": "off",
+    // Parameter properties are the tree-node and controller constructor style.
+    "typescript/parameter-properties": "off",
     // The API layer narrows untyped Gitea JSON with `as Record<string, unknown>` by design.
     "typescript/no-unsafe-type-assertion": "off",
-    "vitest/require-mock-type-parameters": "off"
+
+    // `null` is part of the Gitea API surface, and file names are camelCase.
+    "unicorn/no-null": "off",
+    "unicorn/filename-case": "off",
+    // Conflicts with typescript/consistent-return and with required positional arguments.
+    "unicorn/no-useless-undefined": "off",
+    // oxfmt normalises hex literals to lowercase, so this rule can never be satisfied.
+    "unicorn/number-literal-case": "off",
+
+    // Test-suite shape: this repo uses flat suites, `toEqual`, and vitest globals.
+    "vitest/require-top-level-describe": "off",
+    "vitest/consistent-test-it": "off",
+    "vitest/prefer-describe-function-title": "off",
+    "vitest/prefer-lowercase-title": "off",
+    "vitest/prefer-expect-assertions": "off",
+    "vitest/prefer-strict-equal": "off",
+    "vitest/no-conditional-in-test": "off",
+    "vitest/no-hooks": "off",
+    "vitest/max-expects": "off",
+    "vitest/require-mock-type-parameters": "off",
+    "vitest/prefer-called-with": "off",
+    "vitest/prefer-spy-on": "off",
+    "vitest/no-mocks-import": "off",
+    // globals: true is set in the vitest config, so importing them is redundant. Keeping
+    // no-importing-vitest-globals on means prefer-importing-vitest-globals must be off.
+    "vitest/prefer-importing-vitest-globals": "off",
+    // Weakens `toBe(true)` into a truthiness check; prefer-strict-boolean-matchers is kept on.
+    "vitest/prefer-to-be-truthy": "off",
+    "vitest/prefer-to-be-falsy": "off",
+    // Direct contradiction of vitest/prefer-called-once, which is kept on.
+    "vitest/prefer-called-times": "off"
   },
   "overrides": [
     {
@@ -115,6 +203,8 @@
         "typescript/no-floating-promises": "off",
         "typescript/no-unsafe-argument": "off",
         "typescript/no-unsafe-assignment": "off",
+        "typescript/no-unsafe-call": "off",
+        "typescript/no-unsafe-member-access": "off",
         "typescript/no-unsafe-return": "off",
         "typescript/require-await": "off",
         // Mock responses are tiny; readability beats the allocation this avoids.
@@ -122,10 +212,11 @@
       }
     },
     {
-      // The e2e suites run under Mocha, not Vitest.
+      // The e2e suites run under Mocha, not Vitest, and their entry points are CommonJS CLIs.
       "files": ["src/test/e2e/**"],
       "rules": {
-        "vitest/expect-expect": "off"
+        "vitest/expect-expect": "off",
+        "unicorn/prefer-top-level-await": "off"
       }
     }
   ]

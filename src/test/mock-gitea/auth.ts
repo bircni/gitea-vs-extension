@@ -6,7 +6,7 @@ export function getBearerToken(req: IncomingMessage): string | undefined {
   if (!raw || typeof raw !== "string") {
     return undefined;
   }
-  const m = /^token\s+(.+)$/i.exec(raw.trim());
+  const m = /^token\s+(?<token>.+)$/i.exec(raw.trim());
   return m?.[1]?.trim();
 }
 

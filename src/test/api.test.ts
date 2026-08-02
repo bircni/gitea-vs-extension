@@ -6,13 +6,13 @@ import { fetchSwagger } from "../gitea/swagger";
 import type * as swaggerModule from "../gitea/swagger";
 import type { Mock } from "vitest";
 
-vi.mock("fs", async () => ({
+vi.mock(import("node:fs"), async () => ({
   ...(await vi.importActual<typeof fs>("fs")),
   mkdirSync: vi.fn(),
   writeFileSync: vi.fn(),
 }));
 
-vi.mock("../gitea/swagger", async () => {
+vi.mock(import("../gitea/swagger"), async () => {
   const actual = await vi.importActual<typeof swaggerModule>("../gitea/swagger");
   return {
     ...actual,

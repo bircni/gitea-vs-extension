@@ -25,8 +25,8 @@ test("formatDuration formats seconds, minutes, and hours", () => {
 
 test("formatDuration handles missing end time", () => {
   const duration = formatDuration("2024-01-01T00:00:00Z");
-  expect(duration).toBeTruthy();
-  expect(duration).toMatch(/^\d+(s|m|h)$/);
+  expect(duration).toBeTypeOf("string");
+  expect(duration).toMatch(/^\d+(?<unit>s|m|h)$/);
 });
 
 test("formatDuration returns undefined for invalid dates", () => {

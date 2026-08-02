@@ -1,4 +1,3 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { resolveExtensionTestPat } from "../util/extensionTestMode";
 
 const KEYS = ["EXTENSION_TEST_MODE", "GITEA_EXTENSION_TEST_TOKEN"] as const;

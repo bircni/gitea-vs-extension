@@ -2,7 +2,7 @@ import { GiteaHttpClient } from "../gitea/client";
 import { Agent, request } from "undici";
 import type { Mock, MockedFunction } from "vitest";
 
-vi.mock("undici", () => {
+vi.mock(import("undici"), () => {
   const request = vi.fn();
   const Agent = vi.fn(
     class MockAgent {
@@ -210,14 +210,14 @@ test("reuses cached agent when tls setting stays the same", async () => {
   await client.getText("/repos");
   await client.getText("/repos");
 
-  expect(AgentMock).toHaveBeenCalledTimes(1);
+  expect(AgentMock).toHaveBeenCalledOnce();
 
   insecure = false;
   await client.getText("/repos");
   expect(AgentMock).toHaveBeenCalledTimes(2);
   // The previous agent is closed so its keep-alive socket pool isn't orphaned.
   const firstAgent = AgentMock.mock.results[0].value as { close: Mock };
-  expect(firstAgent.close).toHaveBeenCalledTimes(1);
+  expect(firstAgent.close).toHaveBeenCalledOnce();
 });
 
 test("does not create agent for http urls", async () => {

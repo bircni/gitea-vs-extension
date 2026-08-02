@@ -4,7 +4,7 @@ type QueuedResult = { stdout?: string; stderr?: string; err?: Error };
 
 const resultQueue: QueuedResult[] = [];
 
-vi.mock("child_process", () => {
+vi.mock(import("node:child_process"), () => {
   const { promisify } = require("node:util");
   const execFileMock = vi.fn();
   const promisifyWithCustom = promisify as { custom?: symbol };

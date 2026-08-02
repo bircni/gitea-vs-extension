@@ -7,7 +7,7 @@ import type { RepoRef } from "../gitea/models";
 import * as repoResolution from "../util/repoResolution";
 import type { Mock } from "vitest";
 
-vi.mock("../config/settings", () => ({
+vi.mock(import("../config/settings"), () => ({
   getSettings: vi.fn(() => ({
     discoveryMode: "all" as const,
     baseUrl: "https://gitea.example",
@@ -18,7 +18,7 @@ vi.mock("../config/settings", () => ({
   })),
 }));
 
-vi.mock("../util/git", () => ({
+vi.mock(import("../util/git"), () => ({
   getCurrentBranchInFolder: vi.fn().mockResolvedValue({
     branchName: "main",
     status: "resolved" as const,
@@ -26,7 +26,7 @@ vi.mock("../util/git", () => ({
   }),
 }));
 
-vi.mock("../util/repoResolution", () => ({
+vi.mock(import("../util/repoResolution"), () => ({
   resolveWorkspaceRepos: vi.fn().mockResolvedValue([]),
 }));
 
@@ -315,7 +315,7 @@ describe("RefreshController", () => {
 
     const first = controller.refreshAll();
     const second = controller.refreshAll();
-    expect(discovery.discoverRepos).toHaveBeenCalledTimes(1);
+    expect(discovery.discoverRepos).toHaveBeenCalledOnce();
 
     resolveDiscover([mockRepo]);
     await Promise.all([first, second]);

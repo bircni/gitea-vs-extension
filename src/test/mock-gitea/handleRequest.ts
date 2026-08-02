@@ -112,7 +112,7 @@ async function handle(
       return;
     }
 
-    const repoRe = /^\/api\/v1\/repos\/([^/]+)\/([^/]+)\/(.*)$/;
+    const repoRe = /^\/api\/v1\/repos\/(?<owner>[^/]+)\/(?<repo>[^/]+)\/(?<rest>.*)$/;
     const mRepo = repoRe.exec(pathname);
     if (mRepo) {
       const owner = decodeURIComponent(mRepo[1]);
@@ -174,7 +174,7 @@ async function handleRepoRoutes(
     return;
   }
 
-  const runJobsRe = /^actions\/runs\/([^/]+)\/jobs$/;
+  const runJobsRe = /^actions\/runs\/(?<runId>[^/]+)\/jobs$/;
   if (runJobsRe.test(rest) && method === "GET") {
     sendJson(res, 200, {
       jobs: [
@@ -194,7 +194,7 @@ async function handleRepoRoutes(
     return;
   }
 
-  const runArtRe = /^actions\/runs\/([^/]+)\/artifacts$/;
+  const runArtRe = /^actions\/runs\/(?<runId>[^/]+)\/artifacts$/;
   const mRA = runArtRe.exec(rest);
   if (mRA && method === "GET") {
     const runId = mRA[1];
@@ -220,7 +220,8 @@ async function handleRepoRoutes(
   }
 
   if (/^actions\/runs\/[^/]+\/artifacts\/302\/download$/.test(rest) && method === "GET") {
-    const runId = /^actions\/runs\/([^/]+)\/artifacts\/302\/download$/.exec(rest)?.[1] ?? "101";
+    const runId =
+      /^actions\/runs\/(?<runId>[^/]+)\/artifacts\/302\/download$/.exec(rest)?.[1] ?? "101";
     const zipUrl = `${baseUrl}/api/v1/repos/${TEST_REPO_OWNER}/${TEST_REPO_NAME}/actions/runs/${encodeURIComponent(runId)}/artifacts/303/download`;
     const html = `<!DOCTYPE html><html><body><a href="${zipUrl.replaceAll("&", "&amp;")}">Found</a></body></html>`;
     sendText(res, 200, html, "text/html; charset=utf-8");
@@ -273,7 +274,7 @@ async function handleRepoRoutes(
     return;
   }
 
-  const reviewsRe = /^pulls\/([^/]+)\/reviews$/;
+  const reviewsRe = /^pulls\/(?<index>[^/]+)\/reviews$/;
   const mRev = reviewsRe.exec(rest);
   if (mRev) {
     if (method === "GET") {
@@ -319,7 +320,7 @@ async function handleRepoRoutes(
     }
   }
 
-  const commentsRe = /^pulls\/([^/]+)\/reviews\/([^/]+)\/comments$/;
+  const commentsRe = /^pulls\/(?<index>[^/]+)\/reviews\/(?<reviewId>[^/]+)\/comments$/;
   const mComments = commentsRe.exec(rest);
   if (mComments && method === "GET") {
     const reviewId = Number(mComments[2]);
@@ -374,7 +375,7 @@ async function handleRepoRoutes(
     return;
   }
 
-  const secRe = /^actions\/secrets\/([^/]+)$/;
+  const secRe = /^actions\/secrets\/(?<name>[^/]+)$/;
   const mSec = secRe.exec(rest);
   if (mSec) {
     if (method === "PUT") {
@@ -402,7 +403,7 @@ async function handleRepoRoutes(
     return;
   }
 
-  const varRe = /^actions\/variables\/([^/]+)$/;
+  const varRe = /^actions\/variables\/(?<name>[^/]+)$/;
   const mVar = varRe.exec(rest);
   if (mVar) {
     if (method === "GET") {

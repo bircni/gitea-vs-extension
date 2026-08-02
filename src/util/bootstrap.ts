@@ -182,8 +182,8 @@ export function wireSelectionToRepoSync(deps: SelectionToRepoSyncDeps): vscode.D
 }
 
 export type RefreshAndStatusBarDeps = {
-  refreshController: { scheduleNext(): void; refreshAll(): Promise<void> };
-  settingsProvider: { getCurrentRepo(): RepoRef | undefined };
+  refreshController: { scheduleNext: () => void; refreshAll: () => Promise<void> };
+  settingsProvider: { getCurrentRepo: () => RepoRef | undefined };
   onSettingsChange: (listener: () => void) => vscode.Disposable;
   workspaceFoldersChange: vscode.Event<unknown>;
   trees: RegisteredTrees;

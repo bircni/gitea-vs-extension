@@ -7,7 +7,8 @@ export type RemoteInfo = {
 export function parseRemoteUrl(remoteUrl: string): RemoteInfo | undefined {
   const trimmed = remoteUrl.trim();
 
-  const httpsMatch = /^https?:\/\/([^/]+)\/([^/]+)\/([^/]+?)(?:\.git)?$/i.exec(trimmed);
+  const httpsMatch =
+    /^https?:\/\/(?<host>[^/]+)\/(?<owner>[^/]+)\/(?<repo>[^/]+?)(?:\.git)?$/i.exec(trimmed);
   if (httpsMatch) {
     return {
       host: httpsMatch[1],
@@ -16,9 +17,8 @@ export function parseRemoteUrl(remoteUrl: string): RemoteInfo | undefined {
     };
   }
 
-  const sshMatch = /^ssh:\/\/[^@]+@([^/]+)\/(?<owner>[^/]+)\/(?<repo>[^/]+?)(?:\.git)?$/i.exec(
-    trimmed,
-  );
+  const sshMatch =
+    /^ssh:\/\/[^@]+@(?<host>[^/]+)\/(?<owner>[^/]+)\/(?<repo>[^/]+?)(?:\.git)?$/i.exec(trimmed);
   if (sshMatch?.groups?.owner && sshMatch.groups.repo) {
     return {
       host: sshMatch[1],
@@ -27,7 +27,9 @@ export function parseRemoteUrl(remoteUrl: string): RemoteInfo | undefined {
     };
   }
 
-  const scpMatch = /^[^@]+@([^:]+):([^/]+)\/([^/]+?)(?:\.git)?$/i.exec(trimmed);
+  const scpMatch = /^[^@]+@(?<host>[^:]+):(?<owner>[^/]+)\/(?<repo>[^/]+?)(?:\.git)?$/i.exec(
+    trimmed,
+  );
   if (scpMatch) {
     return {
       host: scpMatch[1],

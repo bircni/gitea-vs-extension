@@ -6,7 +6,7 @@ import { CommandsController } from "../controllers/commands";
 import type { RepoRef } from "../gitea/models";
 import type { Mock } from "vitest";
 
-vi.mock("../config/settings", () => ({
+vi.mock(import("../config/settings"), () => ({
   getSettings: vi.fn(() => ({ maxRunsPerRepo: 20 })),
 }));
 
@@ -22,9 +22,6 @@ function createMockContext(): vscode.ExtensionContext {
     environmentVariableCollection: {} as vscode.GlobalEnvironmentVariableCollection,
     asAbsolutePath: (p: string) => p,
     storageUri: undefined,
-    storagePath: undefined,
-    globalStoragePath: "",
-    logPath: "",
     extensionMode: 1,
     subscriptions: [] as vscode.Disposable[],
     workspaceState: {} as vscode.Memento,
