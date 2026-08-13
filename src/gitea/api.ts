@@ -264,8 +264,7 @@ export class GiteaApi {
 
   async listSecrets(repo: RepoRef): Promise<Secret[]> {
     const path = `/api/v1/repos/${encodeURIComponent(repo.owner)}/${encodeURIComponent(repo.name)}/actions/secrets`;
-    const response = await this.client.getJson<{ secrets?: Secret[] }>(path);
-    return response.secrets ?? [];
+    return this.client.getJson<Secret[]>(path);
   }
 
   async createOrUpdateSecret(
@@ -294,8 +293,7 @@ export class GiteaApi {
 
   async listVariables(repo: RepoRef): Promise<ActionVariable[]> {
     const path = `/api/v1/repos/${encodeURIComponent(repo.owner)}/${encodeURIComponent(repo.name)}/actions/variables`;
-    const response = await this.client.getJson<{ variables?: ActionVariable[] }>(path);
-    return response.variables ?? [];
+    return this.client.getJson<ActionVariable[]>(path);
   }
 
   async getVariable(repo: RepoRef, variableName: string): Promise<ActionVariable> {
