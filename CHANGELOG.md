@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.3](https://github.com/bircni/gitea-vs-extension/compare/v0.4.2..v0.4.3) - 2026-08-13
+
+### Fixed
+
+- **(api)** parse Actions list responses as arrays ([#46](https://github.com/bircni/gitea-vs-extension/issues/46)) - ([1da6449](https://github.com/bircni/gitea-vs-extension/commit/1da6449028f5100470448a0b75e39f4374e2f5f3))
+
 ## [0.4.2](https://github.com/bircni/gitea-vs-extension/compare/v0.4.1..v0.4.2) - 2026-08-02
 
 ### Changed
