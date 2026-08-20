@@ -422,23 +422,23 @@
     "js-yaml": "^4.3.1"
   },
   "devDependencies": {
-    "@tsconfig/node-lts": "24.0.0",
+    "@tsconfig/node-lts": "24.0.1",
     "@types/mocha": "10.0.10",
     "@types/node": "26.2.0",
     "@types/vscode": "1.105.0",
-    "@vitest/coverage-v8": "^4.1.10",
+    "@vitest/coverage-v8": "^4.1.11",
     "@vscode/test-electron": "3.1.0",
     "@vscode/vsce": "3.9.2",
     "depcheck": "1.4.7",
-    "esbuild": "0.28.1",
+    "esbuild": "0.28.2",
     "glob": "13.0.6",
     "mocha": "11.8.0",
-    "oxfmt": "0.62.0",
-    "oxlint": "1.77.0",
+    "oxfmt": "0.64.0",
+    "oxlint": "1.79.0",
     "oxlint-tsgolint": "7.0.2001",
     "rimraf": "6.1.3",
     "typescript": "7.0.2",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   },
   "dependencies": {
     "undici": "8.10.0"
