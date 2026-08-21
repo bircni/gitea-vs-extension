@@ -103,7 +103,7 @@ suite(`gitea-vs-extension E2E (${isRealGitea ? "real Gitea" : "mock"})`, () => {
     );
   });
 
-  test("G1: real Gitea fixture is version 1.26.1", async function () {
+  test("G1: real Gitea fixture is version 1.27.2", async function () {
     if (!isRealGitea) {
       this.skip();
     }
@@ -111,7 +111,7 @@ suite(`gitea-vs-extension E2E (${isRealGitea ? "real Gitea" : "mock"})`, () => {
     const response = await request(`${baseUrl}/api/v1/version`);
     assert.strictEqual(response.statusCode, 200);
     const body = (await response.body.json()) as { version?: string };
-    assert.strictEqual(body.version, "1.26.1");
+    assert.strictEqual(body.version, "1.27.2");
   });
 
   test("G2: refresh discovers fixture repo and pull request", async function () {

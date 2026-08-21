@@ -31,9 +31,16 @@ async function main(): Promise<void> {
   let metadata: GiteaFixtureMetadata | undefined;
   try {
     fs.mkdirSync(dataRoot, { recursive: true });
-    await execFileAsync("tar", ["-xzf", fixtureArchive, "-C", dataRoot], {
-      cwd: extensionDevelopmentPath,
-    });
+    await execFileAsync(
+      "tar",
+      [
+        "-xzf",
+        tarPath(extensionDevelopmentPath, fixtureArchive),
+        "-C",
+        tarPath(extensionDevelopmentPath, dataRoot),
+      ],
+      { cwd: extensionDevelopmentPath },
+    );
     metadata = readMetadata(dataRoot);
     prepareRuntimeSecrets(dataRoot);
 
@@ -136,6 +143,14 @@ function readMetadata(dataRoot: string): GiteaFixtureMetadata {
   return JSON.parse(fs.readFileSync(metadataPath, "utf8")) as GiteaFixtureMetadata;
 }
 
+/**
+ * `tar` operands relative to the repo root with forward slashes: GNU tar reads a `C:\...` archive
+ * name as a remote host and mangles backslashes in the extraction directory.
+ */
+function tarPath(root: string, target: string): string {
+  return path.relative(root, target).split(path.sep).join("/");
+}
+
 function prepareRuntimeSecrets(dataRoot: string): void {
   const appIniPath = path.join(dataRoot, "gitea", "conf", "app.ini");
   let appIni = fs.readFileSync(appIniPath, "utf8");
@@ -220,10 +235,10 @@ async function waitForGitea(baseUrl: string): Promise<void> {
       const response = await request(`${baseUrl}/api/v1/version`);
       if (response.statusCode === 200) {
         const body = (await response.body.json()) as { version?: string };
-        if (body.version === "1.26.1") {
+        if (body.version === "1.27.2") {
           return;
         }
-        throw new Error(`expected Gitea 1.26.1, got ${body.version ?? "unknown"}`);
+        throw new Error(`expected Gitea 1.27.2, got ${body.version ?? "unknown"}`);
       }
       await response.body.text();
     } catch (error) {

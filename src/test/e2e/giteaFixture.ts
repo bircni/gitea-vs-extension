@@ -10,4 +10,4 @@ export type GiteaFixtureMetadata = {
   seededReviewCommentCount: number;
 };
 
-export const GITEA_FIXTURE_ARCHIVE = "gitea-1.26.1-fixture.tar.gz";
+export const GITEA_FIXTURE_ARCHIVE = "gitea-1.27.2-fixture.tar.gz";
