@@ -109,37 +109,44 @@ describe("buildWorkflowGroupDescriptors", () => {
     expect(buildWorkflowGroupDescriptors([])).toEqual([]);
   });
 
-  it("groups runs by branch", () => {
-    const r = repo("o", "n");
-    const e = entry(r, [run(1, "main"), run(2, "main"), run(3, "feat")]);
-    const groups = buildWorkflowGroupDescriptors([e]);
-    expect(groups).toHaveLength(2);
-    const mainGroup = groups.find((g) => g.name === "main");
-    const featGroup = groups.find((g) => g.name === "feat");
-    expect(mainGroup?.runs).toHaveLength(2);
-    expect(featGroup?.runs).toHaveLength(1);
-  });
-
-  it("sorts active branches first", () => {
+  it("groups runs by workflow name", () => {
     const r = repo("o", "n");
     const e = entry(r, [
-      run(1, "main", "completed", "2025-01-02T00:00:00Z"),
-      run(2, "feat", "running"),
+      { ...run(1, "main"), workflowName: "CI" },
+      { ...run(2, "main"), workflowName: "CI" },
+      { ...run(3, "feat"), workflowName: "Docs" },
     ]);
     const groups = buildWorkflowGroupDescriptors([e]);
-    expect(groups[0].name).toBe("feat");
-    expect(groups[1].name).toBe("main");
+    expect(groups).toHaveLength(2);
+    expect(groups.find((g) => g.name === "CI")?.runs).toHaveLength(2);
+    expect(groups.find((g) => g.name === "Docs")?.runs).toHaveLength(1);
+  });
+
+  it("sorts active workflows first", () => {
+    const r = repo("o", "n");
+    const e = entry(r, [
+      { ...run(1, "main", "completed", "2025-01-02T00:00:00Z"), workflowName: "CI" },
+      { ...run(2, "feat", "running"), workflowName: "Docs" },
+    ]);
+    const groups = buildWorkflowGroupDescriptors([e]);
+    expect(groups[0].name).toBe("Docs");
+    expect(groups[1].name).toBe("CI");
   });
 
   it("sorts by most recent when none active", () => {
     const r = repo("o", "n");
     const e = entry(r, [
-      run(1, "main", "completed", "2025-01-01T00:00:00Z"),
-      run(2, "feat", "completed", "2025-01-03T00:00:00Z"),
+      { ...run(1, "main", "completed", "2025-01-01T00:00:00Z"), workflowName: "CI" },
+      { ...run(2, "feat", "completed", "2025-01-03T00:00:00Z"), workflowName: "Docs" },
     ]);
     const groups = buildWorkflowGroupDescriptors([e]);
-    expect(groups[0].name).toBe("feat");
-    expect(groups[1].name).toBe("main");
+    expect(groups[0].name).toBe("Docs");
+    expect(groups[1].name).toBe("CI");
+  });
+
+  it("uses a recent-runs fallback when Gitea omits workflow names", () => {
+    const groups = buildWorkflowGroupDescriptors([entry(repo("o", "n"), [run(1, "main")])]);
+    expect(groups).toEqual([expect.objectContaining({ name: "Recent runs", fallback: true })]);
   });
 
   it("skips entries with error", () => {
@@ -256,12 +263,6 @@ describe("getBranchFilterDescription", () => {
     branchName: "main",
     status: "resolved",
   };
-
-  it("returns undefined for pullRequests mode", () => {
-    expect(
-      getBranchFilterDescription("pullRequests", ctx, { repo: r, mode: "allBranches" }),
-    ).toBeUndefined();
-  });
 
   it("returns all branches for allBranches", () => {
     expect(getBranchFilterDescription("runs", ctx, { repo: r, mode: "allBranches" })).toBe(

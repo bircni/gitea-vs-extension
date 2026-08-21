@@ -16,7 +16,7 @@ import {
   WorkflowGroupNode,
   type TreeNode,
 } from "./nodes";
-import type { Job, RepoRef, WorkflowRun } from "../gitea/models";
+import type { Job, RepoRef, Step, WorkflowRun } from "../gitea/models";
 import {
   buildWorkflowGroupDescriptors,
   getBranchFilterDescription,
@@ -75,9 +75,6 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     }
 
     if (element instanceof SectionNode) {
-      if (element.sectionType === "pullRequests") {
-        return this.getPullRequestChildren(element.repo);
-      }
       if (element.sectionType === "errors") {
         return this.getErrorChildren(element.repo);
       }
@@ -93,10 +90,10 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const settings = getSettings();
     const instanceUrls = settings.instanceUrls ?? (settings.baseUrl ? [settings.baseUrl] : []);
     const hasBaseUrl = instanceUrls.length > 0;
-    const token = await getEffectiveToken(
-      this.secrets,
-      instanceUrls[0],
-      instanceUrls[0] === settings.baseUrl,
+    const tokens = await Promise.all(
+      instanceUrls.map((baseUrl) =>
+        getEffectiveToken(this.secrets, baseUrl, baseUrl === settings.baseUrl),
+      ),
     );
     const reposLoading = this.store.isReposLoading();
     const repos = this.store.getRepos();
@@ -105,7 +102,7 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
 
     const rootMsg = getRootMessage(
       hasBaseUrl,
-      Boolean(token),
+      tokens.some(Boolean),
       reposLoading,
       repos.length,
       this.mode,
@@ -116,17 +113,27 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     }
 
     if (this.mode === "workflows") {
-      return workflowDescriptors.map(
-        (group) =>
-          new WorkflowGroupNode(
-            group.name,
-            group.runs,
-            this.isExpanded(expandedWorkflowKey(group.name)),
-          ),
+      return workflowDescriptors.flatMap<TreeNode>((group) =>
+        group.fallback
+          ? group.runs.map(
+              (entry) =>
+                new RunNode(
+                  entry.repo,
+                  entry.run,
+                  this.isExpanded(expandedRunKey(entry.repo, entry.run.id)),
+                ),
+            )
+          : [
+              new WorkflowGroupNode(
+                group.name,
+                group.runs,
+                this.isExpanded(expandedWorkflowKey(group.name)),
+              ),
+            ],
       );
     }
 
-    // "Current Branch Runs" with a single repo: the repo node is a redundant collapse level, so
+    // "Current Branch" with a single repo: the repo node is a redundant collapse level, so
     // render its runs directly at the root. Multiple repos keep the repo grouping to stay distinct.
     if (this.mode === "runs" && repos.length === 1) {
       return this.getRepoChildren(repos[0]);
@@ -134,16 +141,6 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
 
     const autoExpand = repos.length === 1;
     return repos.map((repo) => {
-      if (this.mode === "pullRequests") {
-        const entry = this.store.getEntry(repo);
-        const count = entry?.pullRequests.length ?? 0;
-        const description = `${count} open`;
-        return new RepoNode(
-          repo,
-          autoExpand || this.isExpanded(expandedRepoKey(repo)),
-          description,
-        );
-      }
       const entry = this.store.getEntry(repo);
       const filterDesc = getBranchFilterDescription(
         this.mode,
@@ -161,41 +158,30 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const context = this.store.getBranchContext(repo);
     const filter = this.store.getBranchFilter(repo);
 
-    if (this.mode === "pullRequests") {
-      if (!entry) {
-        return [new MessageNode("No data yet.")];
-      }
-      if (entry.loading) {
-        return [new MessageNode("Loading runs...")];
-      }
-      if (entry.error) {
-        return [new ErrorNode(entry.error)];
-      }
-      if (entry.pullRequests.length === 0) {
-        return [new MessageNode("No pull requests found.")];
-      }
-      const nodes: TreeNode[] = entry.pullRequests.map((pr) => new PullRequestNode(repo, pr));
-      if (entry.errors.length > 0) {
-        nodes.push(new SectionNode("errors", "Errors", repo));
-      }
-      return nodes;
-    }
-
     const state = getRepoChildRunsState(entry, context ?? undefined, filter ?? undefined);
+    const matchingPullRequest =
+      context?.branchName && entry
+        ? entry.pullRequests.find((pullRequest) => pullRequest.headRef === context.branchName)
+        : undefined;
+    const nodes: TreeNode[] = matchingPullRequest
+      ? [new PullRequestNode(repo, matchingPullRequest)]
+      : [];
     if (state.noEntry) {
-      return [new MessageNode("No data yet.")];
+      return [...nodes, new MessageNode("No data yet.")];
     }
     if (state.loading) {
-      return [new MessageNode("Loading runs...")];
+      return [...nodes, new MessageNode("Loading runs...")];
     }
     if (state.error) {
-      return [new ErrorNode(state.error)];
+      return [...nodes, new ErrorNode(state.error)];
     }
     if (state.emptyMessage && state.filteredRuns.length === 0) {
-      return [new MessageNode(state.emptyMessage.label, "info", state.emptyMessage.command)];
+      return [
+        ...nodes,
+        new MessageNode(state.emptyMessage.label, "info", state.emptyMessage.command),
+      ];
     }
 
-    const nodes: TreeNode[] = [];
     if (state.infoBanner) {
       nodes.push(new MessageNode(state.infoBanner.label, "info", state.infoBanner.command));
     }
@@ -228,7 +214,7 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       return [new ErrorNode(entry.jobsErrorByRun.get(runKey) ?? "Failed to load jobs.")];
     }
 
-    const jobs = entry.jobsByRun.get(runKey) ?? [];
+    const jobs = [...(entry.jobsByRun.get(runKey) ?? [])].toSorted(compareJobsForFailureFirst);
     const nodes: TreeNode[] = jobs.map((job) => new JobNode(repo, run, job));
 
     const artifacts = entry.artifactsByRun.get(runKey) ?? [];
@@ -244,22 +230,11 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   }
 
   private getJobChildren(repo: RepoRef, run: WorkflowRun, job: Job): TreeNode[] {
-    const steps = job.steps ?? [];
+    const steps = [...(job.steps ?? [])].toSorted(compareStepsForFailureFirst);
     if (steps.length === 0) {
       return [new MessageNode("No steps reported.")];
     }
     return steps.map((step) => new StepNode(repo, run, job, step));
-  }
-
-  private getPullRequestChildren(repo: RepoRef): TreeNode[] {
-    const entry = this.store.getEntry(repo);
-    if (!entry) {
-      return [];
-    }
-    if (entry.pullRequests.length === 0) {
-      return [new MessageNode("No pull requests found.")];
-    }
-    return entry.pullRequests.map((pr) => new PullRequestNode(repo, pr));
   }
 
   private getArtifactChildren(repo: RepoRef, runId: number | string): TreeNode[] {
@@ -288,4 +263,22 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   private isExpanded(key: string): boolean {
     return this.expanded.has(key);
   }
+}
+
+function compareJobsForFailureFirst(a: Job, b: Job): number {
+  const aFailed = a.conclusion === "failure";
+  const bFailed = b.conclusion === "failure";
+  if (aFailed !== bFailed) {
+    return aFailed ? -1 : 1;
+  }
+  return a.name.localeCompare(b.name);
+}
+
+function compareStepsForFailureFirst(a: Step, b: Step): number {
+  const aFailed = a.conclusion === "failure";
+  const bFailed = b.conclusion === "failure";
+  if (aFailed !== bFailed) {
+    return aFailed ? -1 : 1;
+  }
+  return (a.name ?? "").localeCompare(b.name ?? "");
 }

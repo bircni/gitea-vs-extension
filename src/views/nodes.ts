@@ -192,7 +192,7 @@ export class PullRequestNode extends vscode.TreeItem {
 
 export class SectionNode extends vscode.TreeItem {
   constructor(
-    public readonly sectionType: "pullRequests" | "artifacts" | "errors",
+    public readonly sectionType: "artifacts" | "errors",
     public readonly label: string,
     public readonly repo: RepoRef,
     public readonly runId?: number | string,

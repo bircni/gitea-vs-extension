@@ -200,17 +200,12 @@
         {
           "type": "tree",
           "id": "gitea-vs-extension.runs",
-          "name": "Current Branch Runs"
-        },
-        {
-          "type": "tree",
-          "id": "gitea-vs-extension.pullRequests",
-          "name": "Pull Requests"
+          "name": "Current Branch"
         },
         {
           "type": "tree",
           "id": "gitea-vs-extension.runsPinned",
-          "name": "Runs by Branch"
+          "name": "Workflows"
         },
         {
           "type": "tree",
@@ -365,7 +360,7 @@
       "view/title": [
         {
           "command": "gitea-vs-extension.refresh",
-          "when": "view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned || view == gitea-vs-extension.pullRequests",
+          "when": "view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned",
           "group": "navigation"
         },
         {
@@ -377,7 +372,7 @@
       "view/item/context": [
         {
           "command": "gitea-vs-extension.refresh",
-          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned || view == gitea-vs-extension.pullRequests) && viewItem == giteaRepo",
+          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem == giteaRepo",
           "group": "inline"
         },
         {
@@ -412,12 +407,12 @@
         },
         {
           "command": "gitea-vs-extension.openInBrowser",
-          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned || view == gitea-vs-extension.pullRequests) && viewItem == giteaPullRequest",
+          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem == giteaPullRequest",
           "group": "inline"
         },
         {
           "command": "gitea-vs-extension.checkoutPrBranch",
-          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned || view == gitea-vs-extension.pullRequests) && viewItem == giteaPullRequest",
+          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem == giteaPullRequest",
           "group": "inline"
         },
         {

@@ -84,17 +84,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   const runsProvider = new ActionsTreeProvider("runs", store, context.secrets, expanded);
   const workflowsProvider = new ActionsTreeProvider("workflows", store, context.secrets, expanded);
-  const pullRequestsProvider = new ActionsTreeProvider(
-    "pullRequests",
-    store,
-    context.secrets,
-    expanded,
-  );
 
   const trees = registerTreeViews({
     runs: { viewId: "gitea-vs-extension.runs", provider: runsProvider },
     workflows: { viewId: "gitea-vs-extension.runsPinned", provider: workflowsProvider },
-    pullRequests: { viewId: "gitea-vs-extension.pullRequests", provider: pullRequestsProvider },
     settings: { viewId: "gitea-vs-extension.settings", provider: settingsProvider },
   });
 
@@ -117,7 +110,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     () => {
       runsProvider.refresh();
       workflowsProvider.refresh();
-      pullRequestsProvider.refresh();
       const currentRepo = settingsProvider.getCurrentRepo();
       const [firstRepo] = store.getRepos();
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -141,14 +133,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     () => {
       runsProvider.refresh();
       workflowsProvider.refresh();
-      pullRequestsProvider.refresh();
     },
   );
 
   context.subscriptions.push(
     trees.runsTree,
     trees.workflowsTree,
-    trees.pullRequestsTree,
     trees.settingsTree,
     statusBar,
     reviewCommentsController,

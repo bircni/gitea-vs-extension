@@ -91,25 +91,19 @@ export function updateStatusBar(item: vscode.StatusBarItem, summary: RefreshSumm
 export type TreeViewConfig = {
   runs: { viewId: string; provider: vscode.TreeDataProvider<unknown> };
   workflows: { viewId: string; provider: vscode.TreeDataProvider<unknown> };
-  pullRequests: { viewId: string; provider: vscode.TreeDataProvider<unknown> };
   settings: { viewId: string; provider: vscode.TreeDataProvider<unknown> };
 };
 
 export type RegisteredTrees = {
   runsTree: vscode.TreeView<unknown>;
   workflowsTree: vscode.TreeView<unknown>;
-  pullRequestsTree: vscode.TreeView<unknown>;
   settingsTree: vscode.TreeView<unknown>;
 };
 
-/** Create and register the four tree views; return them for use in other wiring. */
+/** Create and register the three native Actions tree views. */
 export function registerTreeViews(config: TreeViewConfig): RegisteredTrees {
   const workflowsTree = vscode.window.createTreeView(config.workflows.viewId, {
     treeDataProvider: config.workflows.provider,
-    showCollapseAll: true,
-  });
-  const pullRequestsTree = vscode.window.createTreeView(config.pullRequests.viewId, {
-    treeDataProvider: config.pullRequests.provider,
     showCollapseAll: true,
   });
   const runsTree = vscode.window.createTreeView(config.runs.viewId, {
@@ -120,7 +114,7 @@ export function registerTreeViews(config: TreeViewConfig): RegisteredTrees {
     treeDataProvider: config.settings.provider,
     showCollapseAll: true,
   });
-  return { runsTree, workflowsTree, pullRequestsTree, settingsTree };
+  return { runsTree, workflowsTree, settingsTree };
 }
 
 export type ExpandCollapseDeps = {
@@ -151,8 +145,6 @@ export function wireExpandCollapsePersistence(deps: ExpandCollapseDeps): vscode.
     trees.runsTree.onDidCollapseElement((e) => onCollapse(e.element)),
     trees.workflowsTree.onDidExpandElement((e) => onExpand(e.element)),
     trees.workflowsTree.onDidCollapseElement((e) => onCollapse(e.element)),
-    trees.pullRequestsTree.onDidExpandElement((e) => onExpand(e.element)),
-    trees.pullRequestsTree.onDidCollapseElement((e) => onCollapse(e.element)),
   );
 
   return disposables;
@@ -174,11 +166,7 @@ export function wireSelectionToRepoSync(deps: SelectionToRepoSyncDeps): vscode.D
       }
     });
   }
-  return [
-    onSelection(trees.runsTree),
-    onSelection(trees.workflowsTree),
-    onSelection(trees.pullRequestsTree),
-  ];
+  return [onSelection(trees.runsTree), onSelection(trees.workflowsTree)];
 }
 
 export type RefreshAndStatusBarDeps = {
@@ -218,11 +206,6 @@ export function wireRefreshAndStatusBar(deps: RefreshAndStatusBarDeps): vscode.D
       }
     }),
     trees.workflowsTree.onDidChangeVisibility((e) => {
-      if (e.visible) {
-        void refreshController.refreshAll();
-      }
-    }),
-    trees.pullRequestsTree.onDidChangeVisibility((e) => {
       if (e.visible) {
         void refreshController.refreshAll();
       }

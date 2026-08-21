@@ -106,7 +106,7 @@ describe("extractRepo", () => {
   });
 
   it("returns repo from SectionNode", () => {
-    const node = new SectionNode("pullRequests", "PRs", repo);
+    const node = new SectionNode("errors", "Errors", repo);
     expect(extractRepo(node)).toEqual(repo);
   });
 
@@ -258,7 +258,7 @@ describe("resolveOpenUrl", () => {
   });
 
   it("returns undefined for SectionNode", () => {
-    const node = new SectionNode("pullRequests", "PRs", repo);
+    const node = new SectionNode("errors", "Errors", repo);
     expect(resolveOpenUrl(node, baseUrl)).toBeUndefined();
   });
 

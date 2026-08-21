@@ -2,9 +2,10 @@
  * Unit tests for ActionsTreeProvider with mocked store and config.
  */
 import { getSettings } from "../config/settings";
+import { getEffectiveToken } from "../config/secrets";
 import { ActionsTreeProvider } from "../views/actionsTreeProvider";
-import { MessageNode, RepoNode, RunNode } from "../views/nodes";
-import type { RepoRef, WorkflowRun } from "../gitea/models";
+import { JobNode, MessageNode, PullRequestNode, RepoNode, RunNode, StepNode } from "../views/nodes";
+import type { Job, RepoRef, WorkflowRun } from "../gitea/models";
 import type { Mock } from "vitest";
 
 vi.mock(import("../config/settings"), () => ({
@@ -72,6 +73,66 @@ describe("ActionsTreeProvider", () => {
     expect(children[0]).not.toBeInstanceOf(RepoNode);
   });
 
+  it("shows the current branch pull request above its runs", async () => {
+    const run: WorkflowRun = { id: 1, name: "build", branch: "main", status: "completed" };
+    const store = createMockStore();
+    store.getEntry.mockReturnValue({
+      repo: mockRepo,
+      runs: [run],
+      pullRequests: [{ id: 42, number: 42, title: "Improve CI", state: "open", headRef: "main" }],
+      loading: false,
+      error: undefined,
+      errors: [],
+    });
+    const provider = new ActionsTreeProvider("runs", store as never, {} as never, new Set());
+
+    const children = await provider.getChildren();
+
+    expect(children[0]).toBeInstanceOf(PullRequestNode);
+    expect(children[1]).toBeInstanceOf(RunNode);
+  });
+
+  it("sorts failed jobs and steps before successful ones", async () => {
+    const run: WorkflowRun = { id: 1, name: "build", branch: "main", status: "completed" };
+    const successful: Job = {
+      id: 1,
+      name: "Build",
+      status: "completed",
+      conclusion: "success",
+      steps: [
+        { name: "Install", status: "completed", conclusion: "success" },
+        { name: "Test", status: "completed", conclusion: "failure" },
+      ],
+    };
+    const failed: Job = {
+      id: 2,
+      name: "Lint",
+      status: "completed",
+      conclusion: "failure",
+    };
+    const store = createMockStore();
+    store.getEntry.mockReturnValue({
+      repo: mockRepo,
+      runs: [run],
+      pullRequests: [],
+      loading: false,
+      error: undefined,
+      errors: [],
+      jobsStateByRun: new Map([["1", "loaded"]]),
+      jobsByRun: new Map([["1", [successful, failed]]]),
+      artifactsByRun: new Map(),
+    });
+    const provider = new ActionsTreeProvider("runs", store as never, {} as never, new Set());
+
+    const jobs = await provider.getChildren(new RunNode(mockRepo, run));
+    const steps = await provider.getChildren(new JobNode(mockRepo, run, successful));
+
+    expect((jobs[0] as JobNode).job.name).toBe("Lint");
+    expect(jobs[0]).toBeInstanceOf(JobNode);
+    expect((steps[0] as StepNode).step.name).toBe("Test");
+    expect(steps[0]).toBeInstanceOf(StepNode);
+  });
+
   it("runs mode with multiple repos keeps the RepoNode grouping", async () => {
     const otherRepo: RepoRef = { host: "gitea.example", owner: "o", name: "other" };
     const store = createMockStore();
@@ -91,6 +152,23 @@ describe("ActionsTreeProvider", () => {
     const children = await provider.getChildren();
     expect(children).toHaveLength(1);
     expect(children[0].label).toContain("baseUrl");
+  });
+
+  it("accepts a token configured for a secondary Gitea instance", async () => {
+    (getSettings as Mock).mockReturnValueOnce({
+      baseUrl: "https://first.example",
+      instanceUrls: ["https://first.example", "https://second.example"],
+      discoveryMode: "all",
+    });
+    (getEffectiveToken as Mock)
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce("secondary-token");
+    const store = createMockStore();
+    const provider = new ActionsTreeProvider("runs", store as never, {} as never, new Set());
+
+    const children = await provider.getChildren();
+
+    expect(children[0].label).not.toContain("Set a token");
   });
 
   it("refresh() fires tree change event", () => {

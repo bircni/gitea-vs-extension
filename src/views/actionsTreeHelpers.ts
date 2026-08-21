@@ -10,7 +10,7 @@ import {
 } from "../util/branchContext";
 import type { PullRequest, RepoRef, WorkflowRun } from "../gitea/models";
 
-export type ProviderMode = "runs" | "workflows" | "pullRequests";
+export type ProviderMode = "runs" | "workflows";
 
 /** Root-level single message when not showing repos or workflow groups. */
 export type RootMessage = {
@@ -52,40 +52,46 @@ export function getRootMessage(
   return null;
 }
 
-/** Descriptor for one workflow group (branch name + runs). */
+/** Descriptor for one workflow group (workflow name + runs). */
 export type WorkflowGroupDescriptor = {
   name: string;
   runs: { repo: RepoRef; run: WorkflowRun }[];
+  fallback?: boolean;
 };
 
 /**
- * Build workflow group descriptors from store entries: group runs by branch, then sort
- * (active first, then by most recent run).
+ * Group runs by Gitea's workflow name. Instances that do not expose a workflow name remain in a
+ * clearly labelled recent-runs fallback instead of being misrepresented as branch groups.
  */
 export function buildWorkflowGroupDescriptors(
   entries: RepoCacheEntry[],
 ): WorkflowGroupDescriptor[] {
   const groups = new Map<string, { name: string; runs: { repo: RepoRef; run: WorkflowRun }[] }>();
+  const unnamedRuns: { repo: RepoRef; run: WorkflowRun }[] = [];
 
   for (const entry of entries) {
     if (entry.error) {
       continue;
     }
     for (const run of entry.runs) {
-      const branchName = run.branch ?? "unknown";
-      const existing = groups.get(branchName);
+      const workflowName = run.workflowName?.trim();
+      if (!workflowName) {
+        unnamedRuns.push({ repo: entry.repo, run });
+        continue;
+      }
+      const existing = groups.get(workflowName);
       if (existing) {
         existing.runs.push({ repo: entry.repo, run });
       } else {
-        groups.set(branchName, {
-          name: branchName,
+        groups.set(workflowName, {
+          name: workflowName,
           runs: [{ repo: entry.repo, run }],
         });
       }
     }
   }
 
-  const ordered = [...groups.values()].toSorted((a, b) => {
+  const ordered: WorkflowGroupDescriptor[] = [...groups.values()].toSorted((a, b) => {
     const aActive = a.runs.some((e) => e.run.status === "running" || e.run.status === "queued");
     const bActive = b.runs.some((e) => e.run.status === "running" || e.run.status === "queued");
     if (aActive && !bActive) {
@@ -98,6 +104,9 @@ export function buildWorkflowGroupDescriptors(
     const bTime = b.runs[0]?.run.updatedAt ?? b.runs[0]?.run.createdAt ?? "";
     return bTime.localeCompare(aTime);
   });
+  if (unnamedRuns.length > 0) {
+    ordered.push({ name: "Recent runs", runs: unnamedRuns, fallback: true });
+  }
 
   return ordered;
 }
@@ -243,9 +252,6 @@ export function getBranchFilterDescription(
   context: BranchContext | undefined,
   filter: BranchFilterState | undefined,
 ): string | undefined {
-  if (mode !== "runs" && mode !== "workflows") {
-    return undefined;
-  }
   if (!context || !filter) {
     return undefined;
   }

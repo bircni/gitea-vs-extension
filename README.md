@@ -79,15 +79,22 @@ would mean fetching the action's metadata from github.com. Set
 
 ### Workflows
 
-Shows **all** workflow runs in the repo, grouped by branch. No branch filter is applied.
+Shows all runs grouped by the workflow name provided by Gitea. If an instance does not provide
+workflow names, its runs appear in a flat **Recent runs** fallback instead of being labelled with
+misleading local guesses.
 
-### Current Branch Runs
+### Current Branch
 
-Shows workflow runs for your **current branch** only (when the repo is from your workspace). Use the branch filter (toolbar or context menu on the repo) to view another branch or all branches. Expand a run to load jobs and steps on demand. Under Artifacts, use the row buttons or context menu to **Download** or **Open in browser**; double-click an artifact to open the file in the editor if already downloaded, or see "Download the artifact first" otherwise.
+Shows workflow runs for your **current branch** only (when the repo is from your workspace). An
+open pull request for that branch is shown above its runs. Use the branch filter (toolbar or
+context menu on the repo) to view another branch or all branches. Expand a run to load jobs and
+steps on demand; failed jobs and steps are shown first. Under Artifacts, use the row buttons or
+context menu to **Download** or **Open in browser**; double-click an artifact to open the file in
+the editor if already downloaded, or see "Download the artifact first" otherwise.
 
-### Pull Requests
-
-Lists open PRs per repository with author, labels, and last updated time. Existing review comments are shown inline for the current branch. To add a new review comment, right click a line in a file on a branch with an open PR and run `gitea-vs-extension: Add Review Comment`.
+Existing review comments are shown inline for the current branch. To add a new review comment,
+right click a line in a file on a branch with an open pull request and run
+`gitea-vs-extension: Add Review Comment`.
 
 ### Settings
 
