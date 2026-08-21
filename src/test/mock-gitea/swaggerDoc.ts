@@ -10,6 +10,15 @@ const MIN_PATHS: Record<string, Record<string, unknown>> = {
   "/repos/{owner}/{repo}/actions/runs/{run}/jobs": {
     get: { responses: { "200": { description: "ok" } } },
   },
+  "/repos/{owner}/{repo}/actions/runs/{run}/rerun": {
+    post: { responses: { "201": { description: "ok" } } },
+  },
+  "/repos/{owner}/{repo}/actions/runs/{run}/rerun-failed-jobs": {
+    post: { responses: { "201": { description: "ok" } } },
+  },
+  "/repos/{owner}/{repo}/actions/runs/{run}/jobs/{job_id}/rerun": {
+    post: { responses: { "201": { description: "ok" } } },
+  },
   "/repos/{owner}/{repo}/actions/jobs/{job_id}/logs": {
     get: { responses: { "200": { description: "ok" } } },
   },

@@ -230,6 +230,20 @@ describe("GiteaApi against hermetic mock (008 inventory)", () => {
     expect(list.some((x) => x.name === "MOCK_VAR2")).toBe(false);
   });
 
+  it("run control: re-run, re-run failed jobs, re-run job", async () => {
+    const repo = repoRef();
+    const jobs = await api.listJobs(repo, 101, 10);
+    const jobId = jobs[0].id;
+
+    await api.rerunRun(repo, 101);
+    await api.rerunFailedJobs(repo, 101);
+    await api.rerunJob(repo, 101, jobId);
+
+    // Re-runs only bump the mock's attempt counter, so run 101 stays listed for later tests.
+    const runs = await api.listRuns(repo, 10);
+    expect(runs.some((r) => String(r.id) === "101")).toBe(true);
+  });
+
   it("row 23: fetchBinaryUrl (avatar)", async () => {
     const avatarUrl = `${mock.baseUrl}/api/v1/mock/avatar.png`;
     const bytes = await api.fetchBinaryUrl(avatarUrl);

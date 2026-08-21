@@ -36,6 +36,9 @@ function sendNoContent(res: ServerResponse): void {
   res.end();
 }
 
+/** Run ids the mock serves; anything else answers 404 like a real instance would. */
+const KNOWN_RUN_IDS = new Set(["101", "106"]);
+
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
@@ -157,6 +160,7 @@ async function handleRepoRoutes(
         head_branch: "main",
         head_sha: "abc123",
         created_at: "2020-01-02T00:00:00Z",
+        run_attempt: state.runAttempts.get("101") ?? 1,
       },
     ];
     if (branch) {
@@ -168,9 +172,36 @@ async function handleRepoRoutes(
         head_branch: branch,
         head_sha: "feed106",
         created_at: "2020-01-01T00:00:00Z",
+        run_attempt: state.runAttempts.get("106") ?? 1,
       });
     }
     sendJson(res, 200, { workflow_runs: runs });
+    return;
+  }
+
+  const rerunRe = /^actions\/runs\/(?<runId>[^/]+)\/(?:rerun|rerun-failed-jobs)$/;
+  const mRerun = rerunRe.exec(rest);
+  if (mRerun && method === "POST") {
+    const runId = decodeURIComponent(mRerun[1]);
+    if (!KNOWN_RUN_IDS.has(runId)) {
+      sendText(res, 404, "not found");
+      return;
+    }
+    state.runAttempts.set(runId, (state.runAttempts.get(runId) ?? 1) + 1);
+    sendJson(res, 201, { id: Number(runId), run_attempt: state.runAttempts.get(runId) });
+    return;
+  }
+
+  const rerunJobRe = /^actions\/runs\/(?<runId>[^/]+)\/jobs\/(?<jobId>[^/]+)\/rerun$/;
+  const mRerunJob = rerunJobRe.exec(rest);
+  if (mRerunJob && method === "POST") {
+    const runId = decodeURIComponent(mRerunJob[1]);
+    if (!KNOWN_RUN_IDS.has(runId)) {
+      sendText(res, 404, "not found");
+      return;
+    }
+    state.runAttempts.set(runId, (state.runAttempts.get(runId) ?? 1) + 1);
+    sendJson(res, 201, { id: Number(decodeURIComponent(mRerunJob[2])) });
     return;
   }
 

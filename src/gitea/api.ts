@@ -95,6 +95,50 @@ export class GiteaApi {
     return this.client.getText(url);
   }
 
+  /**
+   * Gitea exposes no cancel endpoint (checked through 1.27.2), so re-running is the only run
+   * control available. It needs a token with Actions write access.
+   */
+  async rerunRun(repo: RepoRef, runId: number | string): Promise<void> {
+    await this.runControl("POST", "rerunRun", "Re-run", repo, runId);
+  }
+
+  async rerunFailedJobs(repo: RepoRef, runId: number | string): Promise<void> {
+    await this.runControl("POST", "rerunFailedJobs", "Re-run failed jobs", repo, runId);
+  }
+
+  async rerunJob(repo: RepoRef, runId: number | string, jobId: number | string): Promise<void> {
+    await this.runControl("POST", "rerunJob", "Re-run job", repo, runId, jobId);
+  }
+
+  private async runControl(
+    method: "POST",
+    endpoint: "rerunRun" | "rerunFailedJobs" | "rerunJob",
+    label: string,
+    repo: RepoRef,
+    runId: number | string,
+    jobId?: number | string,
+  ): Promise<void> {
+    const endpoints = await this.ensureEndpoints();
+    const path = endpoints[endpoint];
+    if (!path) {
+      throw new EndpointError(`${label} is not available on this Gitea instance`);
+    }
+    let url = fillPlaceholder(
+      fillPlaceholder(fillRepoPath(path, repo), "{run}", runId),
+      "{run_id}",
+      runId,
+    );
+    if (jobId !== undefined) {
+      url = fillPlaceholder(fillPlaceholder(url, "{job_id}", jobId), "{job}", jobId);
+    }
+    try {
+      await this.client.requestText(method, url);
+    } catch (error) {
+      throw translateRunControlError(label, error);
+    }
+  }
+
   async listArtifacts(repo: RepoRef, runId: number | string): Promise<Artifact[]> {
     const endpoints = await this.ensureEndpoints();
     const path = endpoints.listRunArtifacts ?? endpoints.listRepoArtifacts;
@@ -395,6 +439,32 @@ export class GiteaApi {
 
     this.lastBaseUrl = baseUrl;
     return this.endpoints;
+  }
+}
+
+/** Turns transport failures of the run-control endpoints into text a user can act on. */
+function translateRunControlError(label: string, error: unknown): Error {
+  if (!(error instanceof HttpError)) {
+    return error instanceof Error ? error : new Error(String(error));
+  }
+  switch (error.status) {
+    case 401:
+    case 403: {
+      return new Error(
+        `${label} failed: the token needs Actions write access for this repository.`,
+      );
+    }
+    case 404: {
+      return new Error(
+        `${label} failed: not found. The run may be gone, or this Gitea version does not support it.`,
+      );
+    }
+    case 409: {
+      return new Error(`${label} failed: the run is not in a state that allows this action.`);
+    }
+    default: {
+      return new Error(`${label} failed: ${error.message}`);
+    }
   }
 }
 

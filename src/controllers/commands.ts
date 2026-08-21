@@ -19,6 +19,7 @@ import {
 import { copyUrl, openBaseUrlSettings, openInBrowser } from "./browserCommands";
 import { checkoutPrBranch } from "./checkoutCommands";
 import { openLatestFailedJobLogs, viewJobLogs } from "./logCommands";
+import { rerunFailedJobs, rerunJob, rerunRun } from "./runControlCommands";
 import {
   createSecret,
   createVariable,
@@ -110,7 +111,35 @@ export class CommandsController {
       vscode.commands.registerCommand("gitea-vs-extension.checkoutPrBranch", (arg) =>
         this.handleCheckoutPrBranch(arg),
       ),
+      vscode.commands.registerCommand("gitea-vs-extension.rerunRun", (arg) =>
+        rerunRun(this.runControlDeps(), arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.rerunFailedJobs", (arg) =>
+        rerunFailedJobs(this.runControlDeps(), arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.rerunJob", (arg) =>
+        rerunJob(this.runControlDeps(), arg),
+      ),
     ];
+  }
+
+  private runControlDeps() {
+    return {
+      rerunRun: this.api.rerunRun.bind(this.api),
+      rerunFailedJobs: this.api.rerunFailedJobs.bind(this.api),
+      rerunJob: this.api.rerunJob.bind(this.api),
+      refreshRepo: async (repo: RepoRef) => {
+        await this.refreshController.refreshRepo(repo, getSettings().maxRunsPerRepo);
+        this.treeProvider.refresh();
+        this.refreshViews?.();
+      },
+      withProgress: <T>(title: string, task: () => Promise<T>) =>
+        vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title }, () =>
+          task(),
+        ),
+      showInformationMessage: (msg: string) => void vscode.window.showInformationMessage(msg),
+      showErrorMessage: (msg: string) => void vscode.window.showErrorMessage(msg),
+    };
   }
 
   private async handleDownloadArtifact(arg: unknown): Promise<void> {

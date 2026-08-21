@@ -479,3 +479,71 @@ describe("GiteaApi core endpoints", () => {
     expect(version).toBe("fallback2");
   });
 });
+
+describe("GiteaApi run control endpoints", () => {
+  const client = {
+    getJson: vi.fn(),
+    getText: vi.fn(),
+    requestText: vi.fn(),
+  };
+  const api = new GiteaApi(client as any, () => "https://example.com");
+
+  beforeEach(() => {
+    client.getJson.mockReset();
+    client.getText.mockReset();
+    client.requestText.mockReset().mockResolvedValue("");
+    (fetchSwagger as Mock).mockReset().mockResolvedValue();
+  });
+
+  test("re-runs a whole run", async () => {
+    await api.rerunRun(repo, 42);
+
+    expect(client.requestText).toHaveBeenCalledWith(
+      "POST",
+      "/api/v1/repos/owner/repo/actions/runs/42/rerun",
+    );
+  });
+
+  test("re-runs the failed jobs of a run", async () => {
+    await api.rerunFailedJobs(repo, 42);
+
+    expect(client.requestText).toHaveBeenCalledWith(
+      "POST",
+      "/api/v1/repos/owner/repo/actions/runs/42/rerun-failed-jobs",
+    );
+  });
+
+  test("re-runs a single job", async () => {
+    await api.rerunJob(repo, 42, 99);
+
+    expect(client.requestText).toHaveBeenCalledWith(
+      "POST",
+      "/api/v1/repos/owner/repo/actions/runs/42/jobs/99/rerun",
+    );
+  });
+
+  test.each([
+    [403, "Re-run failed: the token needs Actions write access for this repository."],
+    [409, "Re-run failed: the run is not in a state that allows this action."],
+    [
+      404,
+      "Re-run failed: not found. The run may be gone, or this Gitea version does not support it.",
+    ],
+  ])("turns HTTP %i into an actionable message", async (status, message) => {
+    client.requestText.mockRejectedValueOnce(new HttpError(status, "https://example.com", "nope"));
+
+    await expect(api.rerunRun(repo, 42)).rejects.toThrow(message);
+  });
+
+  test("reports an EndpointError when the instance does not advertise re-run", async () => {
+    (fetchSwagger as Mock).mockResolvedValue({
+      basePath: "/api/v1",
+      paths: { "/repos/{owner}/{repo}/actions/runs": {} },
+    });
+    // A fresh instance, because `ensureEndpoints` caches per base URL.
+    const limitedApi = new GiteaApi(client as any, () => "https://example.com");
+
+    await expect(limitedApi.rerunRun(repo, 42)).rejects.toThrow(EndpointError);
+    expect(client.requestText).not.toHaveBeenCalled();
+  });
+});

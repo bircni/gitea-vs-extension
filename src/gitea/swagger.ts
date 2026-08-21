@@ -8,6 +8,9 @@ export type SwaggerDoc = {
 export type EndpointMap = {
   listRuns?: string;
   listJobs?: string;
+  rerunRun?: string;
+  rerunFailedJobs?: string;
+  rerunJob?: string;
   jobLogs?: string;
   listRunArtifacts?: string;
   listRepoArtifacts?: string;
@@ -55,6 +58,19 @@ export function discoverEndpoints(doc?: SwaggerDoc): EndpointMap {
     paths,
     /^\/repos\/\{owner\}\/\{repo\}\/actions\/runs\/\{[^}]+\}\/jobs$/,
   );
+  // `/rerun` is anchored so it never matches `/rerun-failed-jobs`.
+  const rerunRun = pickPath(
+    paths,
+    /^\/repos\/\{owner\}\/\{repo\}\/actions\/runs\/\{[^}]+\}\/rerun$/,
+  );
+  const rerunFailedJobs = pickPath(
+    paths,
+    /^\/repos\/\{owner\}\/\{repo\}\/actions\/runs\/\{[^}]+\}\/rerun-failed-jobs$/,
+  );
+  const rerunJob = pickPath(
+    paths,
+    /^\/repos\/\{owner\}\/\{repo\}\/actions\/runs\/\{[^}]+\}\/jobs\/\{[^}]+\}\/rerun$/,
+  );
   const jobLogs =
     pickPath(paths, /^\/repos\/\{owner\}\/\{repo\}\/actions\/jobs\/\{[^}]+\}\/logs$/) ??
     pickPath(paths, /^\/actions\/jobs\/\{[^}]+\}\/logs$/);
@@ -78,6 +94,9 @@ export function discoverEndpoints(doc?: SwaggerDoc): EndpointMap {
   return {
     listRuns: joinPath(basePath, listRuns),
     listJobs: joinPath(basePath, listJobs),
+    rerunRun: joinPath(basePath, rerunRun),
+    rerunFailedJobs: joinPath(basePath, rerunFailedJobs),
+    rerunJob: joinPath(basePath, rerunJob),
     jobLogs: joinPath(basePath, jobLogs),
     listRunArtifacts: joinPath(basePath, listRunArtifacts),
     listRepoArtifacts: joinPath(basePath, listRepoArtifacts),
@@ -95,6 +114,12 @@ export function fallbackEndpoints(): EndpointMap {
   return {
     listRuns: joinPath(basePath, "/repos/{owner}/{repo}/actions/runs"),
     listJobs: joinPath(basePath, "/repos/{owner}/{repo}/actions/runs/{run}/jobs"),
+    rerunRun: joinPath(basePath, "/repos/{owner}/{repo}/actions/runs/{run}/rerun"),
+    rerunFailedJobs: joinPath(
+      basePath,
+      "/repos/{owner}/{repo}/actions/runs/{run}/rerun-failed-jobs",
+    ),
+    rerunJob: joinPath(basePath, "/repos/{owner}/{repo}/actions/runs/{run}/jobs/{job_id}/rerun"),
     jobLogs: joinPath(basePath, "/repos/{owner}/{repo}/actions/jobs/{job_id}/logs"),
     listRunArtifacts: joinPath(basePath, "/repos/{owner}/{repo}/actions/runs/{run}/artifacts"),
     listRepoArtifacts: joinPath(basePath, "/repos/{owner}/{repo}/actions/artifacts"),

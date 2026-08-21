@@ -69,7 +69,7 @@ export class RunNode extends vscode.TreeItem {
         ? vscode.TreeItemCollapsibleState.Expanded
         : vscode.TreeItemCollapsibleState.Collapsed,
     );
-    this.contextValue = "giteaRun";
+    this.contextValue = buildRunContextValue(run);
     this.description = buildRunDescription(run);
     this.iconPath = iconForStatus(run.status, run.conclusion);
     this.tooltip = buildRunTooltip(run);
@@ -91,7 +91,7 @@ export class JobNode extends vscode.TreeItem {
         ? vscode.TreeItemCollapsibleState.Collapsed
         : vscode.TreeItemCollapsibleState.None,
     );
-    this.contextValue = "giteaJob";
+    this.contextValue = buildJobContextValue(job);
     this.description = buildJobDescription(job);
     this.iconPath = iconForStatus(job.status, job.conclusion);
     this.command = {
@@ -318,6 +318,25 @@ export class VariableNode extends vscode.TreeItem {
       this.tooltip = `${name}\nValue: ${value}`;
     }
   }
+}
+
+/**
+ * Space-separated capability tokens matched with `viewItem =~ /…/` in `package.json`, so run-control
+ * menu items only appear where the Gitea API would actually accept them.
+ */
+export function buildRunContextValue(run: WorkflowRun): string {
+  const tokens = ["giteaRun"];
+  if (run.status === "completed") {
+    tokens.push("rerunnable");
+    if (run.conclusion === "failure") {
+      tokens.push("hasFailedJobs");
+    }
+  }
+  return tokens.join(" ");
+}
+
+export function buildJobContextValue(job: Job): string {
+  return job.status === "completed" ? "giteaJob rerunnable" : "giteaJob";
 }
 
 function buildRunLabel(run: WorkflowRun): string {

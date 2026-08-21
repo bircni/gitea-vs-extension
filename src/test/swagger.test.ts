@@ -16,6 +16,13 @@ test("finds actions endpoints", () => {
   expect(endpoints.listRunArtifacts).toBe(
     "/api/v1/repos/{owner}/{repo}/actions/runs/{run}/artifacts",
   );
+  expect(endpoints.rerunRun).toBe("/api/v1/repos/{owner}/{repo}/actions/runs/{run}/rerun");
+  expect(endpoints.rerunFailedJobs).toBe(
+    "/api/v1/repos/{owner}/{repo}/actions/runs/{run}/rerun-failed-jobs",
+  );
+  expect(endpoints.rerunJob).toBe(
+    "/api/v1/repos/{owner}/{repo}/actions/runs/{run}/jobs/{job_id}/rerun",
+  );
   expect(endpoints.listPullRequests).toBe("/api/v1/repos/{owner}/{repo}/pulls");
   expect(endpoints.listPullRequestReviews).toBe(
     "/api/v1/repos/{owner}/{repo}/pulls/{index}/reviews",
@@ -30,6 +37,13 @@ test("uses fallback endpoints when swagger is missing", () => {
   expect(endpoints.listRuns).toBe("/api/v1/repos/{owner}/{repo}/actions/runs");
   expect(endpoints.listJobs).toBe("/api/v1/repos/{owner}/{repo}/actions/runs/{run}/jobs");
   expect(endpoints.version).toBe("/api/v1/version");
+  expect(endpoints.rerunRun).toBe("/api/v1/repos/{owner}/{repo}/actions/runs/{run}/rerun");
+  expect(endpoints.rerunFailedJobs).toBe(
+    "/api/v1/repos/{owner}/{repo}/actions/runs/{run}/rerun-failed-jobs",
+  );
+  expect(endpoints.rerunJob).toBe(
+    "/api/v1/repos/{owner}/{repo}/actions/runs/{run}/jobs/{job_id}/rerun",
+  );
   expect(endpoints.listPullRequestReviews).toBe(
     "/api/v1/repos/{owner}/{repo}/pulls/{index}/reviews",
   );
@@ -100,4 +114,19 @@ test("fetchSwagger ignores invalid docs", async () => {
 
   expect(doc).toBeUndefined();
   expect(client.getJson).toHaveBeenCalledTimes(4);
+});
+
+test("does not confuse the rerun and rerun-failed-jobs endpoints", () => {
+  // Only `rerun-failed-jobs` is advertised: `rerunRun` must stay undefined rather than match it.
+  const endpoints = discoverEndpoints({
+    basePath: "/api/v1",
+    paths: {
+      "/repos/{owner}/{repo}/actions/runs/{run}/rerun-failed-jobs": {},
+    },
+  });
+
+  expect(endpoints.rerunFailedJobs).toBe(
+    "/api/v1/repos/{owner}/{repo}/actions/runs/{run}/rerun-failed-jobs",
+  );
+  expect(endpoints.rerunRun).toBeUndefined();
 });

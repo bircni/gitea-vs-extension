@@ -4,7 +4,7 @@ These markdown files are ready-to-use issue descriptions for GitHub or Gitea. Th
 
 | File                                   | Title                          | Analysis   | Suggested labels                                |
 | -------------------------------------- | ------------------------------ | ----------- | ----------------------------------------------- |
-| `001-rerun-cancel-workflow-run.md`     | Re-run and cancel workflow run | §3 #1       | `enhancement`, `actions`, `high priority`       |
+| `001-rerun-workflow-run.md`            | Re-run workflow run            | §3 #1       | `enhancement`, `actions`, `high priority`       |
 | `002-create-pr-from-current-branch.md` | Create PR from current branch  | §3 #2       | `enhancement`, `pull requests`, `high priority` |
 | `003-checkout-pr-branch.md`            | Checkout PR branch             | §3 #3       | `enhancement`, `pull requests`, `high priority` |
 | `004-issues-view.md`                   | Issues view                    | §3 #4       | `enhancement`, `issues`, `high priority`        |

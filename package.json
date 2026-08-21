@@ -276,6 +276,21 @@
         "title": "Open"
       },
       {
+        "command": "gitea-vs-extension.rerunRun",
+        "title": "gitea-vs-extension: Re-run Workflow Run",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "gitea-vs-extension.rerunFailedJobs",
+        "title": "gitea-vs-extension: Re-run Failed Jobs",
+        "icon": "$(debug-rerun)"
+      },
+      {
+        "command": "gitea-vs-extension.rerunJob",
+        "title": "gitea-vs-extension: Re-run Job",
+        "icon": "$(debug-restart)"
+      },
+      {
         "command": "gitea-vs-extension.checkoutPrBranch",
         "title": "gitea-vs-extension: Checkout PR Branch",
         "icon": "$(source-control)"
@@ -312,22 +327,22 @@
         },
         {
           "command": "gitea-vs-extension.openInBrowser",
-          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem == giteaRun",
+          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem =~ /giteaRun/",
           "group": "inline"
         },
         {
           "command": "gitea-vs-extension.openLatestFailedJobLogs",
-          "when": "viewItem == giteaRun",
+          "when": "viewItem =~ /giteaRun/",
           "group": "inline@1"
         },
         {
           "command": "gitea-vs-extension.openInBrowser",
-          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem == giteaJob",
+          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem =~ /giteaJob/",
           "group": "inline"
         },
         {
           "command": "gitea-vs-extension.viewJobLogs",
-          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && (viewItem == giteaJob || viewItem == giteaStep)",
+          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && (viewItem =~ /giteaJob/ || viewItem =~ /giteaStep/)",
           "group": "inline"
         },
         {
@@ -342,7 +357,7 @@
         },
         {
           "command": "gitea-vs-extension.copyUrl",
-          "when": "viewItem == giteaRepo || viewItem == giteaRun || viewItem == giteaJob || viewItem == giteaStep || viewItem == giteaPullRequest",
+          "when": "viewItem == giteaRepo || viewItem =~ /giteaRun/ || viewItem =~ /giteaJob/ || viewItem =~ /giteaStep/ || viewItem == giteaPullRequest",
           "group": "inline@2"
         },
         {
@@ -394,6 +409,21 @@
           "command": "gitea-vs-extension.deleteVariable",
           "when": "view == gitea-vs-extension.settings && viewItem == giteaVariable",
           "group": "inline@1"
+        },
+        {
+          "command": "gitea-vs-extension.rerunRun",
+          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem =~ /giteaRun/ && viewItem =~ /rerunnable/",
+          "group": "1_run@1"
+        },
+        {
+          "command": "gitea-vs-extension.rerunFailedJobs",
+          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem =~ /giteaRun/ && viewItem =~ /hasFailedJobs/",
+          "group": "1_run@2"
+        },
+        {
+          "command": "gitea-vs-extension.rerunJob",
+          "when": "(view == gitea-vs-extension.runs || view == gitea-vs-extension.runsPinned) && viewItem =~ /giteaJob/ && viewItem =~ /rerunnable/",
+          "group": "1_run@1"
         },
         {
           "command": "gitea-vs-extension.setToken",

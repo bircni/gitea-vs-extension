@@ -11,6 +11,7 @@ Works with VS Code, Cursor, VSCodium, Windsurf, and other VS Code compatible edi
 - Pull Requests view with author, labels, and last updated time
 - Inline pull request review comments, including adding a new review comment from the editor context menu
 - Jobs and step logs with one click
+- Re-run a workflow run, only its failed jobs, or a single job
 - Download workflow artifacts from the tree (context menu); double-click an artifact to open it in the editor (or be prompted to download first)
 - Secrets and variables management
 - Adaptive polling (fast when active, slower when idle)
@@ -29,10 +30,21 @@ Use a personal access token with scopes that allow:
 
 - Reading repositories
 - Reading Actions runs, jobs, and artifacts
+- Writing Actions, if you want to re-run runs or jobs
 - Reading pull requests; write access to pull requests is required to add review comments from the editor
 - Managing secrets/variables if you want to use the Settings view for those actions
 
-If you do not plan to manage secrets or variables, you can use a read-only token.
+If you do not plan to re-run runs or manage secrets or variables, you can use a read-only token.
+
+### Re-running Runs and Jobs
+
+Right click a run to **Re-run** it or to re-run just its **failed jobs**, and a job to re-run that
+job alone. All three appear only where Gitea would accept them: re-run needs a finished run, and
+re-run failed jobs needs a run that actually failed.
+
+There is deliberately no **Cancel**: Gitea exposes no API endpoint for cancelling a run (verified
+through 1.27.2), so it can only be done from the Gitea web UI. Deleting a run is likewise not
+offered.
 
 ## How It Works
 

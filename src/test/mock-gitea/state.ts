@@ -4,6 +4,8 @@ export type MockState = {
   reviewComments: Map<number, { id: number; body?: string; path?: string; line?: number }[]>;
   nextReviewId: number;
   nextReviewCommentId: number;
+  /** Attempt counter per run id, bumped by the re-run routes. */
+  runAttempts: Map<string, number>;
 };
 
 export function createInitialState(): MockState {
@@ -13,5 +15,6 @@ export function createInitialState(): MockState {
     reviewComments: new Map(),
     nextReviewId: 402,
     nextReviewCommentId: 502,
+    runAttempts: new Map(),
   };
 }
