@@ -3,7 +3,8 @@ import path from "node:path";
 import * as vscode from "vscode";
 import { getArtifactDownloadBaseDir, getSettings } from "../config/settings";
 import { clearToken, getEffectiveToken, setToken } from "../config/secrets";
-import type { ActionVariable, GiteaApi, Secret } from "../gitea/api";
+import type { ActionVariable, Secret } from "../gitea/api";
+import type { GiteaApiRouter } from "../gitea/apiRouter";
 import type { RepoRef, WorkflowRun } from "../gitea/models";
 import { computeArtifactSavePath } from "../util/artifactDownload";
 import { extractRepo, isRepoRef } from "../util/commandArgs";
@@ -36,7 +37,7 @@ import type { SettingsTreeProvider } from "../views/settingsTreeProvider";
 export class CommandsController {
   constructor(
     private readonly context: vscode.ExtensionContext,
-    private readonly api: GiteaApi,
+    private readonly api: GiteaApiRouter,
     private readonly refreshController: RefreshController,
     private readonly store: RepoStateStore,
     private readonly treeProvider: ActionsTreeProvider,
@@ -46,12 +47,17 @@ export class CommandsController {
 
   register(): vscode.Disposable[] {
     return [
-      vscode.commands.registerCommand("gitea-vs-extension.setToken", () => this.handleSetToken()),
-      vscode.commands.registerCommand("gitea-vs-extension.clearToken", () =>
-        this.handleClearToken(),
+      vscode.commands.registerCommand("gitea-vs-extension.setToken", (arg) =>
+        this.handleSetToken(arg),
       ),
-      vscode.commands.registerCommand("gitea-vs-extension.testConnection", () =>
-        this.handleTestConnection(),
+      vscode.commands.registerCommand("gitea-vs-extension.addInstance", () =>
+        this.handleAddInstance(),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.clearToken", (arg) =>
+        this.handleClearToken(arg),
+      ),
+      vscode.commands.registerCommand("gitea-vs-extension.testConnection", (arg) =>
+        this.handleTestConnection(arg),
       ),
       vscode.commands.registerCommand("gitea-vs-extension.refresh", () => this.handleRefresh()),
       vscode.commands.registerCommand("gitea-vs-extension.refreshRepo", (arg) =>
@@ -256,7 +262,7 @@ export class CommandsController {
     this.refreshViews?.();
   }
 
-  private async handleSetToken(): Promise<void> {
+  private async handleSetToken(arg?: unknown): Promise<void> {
     const token = await vscode.window.showInputBox({
       title: "Gitea Personal Access Token",
       prompt: "Enter your Gitea PAT",
@@ -268,34 +274,94 @@ export class CommandsController {
       return;
     }
 
-    await setToken(this.context.secrets, token.trim());
-    this.settingsProvider.setTokenStatus(true);
+    const baseUrl = this.getSelectedBaseUrl(arg);
+    if (!baseUrl) {
+      vscode.window.showWarningMessage("Add a Gitea instance URL before setting a token.");
+      return;
+    }
+    await setToken(this.context.secrets, token.trim(), baseUrl);
+    this.settingsProvider.setTokenStatus(baseUrl, true);
     void this.refreshController.refreshAll();
     vscode.window.showInformationMessage("gitea-vs-extension token saved.");
   }
 
-  private async handleClearToken(): Promise<void> {
-    await clearToken(this.context.secrets);
-    this.settingsProvider.setTokenStatus(false);
+  private async handleAddInstance(): Promise<void> {
+    const rawUrl = await vscode.window.showInputBox({
+      title: "Add Gitea Instance",
+      prompt: "Enter the Gitea base URL",
+      placeHolder: "https://gitea.example.com",
+      ignoreFocusOut: true,
+    });
+    if (!rawUrl) {
+      return;
+    }
+    let baseUrl: string;
+    try {
+      const url = new URL(rawUrl.trim());
+      if (url.protocol !== "http:" && url.protocol !== "https:") {
+        throw new Error("unsupported protocol");
+      }
+      baseUrl = url.toString().replace(/\/$/, "");
+    } catch {
+      vscode.window.showWarningMessage("Enter a valid HTTP(S) Gitea URL.");
+      return;
+    }
+
+    const settings = getSettings();
+    if (!settings.instanceUrls.includes(baseUrl)) {
+      await vscode.workspace
+        .getConfiguration("gitea-vs-extension")
+        .update(
+          "instances",
+          [...settings.instanceUrls, baseUrl],
+          vscode.ConfigurationTarget.Global,
+        );
+    }
+
+    const token = await vscode.window.showInputBox({
+      title: "Gitea Personal Access Token",
+      prompt: `Enter a token for ${baseUrl}`,
+      password: true,
+      ignoreFocusOut: true,
+    });
+    if (token) {
+      await setToken(this.context.secrets, token.trim(), baseUrl);
+      this.settingsProvider.setTokenStatus(baseUrl, true);
+    }
+    void this.refreshController.refreshAll();
+  }
+
+  private async handleClearToken(arg?: unknown): Promise<void> {
+    const baseUrl = this.getSelectedBaseUrl(arg);
+    if (!baseUrl) {
+      return;
+    }
+    await clearToken(this.context.secrets, baseUrl);
+    this.settingsProvider.setTokenStatus(baseUrl, false);
     void this.refreshController.refreshAll();
     vscode.window.showInformationMessage("gitea-vs-extension token cleared.");
   }
 
-  private async handleTestConnection(): Promise<void> {
+  private async handleTestConnection(arg?: unknown): Promise<void> {
     const settings = getSettings();
-    if (!settings.baseUrl) {
-      vscode.window.showWarningMessage("Set gitea-vs-extension.baseUrl before testing connection.");
+    const baseUrl = this.getSelectedBaseUrl(arg);
+    if (!baseUrl) {
+      vscode.window.showWarningMessage("Add a Gitea instance URL before testing connection.");
       return;
     }
 
-    const token = await getEffectiveToken(this.context.secrets);
+    const token = await getEffectiveToken(
+      this.context.secrets,
+      baseUrl,
+      baseUrl === settings.baseUrl,
+    );
     if (!token) {
       vscode.window.showWarningMessage("Set a token before testing connection.");
       return;
     }
 
     try {
-      const version = await this.api.testConnection();
+      const version = await this.api.testConnection(baseUrl);
       vscode.window.showInformationMessage(`Gitea connection OK (${version}).`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Connection failed.";
@@ -427,6 +493,33 @@ export class CommandsController {
       executeCommand: (cmd: string, ...args: unknown[]) =>
         vscode.commands.executeCommand(cmd, ...args),
     };
+  }
+
+  private getSelectedBaseUrl(arg?: unknown): string | undefined {
+    const settings = getSettings();
+    if (typeof arg === "string" && settings.instanceUrls.includes(arg)) {
+      return arg;
+    }
+    if (
+      typeof arg === "object" &&
+      arg !== null &&
+      "baseUrl" in arg &&
+      typeof arg.baseUrl === "string" &&
+      settings.instanceUrls.includes(arg.baseUrl)
+    ) {
+      return arg.baseUrl;
+    }
+    const repo = this.settingsProvider.getCurrentRepo();
+    const matching = repo
+      ? settings.instanceUrls.find((url) => {
+          try {
+            return new URL(url).host.toLowerCase() === repo.host.toLowerCase();
+          } catch {
+            return false;
+          }
+        })
+      : undefined;
+    return matching ?? settings.instanceUrls[0];
   }
 
   private async ensureRunDetails(repo: RepoRef, run: WorkflowRun): Promise<void> {

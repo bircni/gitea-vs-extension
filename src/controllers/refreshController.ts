@@ -16,7 +16,7 @@ import {
   resolveBranchFetch,
   type RefreshSummary,
 } from "../util/refreshHelpers";
-import type { GiteaApi } from "../gitea/api";
+import type { GiteaApiRouter } from "../gitea/apiRouter";
 import type { RepoDiscovery } from "../gitea/discovery";
 import type { PullRequest, RepoRef } from "../gitea/models";
 import { resolveWorkspaceRepos } from "../util/repoResolution";
@@ -30,7 +30,7 @@ export class RefreshController {
   private readonly limiter = createLimiter(4);
 
   constructor(
-    private readonly api: GiteaApi,
+    private readonly api: GiteaApiRouter,
     private readonly store: RepoStateStore,
     private readonly discovery: RepoDiscovery,
     private readonly logger: Logger,
@@ -69,7 +69,7 @@ export class RefreshController {
       let discoverySucceeded = true;
 
       try {
-        repos = await this.discovery.discoverRepos(settings.discoveryMode, settings.baseUrl);
+        repos = await this.discovery.discoverRepos(settings.discoveryMode, settings.instanceUrls);
       } catch (error) {
         discoverySucceeded = false;
         this.logger.warn(`Repository discovery failed: ${formatRefreshError(error)}`);
@@ -86,7 +86,7 @@ export class RefreshController {
 
       try {
         const discoveredRepoKeys = new Set(repos.map((repo) => repoKey(repo)));
-        const workspaceRepos = await resolveWorkspaceRepos(settings.baseUrl);
+        const workspaceRepos = await resolveWorkspaceRepos(settings.instanceUrls);
         const repoToFolder = new Map<string, string>();
         for (const { repo, folder } of workspaceRepos) {
           const key = repoKey(repo);

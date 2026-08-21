@@ -25,6 +25,34 @@ describe("repoResolution", () => {
     expect(repo).toEqual({ host: "gitea.example.com:3000", owner: "octo", name: "demo" });
   });
 
+  test("resolves a workspace remote against any configured instance", async () => {
+    (execGit as Mock)
+      .mockResolvedValueOnce("true\n")
+      .mockResolvedValueOnce("origin\thttps://gitea.two.example/octo/demo.git (fetch)\n");
+
+    const repo = await resolveRepoFromFolder("/repo", [
+      "https://gitea.one.example",
+      "https://gitea.two.example",
+    ]);
+
+    expect(repo).toEqual({ host: "gitea.two.example", owner: "octo", name: "demo" });
+  });
+
+  test("prefers origin over a fork remote", async () => {
+    (execGit as Mock)
+      .mockResolvedValueOnce("true\n")
+      .mockResolvedValueOnce(
+        [
+          "fork\thttps://gitea.example.com:3000/alice/demo.git (fetch)",
+          "origin\thttps://gitea.example.com:3000/octo/demo.git (fetch)",
+        ].join("\n"),
+      );
+
+    const repo = await resolveRepoFromFolder("/repo", baseUrl);
+
+    expect(repo).toEqual({ host: "gitea.example.com:3000", owner: "octo", name: "demo" });
+  });
+
   test("returns undefined when not a git repo", async () => {
     (execGit as Mock).mockResolvedValueOnce("false\n");
 

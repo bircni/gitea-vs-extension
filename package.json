@@ -74,6 +74,15 @@
           "default": "",
           "description": "Base URL for the Gitea instance, e.g. http://localhost:3000."
         },
+        "gitea-vs-extension.instances": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string",
+            "format": "uri"
+          },
+          "description": "Additional Gitea instance URLs. Tokens are stored separately for each instance."
+        },
         "gitea-vs-extension.tls.insecureSkipVerify": {
           "type": "boolean",
           "default": false,
@@ -201,7 +210,7 @@
         {
           "type": "tree",
           "id": "gitea-vs-extension.runsPinned",
-          "name": "Workflows"
+          "name": "Runs by Branch"
         },
         {
           "type": "tree",
@@ -216,6 +225,11 @@
         "command": "gitea-vs-extension.setToken",
         "title": "gitea-vs-extension: Set Token",
         "icon": "$(pencil)"
+      },
+      {
+        "command": "gitea-vs-extension.addInstance",
+        "title": "gitea-vs-extension: Add Gitea Instance",
+        "icon": "$(add)"
       },
       {
         "command": "gitea-vs-extension.clearToken",
@@ -484,6 +498,16 @@
         {
           "command": "gitea-vs-extension.clearToken",
           "when": "view == gitea-vs-extension.settings && viewItem == giteaToken",
+          "group": "inline@1"
+        },
+        {
+          "command": "gitea-vs-extension.clearToken",
+          "when": "view == gitea-vs-extension.settings && viewItem == giteaInstance",
+          "group": "inline"
+        },
+        {
+          "command": "gitea-vs-extension.testConnection",
+          "when": "view == gitea-vs-extension.settings && viewItem == giteaInstance",
           "group": "inline@1"
         }
       ],

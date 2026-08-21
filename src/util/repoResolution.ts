@@ -10,10 +10,10 @@ export type WorkspaceRepo = {
 
 export async function resolveRepoFromFolder(
   folderPath: string,
-  baseUrl: string,
+  baseUrl: string | readonly string[],
 ): Promise<RepoRef | undefined> {
-  const host = getHost(baseUrl);
-  if (!host) {
+  const hosts = getHosts(baseUrl);
+  if (hosts.length === 0) {
     return undefined;
   }
 
@@ -28,15 +28,24 @@ export async function resolveRepoFromFolder(
       .split(/\r?\n/)
       .map((line) => line.trim())
       .filter(Boolean)
-      .map((line) => line.split(/\s+/, 2)[1])
-      .filter(Boolean);
+      .map((line) => {
+        const [name, url, direction] = line.split(/\s+/);
+        return { name, url, direction };
+      })
+      .filter((remote): remote is { name: string; url: string; direction: string } =>
+        Boolean(remote.name && remote.url && remote.direction),
+      )
+      .filter((remote) => remote.direction === "(fetch)")
+      .toSorted((a, b) => Number(b.name === "origin") - Number(a.name === "origin"))
+      .map((remote) => remote.url);
 
     for (const remoteUrl of remoteUrls) {
       const parsed = parseRemoteUrl(remoteUrl);
       if (!parsed) {
         continue;
       }
-      if (!hostMatches(host, parsed.host)) {
+      const host = hosts.find((candidate) => hostMatches(candidate, parsed.host));
+      if (!host) {
         continue;
       }
       return {
@@ -52,7 +61,9 @@ export async function resolveRepoFromFolder(
   return undefined;
 }
 
-export async function resolveWorkspaceRepos(baseUrl: string): Promise<WorkspaceRepo[]> {
+export async function resolveWorkspaceRepos(
+  baseUrl: string | readonly string[],
+): Promise<WorkspaceRepo[]> {
   const workspaceFolders = vscode.workspace.workspaceFolders ?? [];
   const repos: WorkspaceRepo[] = [];
 
@@ -66,12 +77,15 @@ export async function resolveWorkspaceRepos(baseUrl: string): Promise<WorkspaceR
   return uniqWorkspaceRepos(repos);
 }
 
-function getHost(baseUrl: string): string | undefined {
-  try {
-    return new URL(baseUrl).host;
-  } catch {
-    return undefined;
-  }
+function getHosts(baseUrl: string | readonly string[]): string[] {
+  const urls = typeof baseUrl === "string" ? [baseUrl] : baseUrl;
+  return urls.flatMap((url) => {
+    try {
+      return [new URL(url).host];
+    } catch {
+      return [];
+    }
+  });
 }
 
 function uniqWorkspaceRepos(repos: WorkspaceRepo[]): WorkspaceRepo[] {

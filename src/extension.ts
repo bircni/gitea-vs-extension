@@ -1,8 +1,9 @@
 import * as vscode from "vscode";
 import { getSettings, onSettingsChange } from "./config/settings";
-import { getToken, TOKEN_KEY } from "./config/secrets";
+import { getToken, tokenKeyForBaseUrl } from "./config/secrets";
 import { GiteaHttpClient } from "./gitea/client";
 import { GiteaApi } from "./gitea/api";
+import { GiteaApiRouter } from "./gitea/apiRouter";
 import { RepoDiscovery } from "./gitea/discovery";
 import { ActionsTreeProvider } from "./views/actionsTreeProvider";
 import { RepoStateStore } from "./util/cache";
@@ -26,32 +27,57 @@ import { startLanguageServer, stopLanguageServer } from "./workflow/languageServ
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const logger = new Logger("gitea-vs-extension", () => getSettings().debugLogging);
-  let cachedToken = await getToken(context.secrets);
+  const cachedTokens = new Map<string, string | undefined>();
 
-  const settingsProvider = new SettingsTreeProvider();
-  settingsProvider.setTokenStatus(Boolean(resolveExtensionTestPat() ?? cachedToken));
+  const settingsProvider = new SettingsTreeProvider(() => getSettings().instanceUrls);
 
   const reloadToken = async (): Promise<void> => {
-    cachedToken = await getToken(context.secrets);
-    settingsProvider.setTokenStatus(Boolean(resolveExtensionTestPat() ?? cachedToken));
+    const settings = getSettings();
+    await Promise.all(
+      settings.instanceUrls.map(async (baseUrl) => {
+        cachedTokens.set(
+          baseUrl,
+          await getToken(context.secrets, baseUrl, baseUrl === settings.baseUrl),
+        );
+      }),
+    );
+    settingsProvider.setTokenStatuses(
+      new Map(
+        settings.instanceUrls.map((baseUrl) => [
+          baseUrl,
+          Boolean(resolveExtensionTestPat() ?? cachedTokens.get(baseUrl)),
+        ]),
+      ),
+    );
   };
+  await reloadToken();
 
   context.secrets.onDidChange((event) => {
-    if (event.key === TOKEN_KEY) {
+    if (getSettings().instanceUrls.some((url) => event.key === tokenKeyForBaseUrl(url))) {
       void reloadToken();
     }
   });
 
-  const client = new GiteaHttpClient(() => {
-    const settings = getSettings();
-    return {
-      baseUrl: settings.baseUrl,
-      token: resolveExtensionTestPat() ?? cachedToken,
-      insecureSkipVerify: settings.tlsInsecureSkipVerify,
-    };
-  });
-
-  const api = new GiteaApi(client, () => getSettings().baseUrl);
+  const apis = new Map<string, GiteaApi>();
+  const api = new GiteaApiRouter(
+    (baseUrl) => {
+      const existing = apis.get(baseUrl);
+      if (existing) {
+        return existing;
+      }
+      const instance = new GiteaApi(
+        new GiteaHttpClient(() => ({
+          baseUrl,
+          token: resolveExtensionTestPat() ?? cachedTokens.get(baseUrl),
+          insecureSkipVerify: getSettings().tlsInsecureSkipVerify,
+        })),
+        () => baseUrl,
+      );
+      apis.set(baseUrl, instance);
+      return instance;
+    },
+    () => getSettings().instanceUrls,
+  );
   const store = new RepoStateStore();
   const discovery = new RepoDiscovery(api);
   const expanded = loadExpandedState(context.globalState);

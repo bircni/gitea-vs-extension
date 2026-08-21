@@ -15,7 +15,8 @@ export type TreeNode =
   | MessageNode
   | ErrorNode
   | ConfigRootNode
-  | TokenNode
+  | AddInstanceNode
+  | InstanceNode
   | ConfigActionNode
   | SecretsRootNode
   | SecretNode
@@ -249,18 +250,38 @@ export class ErrorNode extends vscode.TreeItem {
 
 export class ConfigRootNode extends vscode.TreeItem {
   constructor() {
-    super("Gitea Config", vscode.TreeItemCollapsibleState.Collapsed);
+    super("Gitea Instances", vscode.TreeItemCollapsibleState.Collapsed);
     this.contextValue = "giteaConfigRoot";
     this.iconPath = new vscode.ThemeIcon("settings-gear");
   }
 }
 
-export class TokenNode extends vscode.TreeItem {
-  constructor(public readonly hasToken: boolean) {
-    super("Token", vscode.TreeItemCollapsibleState.None);
-    this.contextValue = "giteaToken";
-    this.description = hasToken ? "V" : "?";
-    this.iconPath = new vscode.ThemeIcon("key");
+export class AddInstanceNode extends vscode.TreeItem {
+  constructor() {
+    super("Add Gitea Instance", vscode.TreeItemCollapsibleState.None);
+    this.contextValue = "giteaAddInstance";
+    this.iconPath = new vscode.ThemeIcon("add");
+    this.command = {
+      command: "gitea-vs-extension.addInstance",
+      title: "Add Gitea Instance",
+    };
+  }
+}
+
+export class InstanceNode extends vscode.TreeItem {
+  constructor(
+    public readonly baseUrl: string,
+    hasToken: boolean,
+  ) {
+    super(baseUrl, vscode.TreeItemCollapsibleState.None);
+    this.contextValue = "giteaInstance";
+    this.description = hasToken ? "Token saved" : "Token missing";
+    this.iconPath = new vscode.ThemeIcon(hasToken ? "pass" : "key");
+    this.command = {
+      command: "gitea-vs-extension.setToken",
+      title: "Set token",
+      arguments: [baseUrl],
+    };
   }
 }
 
@@ -347,10 +368,8 @@ function buildRunLabel(run: WorkflowRun): string {
 
 function buildRunDescription(run: WorkflowRun): string | undefined {
   const duration = formatDuration(run.startedAt ?? run.createdAt, run.completedAt ?? run.updatedAt);
-  if (duration) {
-    return duration;
-  }
-  return formatRelativeTime(run.updatedAt ?? run.createdAt);
+  const time = duration ?? formatRelativeTime(run.updatedAt ?? run.createdAt);
+  return [time, run.event].filter(Boolean).join(" · ") || undefined;
 }
 
 function buildRunTooltip(run: WorkflowRun): string {

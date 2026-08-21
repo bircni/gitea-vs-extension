@@ -7,7 +7,7 @@ Works with VS Code, Cursor, VSCodium, Windsurf, and other VS Code compatible edi
 ## Features
 
 - Workflow runs with colored status icons
-- Workflows grouped by branch
+- Runs grouped by branch
 - Pull Requests view with author, labels, and last updated time
 - Inline pull request review comments, including adding a new review comment from the editor context menu
 - Workflow file authoring: syntax highlighting, schema validation, expression checking, completion and hover docs
@@ -24,6 +24,14 @@ Works with VS Code, Cursor, VSCodium, Windsurf, and other VS Code compatible edi
 2. Set `gitea-vs-extension.baseUrl` to your Gitea instance (for example, `http://localhost:3000`).
 3. Open the Gitea VS Extension activity bar view.
 4. In Settings, set your personal access token and click Test Connection.
+
+To use more than one Gitea server, keep `baseUrl` as the default server and add the others to
+`gitea-vs-extension.instances`. The extension matches workspace remotes to their server and keeps
+each server's token separately in VS Code SecretStorage.
+
+You can add an instance without editing JSON: open the extension’s **Settings** view, expand
+**Gitea Instances**, and select **Add Gitea Instance**. It prompts for the URL and token.
+Configured URLs stay visible in that list; select one later to set or replace its token.
 
 ### Required Gitea Token Scopes
 
@@ -90,6 +98,7 @@ Manage token, test connection, and edit secrets and variables.
 | Setting                                               | Default                 | Description                                         |
 | ----------------------------------------------------- | ----------------------- | --------------------------------------------------- |
 | `gitea-vs-extension.baseUrl`                          | -                       | Base URL of your Gitea instance                     |
+| `gitea-vs-extension.instances`                        | `[]`                    | Additional Gitea instance URLs                      |
 | `gitea-vs-extension.discovery.mode`                   | `workspace`             | How to discover repositories                        |
 | `gitea-vs-extension.refresh.runningIntervalSeconds`   | `15`                    | Polling interval while runs are active              |
 | `gitea-vs-extension.refresh.idleIntervalSeconds`      | `60`                    | Polling interval while idle                         |

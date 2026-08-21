@@ -1,11 +1,12 @@
 import * as vscode from "vscode";
 import {
+  AddInstanceNode,
   ConfigActionNode,
   ConfigRootNode,
+  InstanceNode,
   MessageNode,
   SecretNode,
   SecretsRootNode,
-  TokenNode,
   VariableNode,
   VariablesRootNode,
   type TreeNode,
@@ -24,7 +25,9 @@ export class SettingsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   private variablesState: "idle" | "loading" | "error" = "idle";
   private secretsError?: string;
   private variablesError?: string;
-  private hasToken = false;
+  private readonly tokensByInstance = new Map<string, boolean>();
+
+  constructor(private readonly instanceUrlsProvider: () => readonly string[] = () => []) {}
 
   getTreeItem(element: TreeNode): vscode.TreeItem {
     return element;
@@ -33,7 +36,7 @@ export class SettingsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   getChildren(element?: TreeNode): vscode.ProviderResult<TreeNode[]> {
     if (!element) {
       if (!this.currentRepo) {
-        return [new MessageNode("Open a Gitea repository to view settings")];
+        return [new ConfigRootNode(), new MessageNode("Open a Gitea repository to manage secrets")];
       }
 
       return [
@@ -80,7 +83,13 @@ export class SettingsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     }
 
     if (element instanceof ConfigRootNode) {
-      return [new TokenNode(this.hasToken), new ConfigActionNode()];
+      return [
+        new AddInstanceNode(),
+        ...this.instanceUrlsProvider().map(
+          (baseUrl) => new InstanceNode(baseUrl, this.tokensByInstance.get(baseUrl) === true),
+        ),
+        new ConfigActionNode(),
+      ];
     }
 
     return [];
@@ -111,8 +120,16 @@ export class SettingsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     this.refresh();
   }
 
-  setTokenStatus(hasToken: boolean): void {
-    this.hasToken = hasToken;
+  setTokenStatus(baseUrl: string, hasToken: boolean): void {
+    this.tokensByInstance.set(baseUrl, hasToken);
+    this.refresh();
+  }
+
+  setTokenStatuses(statuses: ReadonlyMap<string, boolean>): void {
+    this.tokensByInstance.clear();
+    for (const [baseUrl, hasToken] of statuses) {
+      this.tokensByInstance.set(baseUrl, hasToken);
+    }
     this.refresh();
   }
 

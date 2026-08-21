@@ -2,7 +2,13 @@
  * Unit tests for the capability tokens the run-control menus match on.
  */
 import type { Job, RepoRef, WorkflowRun } from "../gitea/models";
-import { buildJobContextValue, buildRunContextValue, JobNode, RunNode } from "../views/nodes";
+import {
+  buildJobContextValue,
+  buildRunContextValue,
+  InstanceNode,
+  JobNode,
+  RunNode,
+} from "../views/nodes";
 
 const repo: RepoRef = { host: "gitea.example.com", owner: "o", name: "n" };
 
@@ -41,4 +47,21 @@ describe("buildJobContextValue", () => {
     expect(buildJobContextValue(job)).toBe(expected);
     expect(new JobNode(repo, run(), job).contextValue).toBe(expected);
   });
+});
+
+test("run rows show the event and duration before expansion", () => {
+  const node = new RunNode(
+    repo,
+    run({
+      event: "pull_request",
+      startedAt: "2026-08-21T10:00:00Z",
+      completedAt: "2026-08-21T10:01:02Z",
+    }),
+  );
+  expect(node.description).toBe("1m · pull_request");
+});
+
+test("instance rows expose their individual token status", () => {
+  expect(new InstanceNode("https://gitea.example", true).description).toBe("Token saved");
+  expect(new InstanceNode("https://gitea.example", false).description).toBe("Token missing");
 });

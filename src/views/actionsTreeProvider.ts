@@ -91,8 +91,13 @@ export class ActionsTreeProvider implements vscode.TreeDataProvider<TreeNode> {
 
   private async getRootNodes(): Promise<TreeNode[]> {
     const settings = getSettings();
-    const hasBaseUrl = Boolean(settings.baseUrl);
-    const token = await getEffectiveToken(this.secrets);
+    const instanceUrls = settings.instanceUrls ?? (settings.baseUrl ? [settings.baseUrl] : []);
+    const hasBaseUrl = instanceUrls.length > 0;
+    const token = await getEffectiveToken(
+      this.secrets,
+      instanceUrls[0],
+      instanceUrls[0] === settings.baseUrl,
+    );
     const reposLoading = this.store.isReposLoading();
     const repos = this.store.getRepos();
     const workflowDescriptors =

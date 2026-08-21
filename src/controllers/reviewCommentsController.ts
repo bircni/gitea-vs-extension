@@ -3,7 +3,7 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 import * as vscode from "vscode";
 import { getSettings } from "../config/settings";
-import type { GiteaApi } from "../gitea/api";
+import type { GiteaApiRouter } from "../gitea/apiRouter";
 import { HttpError } from "../gitea/client";
 import type { PullRequest, PullRequestReviewComment, RepoRef } from "../gitea/models";
 import type { Logger } from "../util/logging";
@@ -46,7 +46,7 @@ export class ReviewCommentsController implements vscode.Disposable {
   private lastThreadPlan = new Map<ThreadKey, ThreadPlan>();
 
   constructor(
-    private readonly api: GiteaApi,
+    private readonly api: GiteaApiRouter,
     private readonly logger: Logger,
     storageRoot: string,
   ) {
@@ -120,7 +120,7 @@ export class ReviewCommentsController implements vscode.Disposable {
     }
 
     try {
-      const repo = await resolveRepoFromFolder(folder.uri.fsPath, settings.baseUrl);
+      const repo = await resolveRepoFromFolder(folder.uri.fsPath, settings.instanceUrls);
       if (!repo) {
         void vscode.window.showWarningMessage(
           "Could not resolve a Gitea repository for the active file.",
@@ -197,7 +197,7 @@ export class ReviewCommentsController implements vscode.Disposable {
         return;
       }
 
-      const context = await this.resolveRepoContext(settings.baseUrl);
+      const context = await this.resolveRepoContext(settings.instanceUrls);
       if (!context) {
         this.clear();
         return;
@@ -270,17 +270,17 @@ export class ReviewCommentsController implements vscode.Disposable {
     }
   }
 
-  private async resolveRepoContext(baseUrl: string): Promise<RepoContext | undefined> {
+  private async resolveRepoContext(baseUrls: readonly string[]): Promise<RepoContext | undefined> {
     const activeFolder = getActiveWorkspaceFolder();
     if (activeFolder) {
-      const repo = await resolveRepoFromFolder(activeFolder.uri.fsPath, baseUrl);
+      const repo = await resolveRepoFromFolder(activeFolder.uri.fsPath, baseUrls);
       if (repo) {
         const { branch, sha } = await getGitHead(activeFolder.uri.fsPath);
         return { repo, folder: activeFolder, branch, sha };
       }
     }
 
-    const fallbackRepos = await resolveWorkspaceRepos(baseUrl);
+    const fallbackRepos = await resolveWorkspaceRepos(baseUrls);
     const fallback = fallbackRepos.at(0);
     if (!fallback) {
       return undefined;
@@ -705,7 +705,7 @@ class AvatarCache {
   private readonly inflight = new Set<string>();
 
   constructor(
-    private readonly api: GiteaApi,
+    private readonly api: GiteaApiRouter,
     private readonly logger: Logger,
     storageRoot: string,
     private readonly onAvatarCached: (url: string) => void,

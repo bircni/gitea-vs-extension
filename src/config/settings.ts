@@ -5,6 +5,7 @@ export type DiscoveryMode = "workspace" | "allAccessible";
 
 export type ExtensionSettings = {
   baseUrl: string;
+  instanceUrls: string[];
   tlsInsecureSkipVerify: boolean;
   discoveryMode: DiscoveryMode;
   runningRefreshSeconds: number;
@@ -24,6 +25,7 @@ export function getSettings(): ExtensionSettings {
   const legacyConfig = vscode.workspace.getConfiguration("bircni.gitea-vs-extension");
   return {
     baseUrl: getSetting(config, legacyConfig, "baseUrl", "").trim(),
+    instanceUrls: getInstanceUrls(config, legacyConfig),
     tlsInsecureSkipVerify: getSetting(config, legacyConfig, "tls.insecureSkipVerify", false),
     discoveryMode: getSetting<DiscoveryMode>(config, legacyConfig, "discovery.mode", "workspace"),
     runningRefreshSeconds: getSetting(config, legacyConfig, "refresh.runningIntervalSeconds", 15),
@@ -52,6 +54,16 @@ export function getSettings(): ExtensionSettings {
       "auto",
     ),
   };
+}
+
+/** The legacy single URL remains the default instance for existing installations. */
+function getInstanceUrls(
+  config: vscode.WorkspaceConfiguration,
+  legacyConfig: vscode.WorkspaceConfiguration,
+): string[] {
+  const configured = getSetting<string[]>(config, legacyConfig, "instances", []);
+  const legacyBaseUrl = getSetting(config, legacyConfig, "baseUrl", "").trim();
+  return [...new Set([legacyBaseUrl, ...configured].map((url) => url.trim()).filter(Boolean))];
 }
 
 /**

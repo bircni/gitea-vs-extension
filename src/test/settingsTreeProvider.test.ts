@@ -2,19 +2,26 @@
  * Unit tests for SettingsTreeProvider.
  */
 import { SettingsTreeProvider } from "../views/settingsTreeProvider";
-import { ConfigRootNode, MessageNode, SecretsRootNode, VariablesRootNode } from "../views/nodes";
+import {
+  ConfigRootNode,
+  InstanceNode,
+  MessageNode,
+  SecretsRootNode,
+  VariablesRootNode,
+} from "../views/nodes";
 import type { RepoRef } from "../gitea/models";
 
 const mockRepo: RepoRef = { host: "gitea.example", owner: "o", name: "n" };
 
 describe("SettingsTreeProvider", () => {
-  it("getChildren(undefined) returns message when no repo selected", () => {
+  it("shows configuration before a repository is selected", () => {
     const provider = new SettingsTreeProvider();
     const children = provider.getChildren();
     expect(Array.isArray(children)).toBe(true);
-    expect(children).toHaveLength(1);
-    expect(children[0]).toBeInstanceOf(MessageNode);
-    expect((children[0] as MessageNode).label).toContain("Open a Gitea repository");
+    expect(children).toHaveLength(2);
+    expect(children[0]).toBeInstanceOf(ConfigRootNode);
+    expect(children[1]).toBeInstanceOf(MessageNode);
+    expect((children[1] as MessageNode).label).toContain("Open a Gitea repository");
   });
 
   it("getChildren(undefined) returns roots after setRepository", () => {
@@ -25,6 +32,22 @@ describe("SettingsTreeProvider", () => {
     expect(children[0]).toBeInstanceOf(SecretsRootNode);
     expect(children[1]).toBeInstanceOf(VariablesRootNode);
     expect(children[2]).toBeInstanceOf(ConfigRootNode);
+  });
+
+  it("lists configured instances so their tokens can be changed", () => {
+    const provider = new SettingsTreeProvider(() => ["https://gitea.example"]);
+    const configRoot = provider.getChildren()[0];
+    const children = provider.getChildren(configRoot);
+    const instance = children.find((child) => child instanceof InstanceNode) as InstanceNode;
+    expect(instance.description).toBe("Token missing");
+    provider.setTokenStatus("https://gitea.example", true);
+    expect(
+      (
+        provider
+          .getChildren(configRoot)
+          .find((child) => child instanceof InstanceNode) as InstanceNode
+      ).description,
+    ).toBe("Token saved");
   });
 
   it("getChildren(SecretsRootNode) returns loading message when loading", () => {
