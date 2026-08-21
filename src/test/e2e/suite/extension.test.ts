@@ -1,4 +1,6 @@
 import * as assert from "node:assert";
+import * as fs from "node:fs";
+import path from "node:path";
 import { request } from "undici";
 import * as vscode from "vscode";
 
@@ -101,6 +103,54 @@ suite(`gitea-vs-extension E2E (${isRealGitea ? "real Gitea" : "mock"})`, () => {
       afterCount > beforeCount,
       `expected branch fetch to add runs (before ${beforeCount}, after ${afterCount})`,
     );
+  });
+
+  test("W1: the workflow language server reports schema and expression problems", async function () {
+    this.timeout(30_000);
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    assert.ok(folder, "expected a workspace folder");
+    const dir = path.join(folder.uri.fsPath, ".gitea", "workflows");
+    const file = path.join(dir, "language-server-probe.yml");
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(
+      file,
+      [
+        "name: probe",
+        "not_a_real_key: 1",
+        "on: push",
+        "jobs:",
+        "  build:",
+        "    runs-on: ubuntu-latest",
+        "    steps:",
+        // eslint-disable-next-line no-template-curly-in-string -- workflow expression syntax
+        "      - run: echo ${{ github.reff }}",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+
+    try {
+      const uri = vscode.Uri.file(file);
+      const document = await vscode.workspace.openTextDocument(uri);
+      assert.strictEqual(
+        document.languageId,
+        "gitea-actions-workflow",
+        "expected the file pattern to select our workflow language",
+      );
+
+      const diagnostics = await waitForDiagnostics(uri, 25_000);
+      const messages = diagnostics.map((d) => d.message);
+      assert.ok(
+        messages.some((m) => m.includes("not_a_real_key")),
+        `expected a schema problem, got ${JSON.stringify(messages)}`,
+      );
+      assert.ok(
+        messages.some((m) => m.includes("reff")),
+        `expected an expression problem, got ${JSON.stringify(messages)}`,
+      );
+    } finally {
+      fs.rmSync(file, { force: true });
+    }
   });
 
   test("G1: real Gitea fixture is version 1.27.2", async function () {
@@ -265,4 +315,29 @@ function requireEnv(name: string): string {
     throw new Error(`${name} is required`);
   }
   return value;
+}
+
+/** Resolves once the language server has published diagnostics for the document. */
+async function waitForDiagnostics(
+  uri: vscode.Uri,
+  timeoutMs: number,
+): Promise<vscode.Diagnostic[]> {
+  const existing = vscode.languages.getDiagnostics(uri);
+  if (existing.length > 0) {
+    return existing;
+  }
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      subscription.dispose();
+      reject(new Error(`no diagnostics for ${uri.fsPath} within ${timeoutMs}ms`));
+    }, timeoutMs);
+    const subscription = vscode.languages.onDidChangeDiagnostics(() => {
+      const diagnostics = vscode.languages.getDiagnostics(uri);
+      if (diagnostics.length > 0) {
+        clearTimeout(timer);
+        subscription.dispose();
+        resolve(diagnostics);
+      }
+    });
+  });
 }

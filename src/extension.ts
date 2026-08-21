@@ -21,6 +21,8 @@ import { SettingsTreeProvider } from "./views/settingsTreeProvider";
 import { ReviewCommentsController } from "./controllers/reviewCommentsController";
 import { registerExtensionTestCommands } from "./util/extensionTestCommands";
 import { resolveExtensionTestPat } from "./util/extensionTestMode";
+import { registerWorkflowDocumentTracker } from "./workflow/documentTracker";
+import { startLanguageServer, stopLanguageServer } from "./workflow/languageServer";
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const logger = new Logger("gitea-vs-extension", () => getSettings().debugLogging);
@@ -156,7 +158,23 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   );
 
   reviewCommentsController.scheduleRefresh();
+
+  context.subscriptions.push(
+    registerWorkflowDocumentTracker(() => getSettings().githubFolderLanguage),
+  );
+  if (getSettings().languageServerEnabled) {
+    // Not awaited: a slow server start must not delay the tree views.
+    void (async (): Promise<void> => {
+      try {
+        await startLanguageServer(context, getSettings().debugLogging);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        logger.error(`Workflow language server failed to start: ${message}`);
+      }
+    })();
+  }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-export function deactivate(): void {}
+export async function deactivate(): Promise<void> {
+  await stopLanguageServer();
+}

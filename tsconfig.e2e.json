@@ -1,6 +1,10 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    // This build actually emits JS that node runs, so it needs a real module format; the root
+    // config uses `preserve`, which is only right for the esbuild-bundled extension sources.
+    "module": "commonjs",
+    "moduleResolution": "bundler",
     "outDir": "out/test",
     "rootDir": "src/test",
     "declaration": false,

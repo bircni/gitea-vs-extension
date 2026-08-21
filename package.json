@@ -30,13 +30,17 @@
     "bircni.compress-preview"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "workspaceContains:**/.gitea/workflows/**",
+    "workspaceContains:**/.github/workflows/**"
   ],
   "main": "./dist/extension.js",
   "scripts": {
     "audit": "npm audit --audit-level high",
     "build": "npm run compile && npm run bundle && npm run package",
-    "bundle": "esbuild src/extension.ts --bundle --platform=node --format=cjs --target=node18 --external:vscode --outfile=dist/extension.js --sourcemap",
+    "bundle": "npm run bundle:extension && npm run bundle:server",
+    "bundle:extension": "esbuild src/extension.ts --bundle --platform=node --format=cjs --target=node20 --external:vscode --outfile=dist/extension.js --sourcemap",
+    "bundle:server": "node scripts/bundle-language-server.js",
     "check-unused": "depcheck .",
     "clean": "rimraf dist",
     "compile": "tsc --project tsconfig.build.json",
@@ -119,6 +123,26 @@
           "default": true,
           "description": "When opening job logs locally, save the log file to the repo at .tmp/gitea-logs/<run>-<job>.log so it opens as a saved file. When disabled, logs open in an unsaved editor tab."
         },
+        "gitea-vs-extension.workflows.languageServer.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Validate and auto-complete Gitea Actions workflow files. Works fully offline; `uses:` action inputs are not validated."
+        },
+        "gitea-vs-extension.workflows.githubFolderLanguage": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "always",
+            "never"
+          ],
+          "enumDescriptions": [
+            "Claim .github/workflows only when the GitHub Actions extension is not installed.",
+            "Always claim .github/workflows.",
+            "Never claim .github/workflows."
+          ],
+          "default": "auto",
+          "description": "Whether workflow files under .github/workflows get Gitea Actions workflow language features. Gitea reads that folder too, but the GitHub Actions extension also claims it."
+        },
         "gitea-vs-extension.artifacts.downloadPath": {
           "type": "string",
           "default": ".tmp/gitea-artifacts/",
@@ -126,6 +150,33 @@
         }
       }
     },
+    "languages": [
+      {
+        "id": "gitea-actions-workflow",
+        "aliases": [
+          "Gitea Actions Workflow"
+        ],
+        "filenamePatterns": [
+          "**/.gitea/workflows/*.yml",
+          "**/.gitea/workflows/*.yaml"
+        ],
+        "configuration": "./language/language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "gitea-actions-workflow",
+        "scopeName": "source.gitea-actions-workflow",
+        "path": "./language/syntaxes/yaml.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.gitea-actions-workflow.github-actions-expression",
+        "path": "./language/syntaxes/expressions.tmGrammar.json",
+        "injectTo": [
+          "source.gitea-actions-workflow"
+        ]
+      }
+    ],
     "viewsContainers": {
       "activitybar": [
         {
@@ -471,6 +522,8 @@
     "vitest": "^4.1.11"
   },
   "dependencies": {
-    "undici": "8.10.0"
+    "@actions/languageserver": "0.3.61",
+    "undici": "8.10.0",
+    "vscode-languageclient": "10.1.0"
   }
 }

@@ -10,6 +10,7 @@ Works with VS Code, Cursor, VSCodium, Windsurf, and other VS Code compatible edi
 - Workflows grouped by branch
 - Pull Requests view with author, labels, and last updated time
 - Inline pull request review comments, including adding a new review comment from the editor context menu
+- Workflow file authoring: syntax highlighting, schema validation, expression checking, completion and hover docs
 - Jobs and step logs with one click
 - Re-run a workflow run, only its failed jobs, or a single job
 - Download workflow artifacts from the tree (context menu); double-click an artifact to open it in the editor (or be prompted to download first)
@@ -46,6 +47,19 @@ There is deliberately no **Cancel**: Gitea exposes no API endpoint for cancellin
 through 1.27.2), so it can only be done from the Gitea web UI. Deleting a run is likewise not
 offered.
 
+### Workflow File Authoring
+
+Files under `.gitea/workflows/` get the **Gitea Actions Workflow** language: highlighting for the
+workflow schema and for `${{ }}` expressions, validation of both, completion, and hover
+documentation. Gitea also runs workflows from `.github/workflows/`, so those files get the same
+treatment — unless the GitHub Actions extension is installed, in which case we leave them to it. Use
+`gitea-vs-extension.workflows.githubFolderLanguage` to override that choice.
+
+This runs entirely offline against a bundled language server; nothing is sent anywhere. The one
+thing it cannot check is whether the inputs you pass to a `uses:` action are valid, because that
+would mean fetching the action's metadata from github.com. Set
+`gitea-vs-extension.workflows.languageServer.enabled` to `false` to turn the whole thing off.
+
 ## How It Works
 
 - Discovers repositories from your workspace git remotes or API (based on discovery mode).
@@ -73,17 +87,19 @@ Manage token, test connection, and edit secrets and variables.
 
 ## Configuration
 
-| Setting                                             | Default                 | Description                                      |
-| --------------------------------------------------- | ----------------------- | ------------------------------------------------ |
-| `gitea-vs-extension.baseUrl`                        | -                       | Base URL of your Gitea instance                  |
-| `gitea-vs-extension.discovery.mode`                 | `workspace`             | How to discover repositories                     |
-| `gitea-vs-extension.refresh.runningIntervalSeconds` | `15`                    | Polling interval while runs are active           |
-| `gitea-vs-extension.refresh.idleIntervalSeconds`    | `60`                    | Polling interval while idle                      |
-| `gitea-vs-extension.maxRunsPerRepo`                 | `20`                    | Maximum runs to fetch per repository             |
-| `gitea-vs-extension.maxJobsPerRun`                  | `50`                    | Maximum jobs to fetch per run                    |
-| `gitea-vs-extension.tls.insecureSkipVerify`         | `false`                 | Skip TLS verification (not recommended)          |
-| `gitea-vs-extension.logging.debug`                  | `false`                 | Enable debug logging                             |
-| `gitea-vs-extension.artifacts.downloadPath`         | `.tmp/gitea-artifacts/` | Base directory for downloaded workflow artifacts |
+| Setting                                               | Default                 | Description                                         |
+| ----------------------------------------------------- | ----------------------- | --------------------------------------------------- |
+| `gitea-vs-extension.baseUrl`                          | -                       | Base URL of your Gitea instance                     |
+| `gitea-vs-extension.discovery.mode`                   | `workspace`             | How to discover repositories                        |
+| `gitea-vs-extension.refresh.runningIntervalSeconds`   | `15`                    | Polling interval while runs are active              |
+| `gitea-vs-extension.refresh.idleIntervalSeconds`      | `60`                    | Polling interval while idle                         |
+| `gitea-vs-extension.maxRunsPerRepo`                   | `20`                    | Maximum runs to fetch per repository                |
+| `gitea-vs-extension.maxJobsPerRun`                    | `50`                    | Maximum jobs to fetch per run                       |
+| `gitea-vs-extension.tls.insecureSkipVerify`           | `false`                 | Skip TLS verification (not recommended)             |
+| `gitea-vs-extension.logging.debug`                    | `false`                 | Enable debug logging                                |
+| `gitea-vs-extension.artifacts.downloadPath`           | `.tmp/gitea-artifacts/` | Base directory for downloaded workflow artifacts    |
+| `gitea-vs-extension.workflows.languageServer.enabled` | `true`                  | Validate and auto-complete workflow files           |
+| `gitea-vs-extension.workflows.githubFolderLanguage`   | `auto`                  | Claim `.github/workflows` (`auto`/`always`/`never`) |
 
 ### Discovery Modes
 
@@ -123,3 +139,7 @@ See `CONTRIBUTING.md`.
 ## License
 
 MIT. See `LICENSE`.
+
+The workflow grammars in `language/` are vendored from
+[github/vscode-github-actions](https://github.com/github/vscode-github-actions) (MIT); see
+`language/NOTICE.md`.

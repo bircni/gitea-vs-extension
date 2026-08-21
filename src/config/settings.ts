@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import type { GithubFolderLanguage } from "../workflow/documentSelector";
 
 export type DiscoveryMode = "workspace" | "allAccessible";
 
@@ -14,6 +15,8 @@ export type ExtensionSettings = {
   reviewCommentsEnabled: boolean;
   jobLogsSaveToRepo: boolean;
   artifactsDownloadPath: string;
+  languageServerEnabled: boolean;
+  githubFolderLanguage: GithubFolderLanguage;
 };
 
 export function getSettings(): ExtensionSettings {
@@ -36,6 +39,18 @@ export function getSettings(): ExtensionSettings {
       "artifacts.downloadPath",
       ".tmp/gitea-artifacts/",
     ).trim(),
+    languageServerEnabled: getSetting(
+      config,
+      legacyConfig,
+      "workflows.languageServer.enabled",
+      true,
+    ),
+    githubFolderLanguage: getSetting<GithubFolderLanguage>(
+      config,
+      legacyConfig,
+      "workflows.githubFolderLanguage",
+      "auto",
+    ),
   };
 }
 
