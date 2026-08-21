@@ -1,23 +1,15 @@
 #!/usr/bin/env node
-const { execSync } = require("child_process");
+const { normalizeVersion, parseArgs, run } = require("./release-utils.cjs");
 
 /**
- * Release helper script for markdown-inline-editor-vscode.
- * - Runs validation checks (lint:docs, test, build)
+ * Release helper script for Gitea VS Extension.
+ * - Runs repository validation checks
  * - Gets next version with git-cliff (or a custom version via --version)
  * - Generates CHANGELOG.md
  * - Bumps package.json version
  * - Commits changes and creates git tag
  * - Prints push/undo instructions
  */
-
-function run(cmd, opts = {}) {
-  try {
-    return execSync(cmd, { stdio: "pipe", encoding: "utf8", ...opts }).trim();
-  } catch (err) {
-    throw new Error(`Command failed: ${cmd}\n${err.message}`);
-  }
-}
 
 function log(msg) {
   console.log(`\x1b[36m${msg}\x1b[0m`);
@@ -27,40 +19,15 @@ function error(msg) {
   console.error(`\x1b[31m${msg}\x1b[0m`);
 }
 
-function parseArgs(argv) {
-  const args = argv.slice(2);
-  let customVersion = null;
-
-  for (let i = 0; i < args.length; i += 1) {
-    const arg = args[i];
-    if (arg === "--version" || arg === "-v") {
-      customVersion = args[i + 1];
-      i += 1;
-      continue;
-    }
-    if (arg.startsWith("--version=")) {
-      customVersion = arg.split("=")[1];
-      continue;
-    }
-  }
-
-  return { customVersion };
-}
-
 try {
-  const { customVersion } = parseArgs(process.argv);
-  if (customVersion === "") {
-    throw new Error("Custom version cannot be empty. Use --version <x.y.z>.");
-  }
-  if (customVersion === undefined) {
-    throw new Error("Missing value for --version. Use --version <x.y.z>.");
-  }
+  const { customVersion: requestedVersion } = parseArgs(process.argv);
+  const customVersion = normalizeVersion(requestedVersion);
   // check that we are on main and working tree is clean
-  const branch = run("git rev-parse --abbrev-ref HEAD");
+  const branch = run("git", ["rev-parse", "--abbrev-ref", "HEAD"]);
   if (branch !== "main") {
     throw new Error(`You must be on the main branch to run this script. Current branch: ${branch}`);
   }
-  const status = run("git status --porcelain");
+  const status = run("git", ["status", "--porcelain"]);
   if (status) {
     throw new Error(
       "Your working tree is not clean. Please commit or stash your changes before running this script.",
@@ -69,19 +36,17 @@ try {
 
   // Run validation checks
   log("🔍 Running validation checks...");
-  log("  📝 Validating feature file structure...");
-  run("npm run lint");
-  log("  🧪 Running tests...");
-  run("npm test");
-  log("  🔨 Building extension...");
-  run("npm run build");
+  log("  🧪 Running repository checks...");
+  run("npm", ["run", "validate"]);
+  log("  🔒 Checking dependencies...");
+  run("npm", ["run", "audit"]);
   log("✅ All validation checks passed");
 
   // Check if git-cliff is available
   log("🔍 Checking git-cliff availability...");
   try {
     // Try npx first (will use local node_modules/.bin if available)
-    run("npx --yes git-cliff --version", { stdio: "pipe" });
+    run("npx", ["--yes", "git-cliff", "--version"]);
   } catch {
     throw new Error(
       "git-cliff is not available. Run 'npm install' to install dev dependencies, or install globally with: npm install -g git-cliff",
@@ -94,7 +59,7 @@ try {
     log(`🔍 Using custom version: ${nextVersion}`);
   } else {
     log("🔍 Determining next version with git-cliff...");
-    nextVersion = run("npx git-cliff --bumped-version");
+    nextVersion = normalizeVersion(run("npx", ["git-cliff", "--bumped-version"]));
     if (!nextVersion) {
       throw new Error(
         "Failed to determine next version. Ensure you have conventional commits since the last tag.",
@@ -102,26 +67,26 @@ try {
     }
   }
   // Remove 'v' prefix if present for consistency
-  nextVersion = nextVersion.replace(/^v/, "");
+  nextVersion = normalizeVersion(nextVersion);
   const tagVersion = `v${nextVersion}`;
   log(`Next version: ${nextVersion} (tag: ${tagVersion})`);
 
   // Generate CHANGELOG
   log("📝 Generating CHANGELOG.md...");
-  run(`npx git-cliff -o CHANGELOG.md --tag ${tagVersion}`);
+  run("npx", ["git-cliff", "-o", "CHANGELOG.md", "--tag", tagVersion]);
 
   // Update package.json version
   log("🔢 Bumping package.json version...");
-  run(`npm version ${nextVersion} --no-git-tag-version`);
+  run("npm", ["version", nextVersion, "--no-git-tag-version"]);
 
   // Commit changes
   log("✅ Committing changes...");
-  run("git add CHANGELOG.md package.json package-lock.json");
-  run(`git commit -m "chore(release): ${tagVersion}"`);
+  run("git", ["add", "CHANGELOG.md", "package.json", "package-lock.json"]);
+  run("git", ["commit", "-m", `chore(release): ${tagVersion}`]);
 
   // Create git tag
   log("🏷️  Creating git tag...");
-  run(`git tag ${tagVersion}`);
+  run("git", ["tag", tagVersion]);
 
   log("🎉 Release prep complete!");
   console.log("\nNext steps:");

@@ -22,6 +22,14 @@ describe("computeArtifactSavePath", () => {
     expect(out).toMatch(/\.zip$/);
   });
 
+  test("keeps malformed run IDs inside their dedicated artifact directory", () => {
+    const baseDir = path.join("/base", "artifacts");
+    const outPath = computeArtifactSavePath(baseDir, repo, "..", { id: 1, name: "report" });
+
+    expect(outPath).toBe(path.join(baseDir, "my-owner-my-repo", "unknown", "report.zip"));
+    expect(path.relative(baseDir, outPath).startsWith(`..${path.sep}`)).toBe(false);
+  });
+
   test("uses .zip extension when artifact name has no extension", () => {
     const artifact: Artifact = { id: 2, name: "report" };
     const out = computeArtifactSavePath("/artifacts", repo, 3, artifact);

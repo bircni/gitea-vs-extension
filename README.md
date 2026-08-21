@@ -6,9 +6,11 @@ Works with VS Code, Cursor, VSCodium, Windsurf, and other VS Code compatible edi
 
 ## Features
 
-- Workflow runs with colored status icons
-- Runs grouped by branch
-- Pull Requests view with author, labels, and last updated time
+- A focused **Current Branch** view with that branch's pull request and runs
+- A **Workflows** view grouped by the workflow names reported by Gitea, with a
+  safe **Recent runs** fallback for older servers
+- A multi-instance **Settings** view for tokens, connection checks, secrets,
+  and variables
 - Inline pull request review comments, including adding a new review comment from the editor context menu
 - Workflow file authoring: syntax highlighting, schema validation, expression checking, completion and hover docs
 - Jobs and step logs with one click
@@ -154,6 +156,8 @@ Tokens are stored via VS Code SecretStorage and are never written to settings fi
 - **Mock token** used in tests is the documented fake string `MOCK_GITEA_TOKEN` in `src/test/mock-gitea/fixture.ts` — **never commit a real Gitea PAT**; use env / CI secrets for live checks.
 - **`npm run test:live`** — optional smoke against a real instance (`GITEA_BASE_URL`, optional `GITEA_TOKEN`, optional `GITEA_TLS_INSECURE`, `REQUIRE_LIVE_GITEA` for strict CI). See `specs/008-e2e-gitea-integration-testing/quickstart.md`.
 - **`npm run test:e2e`** — VS Code extension host tests against the mock (after `npm run compile` and `npm run bundle`). See `src/test/e2e/README.md`.
+- **`npm run test:e2e:gitea`** — VS Code extension host tests against the local Gitea fixture; Docker is required.
+- **`make check`** — canonical fast contributor gate; **`make verify`** additionally runs both extension-host suites.
 
 ## Contributing
 

@@ -8,10 +8,10 @@ Before making changes:
 
 1. Read this file completely
 2. Understand the project structure (see below)
-3. Run `npm run validate` to ensure current state is clean
+3. Run `make check` to ensure the fast repository gate is clean
 4. Identify the correct files to modify under `src/`
 5. Add or update tests in `src/test/` as needed
-6. Run `npm run validate` again before committing
+6. Run `make check` again before committing; run `make verify` for changes that affect the extension host, packaging, or Gitea API integration
 
 ## Project Context
 
@@ -121,10 +121,18 @@ npm run format   # oxfmt check
 npm run validate # check-unused + lint + format + test + build
 ```
 
+**Canonical repository interface:**
+
+```bash
+make check   # validate + moderate-or-higher dependency audit
+make verify  # check + mock and local-Gitea extension-host suites
+make help    # all contributor targets
+```
+
 **Security:**
 
 ```bash
-npm run audit    # npm audit (--audit-level high)
+npm run audit    # npm audit (--audit-level moderate)
 ```
 
 **Release:**
@@ -173,7 +181,7 @@ npm run release  # Version, changelog (cliff), tag (see scripts/release.js)
 
 ### 6. Validation Before Committing
 
-Run:
+Run `make check` (or the equivalent commands below):
 
 ```bash
 npm run validate
@@ -214,6 +222,8 @@ Before considering a task complete:
 - [ ] Lint passes (`npm run lint`)
 - [ ] Format check passes (`npm run format`); run `npm run format:write` if needed
 - [ ] `npm run validate` passes
+- [ ] `npm run audit` passes
+- [ ] `make verify` passes when the change touches extension-host behavior, packaging, or Gitea integration
 - [ ] Commit message follows Conventional Commits
 - [ ] Changes are focused and minimal
 
