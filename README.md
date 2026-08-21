@@ -154,7 +154,7 @@ Tokens are stored via VS Code SecretStorage and are never written to settings fi
 - **`npm test`** — unit tests plus hermetic Gitea mock integration (`GiteaApi` over local HTTP); no real credentials.
 - **`npm run test:integration`** — only the mock integration file.
 - **Mock token** used in tests is the documented fake string `MOCK_GITEA_TOKEN` in `src/test/mock-gitea/fixture.ts` — **never commit a real Gitea PAT**; use env / CI secrets for live checks.
-- **`npm run test:live`** — optional smoke against a real instance (`GITEA_BASE_URL`, optional `GITEA_TOKEN`, optional `GITEA_TLS_INSECURE`, `REQUIRE_LIVE_GITEA` for strict CI). See `specs/008-e2e-gitea-integration-testing/quickstart.md`.
+- **`npm run test:live`** — optional smoke against a real instance (`GITEA_BASE_URL`, optional `GITEA_TOKEN`, optional `GITEA_TLS_INSECURE`, `REQUIRE_LIVE_GITEA` for strict CI).
 - **`npm run test:e2e`** — VS Code extension host tests against the mock (after `npm run compile` and `npm run bundle`). See `src/test/e2e/README.md`.
 - **`npm run test:e2e:gitea`** — VS Code extension host tests against the local Gitea fixture; Docker is required.
 - **`make check`** — canonical fast contributor gate; **`make verify`** additionally runs both extension-host suites.

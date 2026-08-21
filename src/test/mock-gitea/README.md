@@ -2,7 +2,5 @@
 
 Used by `src/test/gitea-api-mock.integration.test.ts` to exercise `GiteaHttpClient` + `GiteaApi` without network.
 
-**Contracts**
-
-- [`specs/008-e2e-gitea-integration-testing/contracts/gitea-extension-http-surface.md`](../../../../specs/008-e2e-gitea-integration-testing/contracts/gitea-extension-http-surface.md)
-- [`specs/008-e2e-gitea-integration-testing/contracts/gitea-mock-harness.md`](../../../../specs/008-e2e-gitea-integration-testing/contracts/gitea-mock-harness.md)
+The mock documents its supported HTTP behavior directly in its fixtures and
+request handlers, keeping the hermetic test contract next to the test harness.

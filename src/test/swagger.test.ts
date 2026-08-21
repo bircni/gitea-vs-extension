@@ -1,14 +1,22 @@
-import * as fs from "node:fs";
-import path from "node:path";
 import { discoverEndpoints, fetchSwagger } from "../gitea/swagger";
 import { HttpError } from "../gitea/client";
 
 test("finds actions endpoints", () => {
-  const swaggerPath = path.resolve(__dirname, "../../docs/swagger.v1.json");
-  const content = fs.readFileSync(swaggerPath, "utf8");
-  const doc = JSON.parse(content);
-
-  const endpoints = discoverEndpoints(doc);
+  const endpoints = discoverEndpoints({
+    basePath: "/api/v1",
+    paths: {
+      "/repos/{owner}/{repo}/actions/runs": {},
+      "/repos/{owner}/{repo}/actions/runs/{run}/jobs": {},
+      "/repos/{owner}/{repo}/actions/jobs/{job_id}/logs": {},
+      "/repos/{owner}/{repo}/actions/runs/{run}/artifacts": {},
+      "/repos/{owner}/{repo}/actions/runs/{run}/rerun": {},
+      "/repos/{owner}/{repo}/actions/runs/{run}/rerun-failed-jobs": {},
+      "/repos/{owner}/{repo}/actions/runs/{run}/jobs/{job_id}/rerun": {},
+      "/repos/{owner}/{repo}/pulls": {},
+      "/repos/{owner}/{repo}/pulls/{index}/reviews": {},
+      "/repos/{owner}/{repo}/pulls/{index}/reviews/{id}/comments": {},
+    },
+  });
 
   expect(endpoints.listRuns).toBe("/api/v1/repos/{owner}/{repo}/actions/runs");
   expect(endpoints.listJobs).toBe("/api/v1/repos/{owner}/{repo}/actions/runs/{run}/jobs");

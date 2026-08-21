@@ -87,7 +87,6 @@ Before making changes:
 - `dist/` – Build output (DO NOT EDIT; generated)
 - `scripts/` – Release script (`release.js`), etc.
 - `media/` – Icons and assets
-- `specs/` – Feature specs and plans (e.g. current-branch-workflows)
 
 ## Available Commands
 
