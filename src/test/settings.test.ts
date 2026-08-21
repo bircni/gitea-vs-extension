@@ -49,4 +49,33 @@ describe("getSettings", () => {
       maxRunsPerRepo: 25,
     });
   });
+
+  it("canonicalizes and de-duplicates valid configured instance URLs", () => {
+    const modern = configuration(
+      {
+        baseUrl: "https://gitea.example/",
+        instances: [
+          "https://gitea.example",
+          "https://other.example/",
+          "ftp://not-gitea.example",
+          "not a URL",
+        ],
+      },
+      {
+        baseUrl: "https://gitea.example/",
+        instances: [
+          "https://gitea.example",
+          "https://other.example/",
+          "ftp://not-gitea.example",
+          "not a URL",
+        ],
+      },
+    );
+    const legacy = configuration({});
+    (vscode.workspace.getConfiguration as Mock).mockImplementation((section: string) =>
+      section === "gitea-vs-extension" ? modern : legacy,
+    );
+
+    expect(getSettings().instanceUrls).toEqual(["https://gitea.example", "https://other.example"]);
+  });
 });

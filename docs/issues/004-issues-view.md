@@ -14,7 +14,7 @@ Add an **Issues** tree view per repository: list open (and optionally closed) is
 
 ## Acceptance criteria
 
-- [ ] **New view**: A tree view "Issues" in the Gitea activity bar container (same as Current Branch Runs, Workflows, Pull Requests, Settings). Shows one section per repo (same discovery as other views): under each repo, list issues.
+- [ ] **New view**: A tree view "Issues" in the Gitea activity bar container, alongside Current Branch, Workflows, and Settings. Shows one section per repo (same discovery as other views): under each repo, list issues.
 - [ ] **List issues**: For each repo, call Gitea API to list issues (e.g. `state=open` by default; optional `state=all` or closed). Display at least: issue number, title, author/assignee (if available), labels, updated time. Use existing repo discovery and token.
 - [ ] **Filter**: Support at least open vs closed (e.g. view filter or setting `gitea-vs-extension.issues.state`: `open` | `closed` | `all`). Optional: filter by assignee or labels (can be follow-up).
 - [ ] **Actions**: Context menu on an issue node: "Open in browser" (issue URL). Optional for MVP: "Start working on issue" (create branch, e.g. `issue/<number>-slug`) as a later task.

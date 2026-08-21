@@ -63,7 +63,30 @@ function getInstanceUrls(
 ): string[] {
   const configured = getSetting<string[]>(config, legacyConfig, "instances", []);
   const legacyBaseUrl = getSetting(config, legacyConfig, "baseUrl", "").trim();
-  return [...new Set([legacyBaseUrl, ...configured].map((url) => url.trim()).filter(Boolean))];
+  return [
+    ...new Set(
+      [legacyBaseUrl, ...configured]
+        .map((url) => normalizeInstanceUrl(url))
+        .filter((url): url is string => url !== undefined),
+    ),
+  ];
+}
+
+/** Canonical instance keys prevent duplicate URLs such as `https://gitea.example/` and `https://gitea.example`. */
+function normalizeInstanceUrl(value: string): string | undefined {
+  const raw = value.trim();
+  if (!raw) {
+    return undefined;
+  }
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return undefined;
+    }
+    return url.toString().replace(/\/$/, "");
+  } catch {
+    return undefined;
+  }
 }
 
 /**

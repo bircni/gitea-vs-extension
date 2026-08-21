@@ -105,6 +105,40 @@ suite(`gitea-vs-extension E2E (${isRealGitea ? "real Gitea" : "mock"})`, () => {
     );
   });
 
+  test("M9: native trees expose the intended current-branch and workflow hierarchy", async function () {
+    if (isRealGitea) {
+      this.skip();
+    }
+    const snapshot = await vscode.commands.executeCommand<NativeTreeSnapshot>(
+      "gitea-vs-extension.__testNativeTreeSnapshot",
+    );
+
+    assert.strictEqual(snapshot.currentBranch[0]?.kind, "PullRequestNode");
+    assert.match(snapshot.currentBranch[0]?.label ?? "", /^#1 Mock PR$/);
+    assert.strictEqual(snapshot.currentBranch[1]?.kind, "RunNode");
+    assert.ok(
+      snapshot.currentBranch.every((node) => node.kind !== "SectionNode"),
+      "current branch must not reintroduce a standalone pull-request section",
+    );
+
+    const currentRun = snapshot.currentBranch[1];
+    assert.strictEqual(currentRun?.children[0]?.kind, "JobNode");
+    assert.strictEqual(currentRun?.children[0]?.label, "Lint");
+    assert.strictEqual(currentRun?.children[1]?.label, "Build");
+    assert.deepStrictEqual(
+      currentRun?.children[1]?.children.map((node) => node.label),
+      ["Test", "Install"],
+      "failed steps must be shown before successful steps",
+    );
+
+    assert.strictEqual(snapshot.workflows[0]?.kind, "WorkflowGroupNode");
+    assert.strictEqual(snapshot.workflows[0]?.label, "Mock CI");
+    assert.ok(
+      snapshot.workflows[0].children.every((node) => node.kind === "RunNode"),
+      "workflow groups contain runs rather than branch groups",
+    );
+  });
+
   test("W1: the workflow language server reports schema and expression problems", async function () {
     this.timeout(30_000);
     const folder = vscode.workspace.workspaceFolders?.[0];
@@ -285,6 +319,22 @@ suite(`gitea-vs-extension E2E (${isRealGitea ? "real Gitea" : "mock"})`, () => {
       `expected created review comment after fresh refresh in ${JSON.stringify(comments)}`,
     );
   });
+
+  test("G7: current branch tree renders the real fixture pull request inline", async function () {
+    if (!isRealGitea) {
+      this.skip();
+    }
+    const snapshot = await vscode.commands.executeCommand<NativeTreeSnapshot>(
+      "gitea-vs-extension.__testNativeTreeSnapshot",
+    );
+
+    assert.strictEqual(snapshot.currentBranch[0]?.kind, "PullRequestNode");
+    assert.match(snapshot.currentBranch[0]?.label ?? "", /^#\d+ /);
+    assert.ok(
+      snapshot.currentBranch.every((node) => node.kind !== "SectionNode"),
+      "current branch must not expose a standalone pull-request section",
+    );
+  });
 });
 
 type RepoSnapshot = {
@@ -300,6 +350,17 @@ type RunDetailsSnapshot = {
   runId: number | string;
   jobCount: number;
   artifactCount: number;
+};
+
+type NativeTreeSnapshot = {
+  currentBranch: NativeTreeSnapshotNode[];
+  workflows: NativeTreeSnapshotNode[];
+};
+
+type NativeTreeSnapshotNode = {
+  kind: string;
+  label: string;
+  children: NativeTreeSnapshotNode[];
 };
 
 type ReviewCommentSnapshot = {

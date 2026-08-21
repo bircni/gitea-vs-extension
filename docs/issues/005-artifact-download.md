@@ -14,7 +14,7 @@ Add a **Download** (and optionally **Reveal in file explorer**) context action o
 
 ## Acceptance criteria
 
-- [ ] **Context menu**: "Download" on an artifact node (Current Branch Runs / Workflows). Optionally "Reveal in file explorer" after download when the artifact is a single file or when the user has chosen a path.
+- [ ] **Context menu**: "Download" on an artifact node (Current Branch / Workflows). Optionally "Reveal in file explorer" after download when the artifact is a single file or when the user has chosen a path.
 - [ ] **Download behavior**: Call Gitea API to get the artifact (stream or redirect). Save to a deterministic path under a dedicated directory. Use a setting for base directory (e.g. `gitea-vs-extension.artifacts.downloadPath` default `.tmp/gitea-artifacts/` relative to workspace root or absolute). Subpath can include repo name, run id, and artifact name to avoid collisions.
 - [ ] **Format**: If the API returns a zip, save as zip and optionally unzip into a folder (document behavior). If a single file, save as that file. Handle Gitea artifact API response (e.g. redirect to blob or archive endpoint).
 - [ ] **Feedback**: On success, show an information message with the path (e.g. "Artifact saved to …"). On failure (e.g. 404, network error), show a clear, safe error message.

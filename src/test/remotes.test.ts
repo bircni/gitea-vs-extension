@@ -1,4 +1,4 @@
-import { hostMatches, normalizeHost, parseRemoteUrl } from "../gitea/remotes";
+import { hostMatches, normalizeHost, parseRemoteUrl, webHostMatches } from "../gitea/remotes";
 
 test("parses https remotes", () => {
   const parsed = parseRemoteUrl("https://localhost:3000/owner/repo.git");
@@ -27,6 +27,12 @@ test("matches hostnames without ports", () => {
 
 test("matches hostnames regardless of port casing", () => {
   expect(hostMatches("LOCALHOST:3000", "localhost:2222")).toBe(true);
+});
+
+test("matches web hosts only when their canonical ports are equal", () => {
+  expect(webHostMatches("localhost:3000", "localhost:3000")).toBe(true);
+  expect(webHostMatches("localhost:3000", "localhost:3001")).toBe(false);
+  expect(webHostMatches("gitea.example", "gitea.example:443")).toBe(true);
 });
 
 test("does not match different hosts", () => {

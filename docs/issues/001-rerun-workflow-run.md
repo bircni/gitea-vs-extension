@@ -29,7 +29,7 @@ Reference: `docs/ANALYSIS-2026.md` (§3 high impact #1, §5 MVP order).
 
 ## Acceptance criteria
 
-- [x] **Re-run**: Context menu "Re-run Workflow Run" on a run node (Current Branch Runs / Workflows).
+- [x] **Re-run**: Context menu "Re-run Workflow Run" on a run node (Current Branch / Workflows).
 - [x] **Re-run failed jobs**: Context menu "Re-run Failed Jobs" on a run node.
 - [x] **Re-run job**: Context menu "Re-run Job" on a job node.
 - [x] **Availability**: Re-run entries only appear where the API would accept them — a finished run

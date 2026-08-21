@@ -117,6 +117,13 @@ Manage token, test connection, and edit secrets and variables.
 | `gitea-vs-extension.workflows.languageServer.enabled` | `true`                  | Validate and auto-complete workflow files           |
 | `gitea-vs-extension.workflows.githubFolderLanguage`   | `auto`                  | Claim `.github/workflows` (`auto`/`always`/`never`) |
 
+### Multiple Gitea instances
+
+Open **Settings → Gitea Instances** in the extension sidebar and choose **Add Gitea Instance**.
+Each URL has its own securely stored token: select that instance, choose **Set token**, then use
+**Test Connection**. Repositories are automatically routed to the configured instance matching
+their git remote host.
+
 ### Discovery Modes
 
 | Mode            | Description                                            |

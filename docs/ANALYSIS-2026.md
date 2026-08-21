@@ -13,9 +13,9 @@ This document summarizes what the extension does, how it compares to GitHub/GitL
 
 | Area | Capabilities |
 |------|----------------|
-| **Actions** | Tree views: **Current Branch Runs**, **Workflows** (all runs by branch). Colored status icons, branch filter, adaptive polling (fast when active, slower when idle). |
+| **Actions** | Native tree views: **Current Branch**, **Workflows**, and **Settings**. Current Branch shows the matching pull request above its runs; Workflows groups by the API workflow name with a flat Recent runs fallback. Colored status icons, branch filter, failure-first job/step ordering, and adaptive polling (fast when active, slower when idle). |
 | **Runs/Jobs** | Expand run → load jobs/steps on demand; view job logs (in-editor, optional save to `.tmp/gitea-logs/`); open latest failed job logs; artifacts listed per run. |
-| **Pull Requests** | PR list per repo (author, labels, last updated); open in browser; copy URL. |
+| **Pull Requests** | Current-branch pull-request context (author, labels, last updated); open in browser; copy URL; checkout branch. |
 | **Review comments** | Inline PR review comments in the editor for the current branch (optional, via `reviewComments.enabled`). |
 | **Secrets & variables** | Full CRUD for repo Actions secrets and variables in the Settings tree. |
 | **Discovery** | Repos from workspace git remotes (`workspace`) or all accessible via API (`allAccessible`). |

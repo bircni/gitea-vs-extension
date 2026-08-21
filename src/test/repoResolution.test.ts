@@ -38,6 +38,32 @@ describe("repoResolution", () => {
     expect(repo).toEqual({ host: "gitea.two.example", owner: "octo", name: "demo" });
   });
 
+  test("selects the exact configured web instance when hosts share a hostname", async () => {
+    (execGit as Mock)
+      .mockResolvedValueOnce("true\n")
+      .mockResolvedValueOnce("origin\thttps://gitea.example.com:3001/octo/demo.git (fetch)\n");
+
+    const repo = await resolveRepoFromFolder("/repo", [
+      "https://gitea.example.com:3000",
+      "https://gitea.example.com:3001",
+    ]);
+
+    expect(repo).toEqual({ host: "gitea.example.com:3001", owner: "octo", name: "demo" });
+  });
+
+  test("does not guess an instance for an ambiguous SSH remote", async () => {
+    (execGit as Mock)
+      .mockResolvedValueOnce("true\n")
+      .mockResolvedValueOnce("origin\tgit@gitea.example.com:octo/demo.git (fetch)\n");
+
+    const repo = await resolveRepoFromFolder("/repo", [
+      "https://gitea.example.com:3000",
+      "https://gitea.example.com:3001",
+    ]);
+
+    expect(repo).toBeUndefined();
+  });
+
   test("prefers origin over a fork remote", async () => {
     (execGit as Mock)
       .mockResolvedValueOnce("true\n")

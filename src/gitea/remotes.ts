@@ -2,6 +2,7 @@ export type RemoteInfo = {
   host: string;
   owner: string;
   repo: string;
+  transport: "web" | "ssh";
 };
 
 export function parseRemoteUrl(remoteUrl: string): RemoteInfo | undefined {
@@ -14,6 +15,7 @@ export function parseRemoteUrl(remoteUrl: string): RemoteInfo | undefined {
       host: httpsMatch[1],
       owner: httpsMatch[2],
       repo: httpsMatch[3],
+      transport: "web",
     };
   }
 
@@ -24,6 +26,7 @@ export function parseRemoteUrl(remoteUrl: string): RemoteInfo | undefined {
       host: sshMatch[1],
       owner: sshMatch.groups.owner,
       repo: sshMatch.groups.repo,
+      transport: "ssh",
     };
   }
 
@@ -35,6 +38,7 @@ export function parseRemoteUrl(remoteUrl: string): RemoteInfo | undefined {
       host: scpMatch[1],
       owner: scpMatch[2],
       repo: scpMatch[3],
+      transport: "ssh",
     };
   }
 
@@ -54,4 +58,19 @@ export function hostMatches(baseHost: string, remoteHost: string): boolean {
   const baseHostname = normalizedBase.split(":", 1)[0];
   const remoteHostname = normalizedRemote.split(":", 1)[0];
   return baseHostname === remoteHostname;
+}
+
+/**
+ * HTTP(S) remotes identify the Gitea web endpoint, so their port must match a configured base URL.
+ * URL parsing also treats an explicit default HTTPS port as equivalent to an omitted one.
+ */
+export function webHostMatches(baseHost: string, remoteHost: string): boolean {
+  try {
+    return (
+      new URL(`https://${baseHost}`).host.toLowerCase() ===
+      new URL(`https://${remoteHost}`).host.toLowerCase()
+    );
+  } catch {
+    return normalizeHost(baseHost) === normalizeHost(remoteHost);
+  }
 }

@@ -157,6 +157,7 @@ async function handleRepoRoutes(
         status: "completed",
         conclusion: "success",
         name: "Mock workflow",
+        workflow_name: "Mock CI",
         head_branch: "main",
         head_sha: "abc123",
         created_at: "2020-01-02T00:00:00Z",
@@ -169,6 +170,7 @@ async function handleRepoRoutes(
         status: "completed",
         conclusion: "success",
         name: `Mock ${branch} run`,
+        workflow_name: "Mock CI",
         head_branch: branch,
         head_sha: "feed106",
         created_at: "2020-01-01T00:00:00Z",
@@ -211,9 +213,19 @@ async function handleRepoRoutes(
       jobs: [
         {
           id: 201,
-          name: "mock-job",
+          name: "Build",
           status: "completed",
           conclusion: "success",
+          steps: [
+            { name: "Install", status: "completed", conclusion: "success" },
+            { name: "Test", status: "completed", conclusion: "failure" },
+          ],
+        },
+        {
+          id: 202,
+          name: "Lint",
+          status: "completed",
+          conclusion: "failure",
         },
       ],
     });

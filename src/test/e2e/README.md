@@ -14,6 +14,7 @@ E2E runs the packaged extension in a real VS Code instance via `@vscode/test-ele
 8. **M6**: `__testViewFirstJobLog` runs the real `viewJobLogs` command and asserts the opened document shows the mock log line.
 9. **M7**: `__testDownloadFirstArtifact` runs the real `downloadArtifact` command and asserts the artifact file is written to disk with content.
 10. **M8**: `__testSetBranchFilter` forces a `specificBranch` filter, then asserts the next refresh performs a server-side branch fetch and `mergeRunsById` combines the results into more runs.
+11. **M9**: `__testNativeTreeSnapshot` serializes the actual registered native tree providers and asserts current-branch PR placement, workflow-name grouping, and failure-first jobs and steps.
 
 Internal commands (`__testRepoCount`, `__testRefreshDone`, `__testRepoSnapshot`, `__testLoadFirstRunDetails`, `__testViewFirstJobLog`, `__testDownloadFirstArtifact`, `__testSetBranchFilter`, and the review-comment helpers) are registered only when `EXTENSION_TEST_MODE=1`.
 
@@ -28,7 +29,7 @@ The first run may download a VS Code build. On Linux CI, ensure a display or use
 
 ## Real Gitea fixture run
 
-`npm run test:e2e:gitea` launches `docker.gitea.com/gitea:1.26.1` from the committed fixture archive at `src/test/e2e/fixtures/gitea-1.26.1-fixture.tar.gz`.
+`npm run test:e2e:gitea` launches `docker.gitea.com/gitea:1.27.2` from the committed fixture archive at `src/test/e2e/fixtures/gitea-1.27.2-fixture.tar.gz`.
 
 The runner unpacks the archive into `.tmp/e2e-gitea/<run-id>/data`, starts Gitea with that data mounted to `/data`, creates a throwaway access token, writes temporary workspace settings, and launches the same VS Code extension-host suite in real-Gitea mode.
 

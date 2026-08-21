@@ -18,7 +18,9 @@ Before making changes:
 **What This Project Does:**
 
 - VS Code extension that shows **Gitea Actions** workflow runs, jobs, and logs inside the editor
-- Tree views: **Current Branch Runs**, **Workflows** (all runs by branch), **Pull Requests**, **Settings**
+- Native tree views: **Current Branch**, **Workflows**, and **Settings**. A pull request matching
+  the current branch appears above that branch's runs; Workflows groups by the API-provided
+  workflow name, with a flat Recent runs fallback when Gitea omits it.
 - Branch filter per repo; job logs can be opened locally (optionally saved to `.tmp/gitea-logs/`)
 - Manages secrets and variables via Gitea API; uses workspace git remotes or API for repo discovery
 
@@ -58,7 +60,8 @@ Before making changes:
 
 **Views:**
 
-- `views/actionsTreeProvider.ts` – Tree data for Current Branch Runs and Workflows (filtering, grouping by branch)
+- `views/actionsTreeProvider.ts` – Tree data for Current Branch and Workflows (branch filtering,
+  API workflow grouping, and current-branch pull-request context)
 - `views/nodes.ts` – Tree item classes (RepoNode, RunNode, JobNode, etc.)
 - `views/settingsTreeProvider.ts` – Settings tree (token, secrets, variables)
 - `views/icons.ts` – Status/conclusion icons

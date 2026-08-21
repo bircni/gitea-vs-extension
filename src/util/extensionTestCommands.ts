@@ -7,7 +7,21 @@ import type { RepoRef, WorkflowRun } from "../gitea/models";
 import { computeArtifactSavePath } from "./artifactDownload";
 import type { BranchFilterMode } from "./branchContext";
 import type { RepoStateStore } from "./cache";
-import { ArtifactNode } from "../views/nodes";
+import type { ActionsTreeProvider } from "../views/actionsTreeProvider";
+import { ArtifactNode, type TreeNode } from "../views/nodes";
+
+type NativeTreeProviders = {
+  runs: ActionsTreeProvider;
+  workflows: ActionsTreeProvider;
+};
+
+export type NativeTreeSnapshotNode = {
+  kind: string;
+  label: string;
+  description?: string;
+  contextValue?: string;
+  children: NativeTreeSnapshotNode[];
+};
 
 /**
  * Internal commands for @vscode/test-electron only (EXTENSION_TEST_MODE=1).
@@ -17,6 +31,7 @@ export function registerExtensionTestCommands(
   store: RepoStateStore,
   refreshController: RefreshController,
   reviewCommentsController?: ReviewCommentsController,
+  treeProviders?: NativeTreeProviders,
 ): vscode.Disposable[] {
   if (process.env.EXTENSION_TEST_MODE !== "1") {
     return [];
@@ -65,6 +80,35 @@ export function registerExtensionTestCommands(
               : undefined,
           };
         }),
+      };
+    }),
+    vscode.commands.registerCommand("gitea-vs-extension.__testNativeTreeSnapshot", async () => {
+      if (!treeProviders) {
+        throw new Error("native tree providers are unavailable");
+      }
+      await refreshController.refreshAll();
+      const [repo] = store.getRepos();
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- getRepos() can be empty at runtime
+      if (!repo) {
+        throw new Error("no repositories discovered");
+      }
+
+      if (process.env.GITEA_EXTENSION_TEST_KIND !== "real-gitea") {
+        // Force the mock fixture into the same branch/PR state a user sees on a checked-out branch.
+        // The subsequent direct branch fetch makes the snapshot independent of test execution order.
+        store.setBranchFilter({ repo, mode: "specificBranch", branchName: "feature" });
+        await refreshController.refreshRepo(repo, 20);
+        store.setBranchContext({ repo, branchName: "feature", status: "resolved" });
+        store.setBranchFilter({ repo, mode: "currentBranch" });
+      }
+
+      const entry = store.getEntry(repo);
+      await Promise.all(
+        (entry?.runs ?? []).map(async (run) => refreshController.loadRunDetails(repo, run.id)),
+      );
+      return {
+        currentBranch: await snapshotTree(treeProviders.runs),
+        workflows: await snapshotTree(treeProviders.workflows),
       };
     }),
     vscode.commands.registerCommand("gitea-vs-extension.__testReviewCommentCount", async () => {
@@ -159,4 +203,38 @@ export function registerExtensionTestCommands(
       },
     ),
   ];
+}
+
+async function snapshotTree(provider: ActionsTreeProvider): Promise<NativeTreeSnapshotNode[]> {
+  const roots = await provider.getChildren();
+  return Promise.all(roots.map((node) => snapshotNode(provider, node, 4)));
+}
+
+async function snapshotNode(
+  provider: ActionsTreeProvider,
+  node: TreeNode,
+  remainingDepth: number,
+): Promise<NativeTreeSnapshotNode> {
+  const children = remainingDepth > 0 ? await provider.getChildren(node) : ([] as TreeNode[]);
+  return {
+    kind: node.constructor.name,
+    label: treeItemText(node.label) ?? "",
+    description: treeItemText(node.description),
+    contextValue: node.contextValue,
+    children: await Promise.all(
+      children.map((child) => snapshotNode(provider, child, remainingDepth - 1)),
+    ),
+  };
+}
+
+function treeItemText(
+  value: string | vscode.TreeItemLabel | boolean | undefined,
+): string | undefined {
+  if (typeof value === "string") {
+    return value;
+  }
+  if (typeof value === "object" && value !== null && "label" in value) {
+    return value.label;
+  }
+  return undefined;
 }

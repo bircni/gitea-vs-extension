@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import type { RepoRef } from "../gitea/models";
-import { hostMatches, parseRemoteUrl } from "../gitea/remotes";
+import { hostMatches, parseRemoteUrl, webHostMatches } from "../gitea/remotes";
 import { execGit } from "./git";
 
 export type WorkspaceRepo = {
@@ -44,7 +44,17 @@ export async function resolveRepoFromFolder(
       if (!parsed) {
         continue;
       }
-      const host = hosts.find((candidate) => hostMatches(candidate, parsed.host));
+      const matchingHosts = hosts.filter((candidate) =>
+        parsed.transport === "web"
+          ? webHostMatches(candidate, parsed.host)
+          : hostMatches(candidate, parsed.host),
+      );
+      // An SSH port is unrelated to Gitea's HTTP(S) port. With multiple instances on the same
+      // hostname there is no reliable way to choose one, so avoid silently using the wrong token.
+      if (parsed.transport === "ssh" && matchingHosts.length > 1) {
+        continue;
+      }
+      const host = matchingHosts[0];
       if (!host) {
         continue;
       }
