@@ -65,6 +65,17 @@ test("prefixes discovered endpoints with basePath", () => {
   expect(endpoints.version).toBe("/api/v1/version");
 });
 
+test("keeps Swagger-discovered endpoints on the configured origin", () => {
+  const endpoints = discoverEndpoints({
+    basePath: "https://untrusted.example/api/v1",
+    paths: {
+      "/repos/{owner}/{repo}/actions/runs": {},
+    },
+  });
+
+  expect(endpoints.listRuns).toBe("/repos/{owner}/{repo}/actions/runs");
+});
+
 test("discovers fallback job logs path and basePath root", () => {
   const endpoints = discoverEndpoints({
     basePath: "/",

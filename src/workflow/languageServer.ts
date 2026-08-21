@@ -17,6 +17,7 @@ import {
   GITHUB_WORKFLOW_PATTERN,
 } from "./documentSelector";
 import { buildInitializationOptions } from "./initializationOptions";
+import { isWorkspaceFileUri } from "./readFilePolicy";
 
 let client: LanguageClient | undefined;
 
@@ -61,7 +62,11 @@ export async function startLanguageServer(
       return null;
     }
     try {
-      const content = await vscode.workspace.fs.readFile(vscode.Uri.parse(event.path));
+      const uri = vscode.Uri.parse(event.path);
+      if (!isWorkspaceFileUri(uri, vscode.workspace.workspaceFolders)) {
+        return null;
+      }
+      const content = await vscode.workspace.fs.readFile(uri);
       return new TextDecoder().decode(content);
     } catch {
       return null;

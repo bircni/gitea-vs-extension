@@ -16,7 +16,11 @@ export const window = {
 };
 
 export const Uri = {
-  file: (fsPath: string) => ({ fsPath }),
+  file: (fsPath: string) => ({ fsPath, scheme: "file" }),
+  parse: (value: string) => {
+    const scheme = /^(?<scheme>[a-zA-Z][a-zA-Z0-9+.-]*):/.exec(value)?.groups?.scheme ?? "file";
+    return { fsPath: scheme === "file" ? value.replace(/^file:\/\//, "") : "", scheme };
+  },
 };
 
 /** Minimal TreeItem for tests that use views/nodes (e.g. ArtifactNode). */

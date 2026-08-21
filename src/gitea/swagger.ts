@@ -142,8 +142,29 @@ function joinPath(basePath: string, path?: string): string | undefined {
   if (!path) {
     return undefined;
   }
-  if (!basePath || basePath === "/") {
+  const normalizedBasePath = normalizeBasePath(basePath);
+  if (!normalizedBasePath) {
     return path;
   }
-  return `${basePath}${path}`;
+  return `${normalizedBasePath}${path}`;
+}
+
+/**
+ * Swagger is fetched from the configured instance, but its basePath is still
+ * server-provided data. Keep discovered endpoints relative to that instance
+ * instead of allowing an absolute or protocol-relative URL to redirect calls.
+ */
+function normalizeBasePath(basePath: string): string {
+  if (!basePath || basePath === "/") {
+    return "";
+  }
+  try {
+    const parsed = new URL(basePath, "http://localhost");
+    if (parsed.origin !== "http://localhost" || parsed.search || parsed.hash) {
+      return "";
+    }
+    return parsed.pathname === "/" ? "" : parsed.pathname.replace(/\/$/, "");
+  } catch {
+    return "";
+  }
 }
