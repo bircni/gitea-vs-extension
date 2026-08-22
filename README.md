@@ -1,3 +1,7 @@
+> [!NOTE]  
+> This repo will be moved soon 
+
+
 # Gitea VS Extension
 
 Monitor Gitea Actions & Pull Requests without leaving your editor.
