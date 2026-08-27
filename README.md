@@ -1,5 +1,5 @@
 > [!NOTE]  
-> This repo will be moved soon 
+> This repo has moved to https://gitea.com/gitea/gitea-vscode
 
 
 # Gitea VS Extension
