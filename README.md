@@ -1,5 +1,7 @@
 > [!NOTE]  
-> This repo has moved to https://gitea.com/gitea/gitea-vscode
+> Thanks a lot for using this extension.
+> As a gitea maintainer I gifted it to the gitea community and it was rewritten to be in a even better shape :)
+> You can find it here: https://gitea.com/gitea/gitea-vscode
 
 
 # Gitea VS Extension
